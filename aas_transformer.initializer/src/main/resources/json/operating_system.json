@@ -1,0 +1,30 @@
+{
+  "id": "a885c6b1-f19b-4e6d-8e9d-9027dcdd5c2b",
+  "destination": {
+    "smDestination": {
+      "idShort": "operating_system",
+      "identifier": {
+        "idType": "Custom",
+        "id": "operating_system"
+      }
+    }
+  },
+  "transformerActions": [
+    {
+      "actionType": "COPY",
+      "sourceSubmodelIdentifier": {
+        "identifierType": "ID_SHORT",
+        "identifierValue": "ansible-facts"
+      },
+      "sourceSubmodelElement": "distribution"
+    },
+    {
+      "actionType": "COPY",
+      "sourceSubmodelIdentifier": {
+        "identifierType": "ID_SHORT",
+        "identifierValue": "ansible-facts"
+      },
+      "sourceSubmodelElement": "distribution_major_version"
+    }
+  ]
+}

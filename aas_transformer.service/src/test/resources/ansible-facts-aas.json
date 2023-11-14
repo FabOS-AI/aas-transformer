@@ -1,0 +1,53 @@
+{
+  "modelType": {
+    "name": "AssetAdministrationShell"
+  },
+  "idShort": "ubuntu2204",
+  "identification": {
+    "id": "b6281b53-bdfa-429b-9ce0-7b420030d6da",
+    "idType": "Custom"
+  },
+  "dataSpecification": [],
+  "embeddedDataSpecifications": [],
+  "asset": {
+    "keys": [
+      {
+        "type": "Asset",
+        "local": true,
+        "value": "",
+        "idType": "IRDI"
+      }
+    ],
+    "modelType": {
+      "name": "Asset"
+    },
+    "kind": "Instance",
+    "idShort": "ubuntu2204",
+    "identification": {
+      "id": "",
+      "idType": "IRDI"
+    },
+    "dataSpecification": [],
+    "embeddedDataSpecifications": []
+  },
+  "views": [],
+  "conceptDictionary": [],
+  "submodels": [
+    {
+      "keys": [
+        {
+          "type": "AssetAdministrationShell",
+          "local": false,
+          "value": "b6281b53-bdfa-429b-9ce0-7b420030d6da",
+          "idType": "Custom"
+        },
+        {
+          "type": "Submodel",
+          "local": true,
+          "value": "ansible-facts",
+          "idType": "Custom"
+        }
+      ]
+    }
+  ]
+}

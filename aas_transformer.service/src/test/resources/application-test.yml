@@ -1,0 +1,70 @@
+### Application
+application:
+  name: "^project.artifactId^"
+  version: "^project.version^"
+  timestamp: "^timestamp^"
+
+### Server / API
+server:
+  port: 4010
+  error:
+    include-message: always
+
+open-api:
+  title: AAS Transformer
+  description: REST API of AAS Transformer
+  version: "^project.version^"
+  contact:
+    name: Fraunhofer IPA
+    url: https://www.ipa.fraunhofer.de
+    email: benjamin.goetz@ipa.fraunhofer.de
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+spring:
+  application:
+    name: resource_management
+  jpa:
+    hibernate:
+      ddl-auto: update
+  datasource:
+    driver-class-name=org: 'org.testcontainers.jdbc.ContainerDatabaseDriver'
+    url: jdbc:tc:mariadb:10.5:///${database.host}:${database.port}/${database.schema}?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: ${database.username}
+    password: ${database.password}
+  sql:
+    init:
+      mode:
+      platform: mysql
+  data:
+    jpa:
+      repositories:
+        bootstrap-mod: default
+
+### Database
+database:
+  host: localhost
+  port: 3306
+  schema: transformer
+  username: root
+  password: password
+
+### AAS
+aas:
+  broker:
+    host: localhost
+    port: 1883
+  registry:
+    host: localhost
+    port: 4000
+    context: registry
+    url: http://${aas.registry.host}:${aas.registry.port}/${aas.registry.context}
+  server:
+    host: localhost
+    port: 4001
+    context: aasServer
+    url: http://${aas.server.host}:${aas.server.port}/${aas.server.context}

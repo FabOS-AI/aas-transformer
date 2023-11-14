@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.fhg.ipa</groupId>
+    <artifactId>aas_transformer</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>aas_transformer.broker</module>
+        <module>aas_transformer.initializer</module>
+        <module>aas_transformer.model</module>
+        <module>aas_transformer.persistence</module>
+        <module>aas_transformer.service</module>
+    </modules>
+
+    <properties>
+        <revision>1.0.0-SNAPSHOT</revision>
+
+        <maven.compiler.source>18</maven.compiler.source>
+        <maven.compiler.target>18</maven.compiler.target>
+
+        <spring.boot.version>2.7.4</spring.boot.version>
+        <springdoc.openapi.version>1.6.11</springdoc.openapi.version>
+        <slf4j.version>1.7.36</slf4j.version>
+        <mariadb.client.version>2.7.4</mariadb.client.version>
+        <junit.version>5.8.2</junit.version>
+        <testcontainers.version>1.19.1</testcontainers.version>
+        <restassured.version>5.3.1</restassured.version>
+        <assertj.version>3.24.2</assertj.version>
+        <jinjava.version>2.7.1</jinjava.version>
+
+        <maven.plugin.codehaus.exec.version>1.2.1</maven.plugin.codehaus.exec.version>
+        <maven.plugin.spring.boot.version>${spring.boot.version}</maven.plugin.spring.boot.version>
+        <maven.plugin.dockerfile.version>1.4.10</maven.plugin.dockerfile.version>
+        <maven.plugin.apache.deploy.version>2.8.2</maven.plugin.apache.deploy.version>
+        <maven.plugin.surefire.version>3.2.2</maven.plugin.surefire.version>
+
+        <docker.image.registry>ghcr.io/fabos-ai/aas-transformer</docker.image.registry>
+        <docker.image.skip>true</docker.image.skip>
+
+        <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- TESTING !-->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Spring Boot !-->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${maven.plugin.spring.boot.version}</version>
+            </plugin>
+            <!-- Docker Image !-->
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${maven.plugin.dockerfile.version}</version>
+                <executions>
+                    <execution>
+                        <id>build-image</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>push-image</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
+                    <repository>${docker.image.registry}/${docker.image.name}</repository>
+                    <tag>${project.version}</tag>
+                    <dockerfile>Dockerfile</dockerfile>
+                    <contextDirectory>.</contextDirectory>
+                    <skipDockerInfo>true</skipDockerInfo>
+                    <skip>${docker.image.skip}</skip>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>javax.activation</groupId>
+                        <artifactId>javax.activation-api</artifactId>
+                        <version>1.2.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <!-- Deployment !-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${maven.plugin.apache.deploy.version}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- Versioning !-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.2.7</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Testing !-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.plugin.surefire.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

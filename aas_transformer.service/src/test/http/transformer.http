@@ -1,0 +1,41 @@
+### GET /aas/transformer
+GET http://{{host}}:{{port}}/aas/transformer
+
+### POST /aas/transformer
+POST http://{{host}}:{{port}}/aas/transformer
+Content-Type: application/json
+
+{
+  "id": "{{transformerId}}",
+  "destination": {
+    "idShort": "operating-system",
+    "identification": {
+      "idType": "Custom",
+      "id": "operating-system-{{destinationId}}"
+    }
+  },
+  "transformerActions": [
+    {
+      "actionType": "COPY",
+      "sourceSubmodelIdentifier": {
+        "identifierType": "ID_SHORT",
+        "identifierValue": "ansible-facts"
+      },
+      "sourceSubmodelElement": "distribution"
+    },
+    {
+      "actionType": "COPY",
+      "sourceSubmodelIdentifier": {
+        "identifierType": "ID_SHORT",
+        "identifierValue": "ansible-facts"
+      },
+      "sourceSubmodelElement": "distribution_major_version"
+    }
+  ]
+}
+
+### GET /aas/transformer/{{transformerId}}
+GET http://{{host}}:{{port}}/aas/transformer/{{transformerId}}
+
+### DELETE /aas/transformer/{{transformerId}}
+DELETE http://{{host}}:{{port}}/aas/transformer/{{transformerId}}

@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  aas-broker:
+    image: eclipse-mosquitto:1.6
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+#    ports:
+#      - "1883:1883"
+#      - "9001:9001"
+
+
+  aas-transformer:
+    image: fabos4ai/aas-transformer:1.0.0-SNAPSHOT
+#    ports:
+#      - "4010:4010"
+    environment:
+      DATABASE_HOST: aas-transformer-database
+      DATABASE_PORT: 3306
+      AAS_BROKER_HOST: aas-broker
+
+
+  aas-transformer-database:
+    image: mariadb:10.5
+    restart: unless-stopped
+    environment:
+      MYSQL_USER: aas-transformer
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: transformer
+      MARIADB_ROOT_PASSWORD: password
+#    ports:
+#      - "4044:3306"
+
+
+  aas-transformer-initializer:
+    build: ../../../
+
+
