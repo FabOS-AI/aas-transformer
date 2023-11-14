@@ -15,7 +15,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <docker.image.name>aas-transformer-initializer</docker.image.name>
+        <docker.image.name>initializer</docker.image.name>
         <docker.image.skip>false</docker.image.skip>
     </properties>
 

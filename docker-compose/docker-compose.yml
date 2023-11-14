@@ -10,7 +10,6 @@ services:
       basyxmqtt_server: tcp://aas-broker:1883
       basyxcontext_accesscontrolalloworigin: "*"
 
-
   aas-server:
     image: eclipsebasyx/aas-server:1.4.0
     ports:
@@ -22,34 +21,29 @@ services:
       basyxcontext_accesscontrolalloworigin: "*"
       waiting_for: '[{"host":"aas-registry","port":"4000"}]'
 
-
   aas-gui:
-    image: fabos4ai/aas-ui:1.2.0-SNAPSHOT
+    image: eclipsebasyx/aas-gui:v230703
     ports:
       - "3000:3000"
     environment:
       VITE_REGISTRY_PATH: "http://localhost:4000/registry"
       VITE_AAS_SERVER_PATH: "http://localhost:4001/aasServer"
 
-
   aas-broker:
-    image: fabos4ai/aas-broker:1.0.0-SNAPSHOT
+    image: ghcr.io/fabos-ai/aas-transformer/aas-broker:${VERSION}
     ports:
       - "1883:1883"
       - "9001:9001"
-
 
   aas-mqtt-gui:
     image: emqx/mqttx-web
     ports:
       - "9090:80"
 
-
   aas-transformer:
-    image: fabos4ai/aas-transformer:1.0.0-SNAPSHOT
+    image: ghcr.io/fabos-ai/aas-transformer/service:${VERSION}
     ports:
       - "4010:4010"
-
 
   aas-transformer-database:
     image: mariadb:10.5
@@ -64,6 +58,3 @@ services:
       MYSQL_PASSWORD: password
       MYSQL_DATABASE: transformer
       MARIADB_ROOT_PASSWORD: password
-    ports:
-      - "4044:3306"
-
