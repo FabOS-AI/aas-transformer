@@ -42,9 +42,9 @@ spring:
 ### Database
 database:
   host: localhost
-  port: 4044
-  schema: transformer
-  username: aas-transformer
+  port: 3306
+  schema: aas_transformer
+  username: aas_transformer
   password: password
 
 ### AAS

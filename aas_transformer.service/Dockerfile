@@ -18,6 +18,4 @@ COPY target/*-exec.jar /app/app.jar
 
 WORKDIR /app
 
-RUN export JDK_JAVA_OPTIONS="--add-opens java.base/java.lang=ALL-UNNAMED"
-
-ENTRYPOINT ["java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "/app/app.jar"]
+CMD ["java", "--add-opens=java.base/java.lang=ALL-UNNAMED", "-jar", "-Djava.security.egd=file:/dev/./urandom", "/app/app.jar"]

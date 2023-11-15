@@ -3,6 +3,12 @@ version: '3'
 services:
   aas-registry:
     image: eclipsebasyx/aas-registry:1.4.0
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "4000:4000"
     environment:
@@ -12,6 +18,12 @@ services:
 
   aas-server:
     image: eclipsebasyx/aas-server:1.4.0
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "4001:4001"
     environment:
@@ -23,6 +35,12 @@ services:
 
   aas-gui:
     image: eclipsebasyx/aas-gui:v230703
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "3000:3000"
     environment:
@@ -31,19 +49,40 @@ services:
 
   aas-broker:
     image: ghcr.io/fabos-ai/aas-transformer/aas-broker:${VERSION}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "1883:1883"
       - "9001:9001"
 
   aas-mqtt-gui:
     image: emqx/mqttx-web
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "9090:80"
 
   aas-transformer:
     image: ghcr.io/fabos-ai/aas-transformer/service:${VERSION}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "4010:4010"
+    environment:
+      DATABASE_HOST: aas-transformer-database
+      DATABASE_PASSWORD: password
 
   aas-transformer-database:
     image: mariadb:10.5
@@ -53,8 +92,14 @@ services:
       options:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
+    networks:
+      default:
+        aliases:
+          - aas-transformer-database
+    ports:
+      - "3306:3306"
     environment:
-      MYSQL_USER: aas-transformer
-      MYSQL_PASSWORD: password
-      MYSQL_DATABASE: transformer
-      MARIADB_ROOT_PASSWORD: password
+      MARIADB_USER: aas_transformer
+      MARIADB_PASSWORD: ${AAS_TRANSFORMER_DATABASE_PASSWORD}
+      MARIADB_DATABASE: aas_transformer
+      MARIADB_ROOT_PASSWORD: ${AAS_TRANSFORMER_DATABASE_ROOT_PASSWORD}

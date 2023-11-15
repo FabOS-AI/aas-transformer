@@ -9,8 +9,9 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class TransformerActionServiceFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransformerActionServiceFactory.class);
