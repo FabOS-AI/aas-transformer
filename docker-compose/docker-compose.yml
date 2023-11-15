@@ -18,6 +18,8 @@ services:
     environment:
       basyxregistry_registry_events: MQTTV2_SIMPLE_ENCODING
       basyxmqtt_server: tcp://aas-broker:1883
+      basyxregistry_registry_backend: MongoDB
+      basyxmongodb_dbconnectionstring: mongodb://aas-database:27017/
       basyxcontext_accesscontrolalloworigin: "*"
     extra_hosts:
       - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
@@ -37,14 +39,27 @@ services:
         aliases:
           - aas-server
     environment:
+      basyxmqtt_server: tcp://aas-broker:1883
       basyxaas_aas_events: MQTTV2_SIMPLE_ENCODING
       basyxaas_registry_path: http://aas-registry:4000/registry/api/v1/registry
       basyxaas_registry_host: http://${AAS_TRANSFORMER_HOST}:4001/aasServer
-      basyxmqtt_server: tcp://aas-broker:1883
       basyxcontext_accesscontrolalloworigin: "*"
+      basyxaas_aas_backend: MongoDB
+      basyxmongodb_dbconnectionstring: mongodb://aas-database:27017/
+      basyxaas_aas_aasxupload: Enabled
       waiting_for: '[{"host":"aas-registry","port":"4000"}]'
     extra_hosts:
       - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
+
+  aas-database:
+    image: mongo:latest
+    restart: always
+    networks:
+      default:
+        aliases:
+          - aas-database
+    volumes:
+      - "aas_database:/data/db"
 
   aas-gui:
     image: eclipsebasyx/aas-gui:v230703
@@ -134,3 +149,9 @@ services:
       MARIADB_PASSWORD: ${AAS_TRANSFORMER_DATABASE_PASSWORD}
       MARIADB_DATABASE: aas_transformer
       MARIADB_ROOT_PASSWORD: ${AAS_TRANSFORMER_DATABASE_ROOT_PASSWORD}
+    volumes:
+      - "aas_transformer_database:/var/lib/mysql"
+
+volumes:
+  aas_database:
+  aas_transformer_database:
