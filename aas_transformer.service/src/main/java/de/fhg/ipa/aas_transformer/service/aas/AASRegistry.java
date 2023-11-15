@@ -7,8 +7,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class AASRegistry extends AASRegistryProxy {
 
+    private String aasRegistryUrl;
+
     public AASRegistry(@Value("${aas.registry.url}") String aasRegistryUrl) {
         super(aasRegistryUrl);
+        this.aasRegistryUrl = aasRegistryUrl;
     }
 
+    public String getAasRegistryUrl() {
+        return aasRegistryUrl;
+    }
 }

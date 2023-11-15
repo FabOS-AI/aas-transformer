@@ -11,10 +11,16 @@ services:
         max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "4000:4000"
+    networks:
+      default:
+        aliases:
+          - aas-registry
     environment:
       basyxregistry_registry_events: MQTTV2_SIMPLE_ENCODING
       basyxmqtt_server: tcp://aas-broker:1883
       basyxcontext_accesscontrolalloworigin: "*"
+    extra_hosts:
+      - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
 
   aas-server:
     image: eclipsebasyx/aas-server:1.4.0
@@ -26,12 +32,19 @@ services:
         max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "4001:4001"
+    networks:
+      default:
+        aliases:
+          - aas-server
     environment:
       basyxaas_aas_events: MQTTV2_SIMPLE_ENCODING
       basyxaas_registry_path: http://aas-registry:4000/registry/api/v1/registry
+      basyxaas_registry_host: http://${AAS_TRANSFORMER_HOST}:4001/aasServer
       basyxmqtt_server: tcp://aas-broker:1883
       basyxcontext_accesscontrolalloworigin: "*"
       waiting_for: '[{"host":"aas-registry","port":"4000"}]'
+    extra_hosts:
+      - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
 
   aas-gui:
     image: eclipsebasyx/aas-gui:v230703
@@ -58,6 +71,10 @@ services:
     ports:
       - "1883:1883"
       - "9001:9001"
+    networks:
+      default:
+        aliases:
+          - aas-broker
 
   aas-mqtt-gui:
     image: emqx/mqttx-web
@@ -80,9 +97,23 @@ services:
         max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "4010:4010"
+    networks:
+      default:
+        aliases:
+          - aas-transformer
     environment:
       DATABASE_HOST: aas-transformer-database
       DATABASE_PASSWORD: password
+    extra_hosts:
+      - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
+
+  aas-transformer-init:
+    image: ghcr.io/fabos-ai/aas-transformer/initializer:1.0.0-SNAPSHOT
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
 
   aas-transformer-database:
     image: mariadb:10.5

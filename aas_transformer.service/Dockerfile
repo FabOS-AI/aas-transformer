@@ -7,7 +7,7 @@ ENV DATABASE_HOST="aas-transformer-database" \
     AAS_REGISTRY_HOST="aas-registry" \
     AAS_REGISTRY_PORT=4000 \
     AAS_REGISTRY_CONTEXT="registry" \
-    AAS_SERVER_HOST="aasServer" \
+    AAS_SERVER_HOST="aas-server" \
     AAS_SERVER_PORT=4001 \
     AAS_SERVER_CONTEXT="aasServer"
 

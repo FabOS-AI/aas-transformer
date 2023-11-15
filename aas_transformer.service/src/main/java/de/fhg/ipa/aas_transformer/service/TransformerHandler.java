@@ -149,6 +149,7 @@ public class TransformerHandler implements Runnable {
                 }
             } catch (Exception e) {
                 LOG.error(e.getMessage());
+                e.printStackTrace();
             }
         }
     }
