@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  aas-mqtt-gui:
+    image: emqx/mqttx-web
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    ports:
+      - "9090:80"

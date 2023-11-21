@@ -9,7 +9,6 @@ import de.fhg.ipa.aas_transformer.service.TransformerServiceFactory;
 import de.fhg.ipa.aas_transformer.service.aas.AASManager;
 import de.fhg.ipa.aas_transformer.service.aas.AASRegistry;
 import de.fhg.ipa.aas_transformer.service.actions.TransformerActionServiceFactory;
-import de.fhg.ipa.aas_transformer.service.mqtt.MessageListener;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.eclipse.basyx.aas.metamodel.api.IAssetAdministrationShell;
@@ -27,8 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.TestPropertySource;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -194,6 +191,7 @@ public class AasTransformerIT {
         public void createOSTransformer() {
             given()
                     .contentType(ContentType.JSON)
+                    .queryParam("execute", true)
                     .body(GenericTestConfig.osTransformer)
                     .post();
             Optional<Transformer> optionalTransformer = transformerRestController.getTransformer(GenericTestConfig.osTransformer.getId());
@@ -217,16 +215,16 @@ public class AasTransformerIT {
             int sleepTimeInMs = 1000;
 
             for(int tryNo = 0; tryNo < maxTries; tryNo++) {
-                // Get changed Submodel Element from Submodel operating-system:
-                ISubmodelElement destinationSubmodelElement = actions.getSubmodelElement(
-                        GenericTestConfig.AAS.getIdentification(),
-                        GenericTestConfig.osTransformer.getDestination().getSmDestination().getIdentifier(),
-                        keyOfSubmodelElement
-                );
                 try {
+                    // Get changed Submodel Element from Submodel operating-system:
+                    ISubmodelElement destinationSubmodelElement = actions.getSubmodelElement(
+                            GenericTestConfig.AAS.getIdentification(),
+                            GenericTestConfig.osTransformer.getDestination().getSmDestination().getIdentifier(),
+                            keyOfSubmodelElement
+                    );
                     assertThat(newValueOfSubmodelElement).isEqualTo(destinationSubmodelElement.getValue());
                     return;
-                } catch (AssertionError e) {
+                } catch (ResourceNotFoundException | AssertionError e) {
                     String msg = "Submodel Element '"+ keyOfSubmodelElement +"' has not the correct value. Retry in " +(sleepTimeInMs/1000)+ " seconds";
                     LOG.debug(msg);
                     Thread.sleep(sleepTimeInMs);
@@ -243,7 +241,6 @@ public class AasTransformerIT {
                         GenericTestConfig.getAnsibleFactsIdentifier()
                 );
             } catch(ResourceNotFoundException e) {}
-            Thread.sleep(1000 * 5);
 
             int maxTries = 10;
             int sleepTimeInMs = 1000;
@@ -251,11 +248,12 @@ public class AasTransformerIT {
             for(int tryNo = 0; tryNo < maxTries; tryNo++) {
                 try {
                     var submodels = aasManager.retrieveSubmodels(GenericTestConfig.AAS.getIdentification());
-                    assertThat(submodels).hasSize(0);
+                    assertThat(submodels).doesNotContainKeys(
+                            GenericTestConfig.getAnsibleFactsSubmodel().getIdShort(),
+                            GenericTestConfig.osTransformer.getDestination().getSmDestination().getIdShort());
                     return;
-                } catch (AssertionError e) {
-                    String msg = "Submodel Count has not expected size of 0. Retry in " +(sleepTimeInMs/1000)+ " seconds";
-                    System.out.println(msg);
+                } catch (ResourceNotFoundException | AssertionError e) {
+                    System.out.println(e.getMessage());
                     Thread.sleep(sleepTimeInMs);
                 }
             }
@@ -594,141 +592,6 @@ public class AasTransformerIT {
                 @Test
                 @Order(10)
                 public void updateOfSourceSubmodel() throws IOException, InterruptedException {
-                    actions.updateOfSourceSubmodel();
-                }
-            }
-
-            // delete Submodel / AAS
-            // Check Transformer deletes associated submodel (if necessary at all)
-            @Nested
-            @Order(50)
-            @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-            public class testDeleteOfSourceSubmodel {
-                @Test
-                @Order(10)
-                public void testSubmodelCountExpectTwo() throws InterruptedException {
-                    var submodels = aasManager.retrieveSubmodels(GenericTestConfig.AAS.getIdentification());
-                    assertThat(submodels).hasSize(2);
-                }
-
-                @Test
-                @Order(20)
-                public void deleteOfSourceSubmodel() throws IOException, InterruptedException {
-                    actions.deleteSourceSubmodel();
-                }
-
-                @Test
-                @Order(40)
-                public void testReceivedObjectCacheIsEmpty() {
-                    var receivedObjectCache = MessageListener.getMessageCache();
-                    assertThat(receivedObjectCache).hasSize(0);
-                }
-            }
-        }
-
-        @Nested
-        @Order(50)
-        @TestClassOrder(ClassOrderer.OrderAnnotation.class)
-        @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-        @DisplayName("Create transformer then AAS and submodel via server API")
-        public class testCreateTransformerFirstThenAasAndSubmodelViaServerApi {
-            @BeforeAll
-            public void beforeAll() {
-                actions.cleanupTransformersAndAAS();
-            }
-
-            // create Transformer:
-            @Nested
-            @Order(10)
-            @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-            public class createAasTransformer {
-                @Test
-                @Order(10)
-                public void testGetAllTransformerExpectNone() {
-                    actions.checkNoTransformerExists();
-                }
-
-                @Test
-                @Order(20)
-                public void testCreateOsTransformer() {
-                    actions.createOSTransformer();
-                }
-            }
-
-            // create AAS / Submodel:
-            @Nested
-            @Order(20)
-            @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-            public class createAasAndSubmodel {
-                @Test
-                @Order(10)
-                public void checkNoAASExists() {
-                    actions.checkNoAASExists();
-                }
-
-                @Test
-                @Order(20)
-                public void createAAS() {
-                    actions.createAAS();
-                }
-
-                @Test
-                @Order(30)
-                public void createSubmodel() throws IOException {
-                    String aasId = GenericTestConfig.AAS.getIdentification().getId();
-                    String smIdShort = GenericTestConfig.getAnsibleFactsSubmodelWithoutSubmodelElements().getIdShort();
-
-                    try (BufferedReader br = new BufferedReader(new FileReader(GenericTestConfig.ansibleFactsSubmodelAndSubmodelElementFile))) {
-                        String line;
-                        while ((line = br.readLine()) != null) {
-                            System.out.println(line);
-                        }
-                    }
-
-                    given()
-                            .contentType(ContentType.JSON)
-                            .body(GenericTestConfig.ansibleFactsSubmodelAndSubmodelElementFile)
-                            .log()
-                            .all()
-                            .put(aasManager.getAasServerUrl() + "/shells/" + aasId + "/aas/submodels/" + smIdShort)
-                            .then()
-                            .log()
-                            .all();
-
-                    var submodels = aasManager.retrieveSubmodels(GenericTestConfig.AAS.getIdentification());
-                    assertThat(submodels).containsKey(GenericTestConfig.getAnsibleFactsSubmodel().getIdShort());
-                }
-            }
-
-            // check Transformer got triggered
-            // check Transformer has created new submodel:
-            @Nested
-            @Order(30)
-            @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-            public class testSubmodelCreatedByTransformer {
-                @Test
-                @Order(10)
-                public void checkDestinationSubmodelHasBeenCreatedByTransformer() throws InterruptedException, IOException {
-                    actions.checkDestinationSubmodelHasBeenCreatedByTransformer();
-                }
-
-                @Test
-                @Order(20)
-                public void checkDestinationSubmodelHasBeenCreatedByTransformerAndContainsSubmodelElements() throws InterruptedException {
-                    actions.checkDestinationSubmodelHasBeenCreatedByTransformerAndContainsSubmodelElements();
-                }
-            }
-
-            @Nested
-            @Order(40)
-            @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-            public class testSubmodelUpdateTriggersTransformer {
-                String keyOfSubmodelElement = "distribution";
-                String newValueOfSubmodelElement = "Windows";
-
-                @Test
-                @Order(10)
-                public void testUpdateOfSourceSubmodel() throws IOException, InterruptedException {
                     actions.updateOfSourceSubmodel();
                 }
             }

@@ -1,41 +1,29 @@
 package de.fhg.ipa.aas_transformer.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import de.fhg.ipa.aas_transformer.model.MqttVerb;
-import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelElementMessageListener;
-import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelMessageListener;
-import org.eclipse.basyx.aas.manager.ConnectedAssetAdministrationShellManager;
-import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
-import org.eclipse.basyx.aas.registration.proxy.AASRegistryProxy;
-import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
-import org.eclipse.basyx.submodel.metamodel.map.Submodel;
+import de.fhg.ipa.aas_transformer.service.mqtt.AASMqttListener;
+import de.fhg.ipa.aas_transformer.service.mqtt.MqttListener;
+import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelElementMqttListener;
+import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelMqttListener;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
 public class BrokerListener implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(BrokerListener.class);
-
     private static final MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
     private final MqttAsyncClient mqttClient;
-    private String[] topics = new String[] {
-        SubmodelMessageListener.TOPIC,
-        SubmodelElementMessageListener.TOPIC
-    };
-    private IMqttMessageListener[] listeners;
+
+    private List<MqttListener> listeners = new ArrayList<>();
 
     static {
         mqttConnectOptions.setAutomaticReconnect(true);
@@ -46,20 +34,19 @@ public class BrokerListener implements Runnable {
     public BrokerListener(
             @Value("${aas.broker.host}") String brokerHost,
             @Value("${aas.broker.port}") int brokerPort,
-            @Value("${aas.registry.port}") int aasRegistryPort,
-            SubmodelMessageListener submodelMessageListener,
-            SubmodelElementMessageListener submodelElementMessageListener
+            AASMqttListener aasMqttListener,
+            SubmodelMqttListener submodelMqttListener,
+            SubmodelElementMqttListener submodelElementMqttListener
     ) throws MqttException {
         this.mqttClient = new MqttAsyncClient(
-                "tcp://"+brokerHost+":"+brokerPort,
+                "tcp://" + brokerHost + ":" + brokerPort,
                 UUID.randomUUID().toString(),
                 new MemoryPersistence()
         );
 
-        this.listeners = new IMqttMessageListener[] {
-                submodelMessageListener,
-                submodelElementMessageListener
-        };
+        this.listeners.add(aasMqttListener);
+        this.listeners.add(submodelMqttListener);
+        this.listeners.add(submodelElementMqttListener);
     }
 
     @PostConstruct
@@ -78,7 +65,12 @@ public class BrokerListener implements Runnable {
 
         while(true) {
             try {
-                mqttClient.subscribe(topics, new int[]{2, 2}, listeners);
+                for (var listener : this.listeners) {
+                    for (var topic : listener.getTopics()) {
+                        mqttClient.subscribe(topic, 2, listener);
+                    }
+                }
+                LOG.info("MQTT subscribed successfully");
                 break;
             } catch(MqttException e) {
                 try {
@@ -87,6 +79,9 @@ public class BrokerListener implements Runnable {
                     throw new RuntimeException(ex);
                 }
                 LOG.error("MQTT client failed to subscribe... sleeping and retry");
+            } catch (Exception e) {
+                LOG.error(e.getMessage());
+                e.printStackTrace();
             }
         }
     }

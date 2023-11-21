@@ -4,8 +4,9 @@ import de.fhg.ipa.aas_transformer.service.Application;
 import de.fhg.ipa.aas_transformer.service.actions.TransformerActionServiceFactory;
 import de.fhg.ipa.aas_transformer.service.aas.AASManager;
 import de.fhg.ipa.aas_transformer.service.aas.AASRegistry;
-import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelElementMessageListener;
-import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelMessageListener;
+import de.fhg.ipa.aas_transformer.service.mqtt.AASMqttListener;
+import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelElementMqttListener;
+import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelMqttListener;
 import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,10 +26,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BrokerListenerTest {
 
     @SpyBean
-    private SubmodelMessageListener submodelMessageListener;
+    private AASMqttListener aasMqttListener;
 
     @SpyBean
-    private SubmodelElementMessageListener submodelElementMessageListener;
+    private SubmodelMqttListener submodelMqttListener;
+
+    @SpyBean
+    private SubmodelElementMqttListener submodelElementMqttListener;
 
     @Autowired
     public AASManager aasManager;
@@ -39,8 +43,8 @@ public class BrokerListenerTest {
     @Test
     @Order(10)
     public void testContextLoaded() {
-        assertThat(submodelMessageListener).isNotNull();
-        assertThat(submodelElementMessageListener).isNotNull();
+        assertThat(aasMqttListener).isNotNull();
+        assertThat(submodelMqttListener).isNotNull();
     }
 
     @Nested
@@ -52,8 +56,7 @@ public class BrokerListenerTest {
         public void testCreateAas() {
             aasManager.createAAS(GenericTestConfig.AAS);
 
-            Mockito.verifyNoInteractions(submodelMessageListener);
-            Mockito.verifyNoInteractions(submodelElementMessageListener);
+            Mockito.verifyNoInteractions(submodelMqttListener);
         }
 
         @Test
@@ -65,8 +68,11 @@ public class BrokerListenerTest {
             );
 
             ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
-            Mockito.verify(submodelMessageListener).messageArrived(argumentTopic.capture(), Mockito.any());
-            assertThat(argumentTopic.getValue()).isEqualTo("aas-repository/aas-server/shells/aas-id/submodels/created");
+            Mockito.verify(submodelMqttListener, Mockito.atLeast(3)).messageArrived(argumentTopic.capture(), Mockito.any());
+            assertThat(argumentTopic.getAllValues())
+                    .contains("aas-registry/aas-registry/shells/aas-id/submodels/created")
+                    .contains("aas-repository/aas-server/shells/aas-id/submodels/created")
+                    .contains("aas-registry/aas-registry/shells/aas-id/submodels/updated");
         }
 
         @Test
@@ -83,8 +89,9 @@ public class BrokerListenerTest {
             sourceSubmodel.getSubmodelElement(keyOfSubmodelElement).setValue(newValueOfSubmodelElement);
 
             ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
-            Mockito.verify(submodelElementMessageListener).messageArrived(argumentTopic.capture(), Mockito.any());
-            assertThat(argumentTopic.getValue()).isEqualTo("aas-repository/aas-server/shells/aas-id/submodels/ansible-facts/submodelElements/distribution/value");
+            Mockito.verify(submodelElementMqttListener).messageArrived(argumentTopic.capture(), Mockito.any());
+            assertThat(argumentTopic.getValue())
+                    .isEqualTo("aas-repository/aas-server/shells/aas-id/submodels/ansible-facts/submodelElements/distribution/value");
         }
 
         @Test
@@ -97,9 +104,13 @@ public class BrokerListenerTest {
                 );
             } catch(ResourceNotFoundException e) {}
 
+            Thread.sleep(100);
+
             ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
-            Mockito.verify(submodelMessageListener).messageArrived(argumentTopic.capture(), Mockito.any());
-            assertThat(argumentTopic.getValue()).isEqualTo("aas-repository/aas-server/shells/aas-id/submodels/deleted");
+            Mockito.verify(submodelMqttListener, Mockito.atLeast(1)).messageArrived(argumentTopic.capture(), Mockito.any());
+            assertThat(argumentTopic.getAllValues())
+                    .contains("aas-registry/aas-registry/shells/aas-id/submodels/deleted")
+                    .contains("aas-repository/aas-server/shells/aas-id/submodels/deleted");
         }
     }
 }

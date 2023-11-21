@@ -9,6 +9,7 @@ import de.fhg.ipa.aas_transformer.service.templating.TemplateRenderer;
 import org.eclipse.basyx.aas.metamodel.api.parts.asset.AssetKind;
 import org.eclipse.basyx.aas.metamodel.map.AssetAdministrationShell;
 import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
+import org.eclipse.basyx.aas.metamodel.map.descriptor.SubmodelDescriptor;
 import org.eclipse.basyx.aas.metamodel.map.parts.Asset;
 import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
 import org.eclipse.basyx.submodel.metamodel.api.reference.enums.KeyElements;
@@ -99,9 +100,9 @@ public class TransformerService {
         }
     }
 
-    public boolean isSubmodelSourceOfTransformerActions(Submodel submodel) {
+    public boolean isSubmodelSourceOfTransformerActions(SubmodelDescriptor submodelDescriptor) {
         for (var transformerActionService : this.transformerActionServices) {
-            if (transformerActionService.isSubmodelSourceOfTransformerAction(submodel)) {
+            if (transformerActionService.isSubmodelSourceOfTransformerAction(submodelDescriptor)) {
                 return true;
             }
         }

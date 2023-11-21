@@ -3,9 +3,11 @@ package de.fhg.ipa.aas_transformer.service.actions;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.service.aas.AASManager;
 import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
+import org.eclipse.basyx.aas.metamodel.map.descriptor.SubmodelDescriptor;
 import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
 import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
 import org.eclipse.basyx.submodel.metamodel.map.Submodel;
+import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,16 +26,23 @@ public abstract class TransformerActionService {
     public abstract void execute(IIdentifier sourceAASId, ISubmodel destinationSubmodel);
 
     protected boolean isSourceAvailable(IIdentifier aasIdentifier, SubmodelIdentifier sourceSubmodelIdentifier, String sourceSubmodelElementId) {
-        if(aasManager.retrieveAAS(aasIdentifier)==null)
-            return false;
+        try {
+            if (aasManager.retrieveAAS(aasIdentifier) == null) {
+                return false;
+            }
 
-        ISubmodel sourceSubmodel = getSourceSubmodel(aasIdentifier, sourceSubmodelIdentifier);
+            ISubmodel sourceSubmodel = getSourceSubmodel(aasIdentifier, sourceSubmodelIdentifier);
 
-        if(sourceSubmodel == null)
-            return false;
+            if (sourceSubmodel == null) {
+                return false;
+            }
 
-        if(sourceSubmodel.getSubmodelElement(sourceSubmodelElementId)==null)
+            if (sourceSubmodel.getSubmodelElement(sourceSubmodelElementId) == null) {
+                return false;
+            }
+        } catch (NullPointerException | ResourceNotFoundException e) {
             return false;
+        }
 
         return true;
     }
@@ -49,52 +58,57 @@ public abstract class TransformerActionService {
             IIdentifier aasIdentifier,
             SubmodelIdentifier sourceSubmodelIdentifier
     ) {
-        switch(sourceSubmodelIdentifier.getIdentifierType()) {
-            case ID -> {
-                return new CustomId(sourceSubmodelIdentifier.getIdentifierValue());
-            }
+        try {
+            switch (sourceSubmodelIdentifier.getIdentifierType()) {
+                case ID -> {
+                    return new CustomId(sourceSubmodelIdentifier.getIdentifierValue());
+                }
 
-            case ID_SHORT -> {
-                Map<String, ISubmodel> submodels = aasManager.retrieveSubmodels(aasIdentifier);
-                return submodels.get(sourceSubmodelIdentifier.getIdentifierValue()).getIdentification();
+                case ID_SHORT -> {
+                    Map<String, ISubmodel> submodels = aasManager.retrieveSubmodels(aasIdentifier);
+                    return submodels.get(sourceSubmodelIdentifier.getIdentifierValue()).getIdentification();
+                }
+                case SEMANTIC_ID -> {
+                    Map<String, ISubmodel> submodels = aasManager.retrieveSubmodels(aasIdentifier);
+                    return submodels
+                            .values()
+                            .stream()
+                            .filter(
+                                    s -> s.getSemanticId()
+                                            .getKeys()
+                                            .stream()
+                                            .filter(id -> id.getValue().equals(sourceSubmodelIdentifier.getIdentifierValue())).findFirst().isPresent()
+                            ).findFirst()
+                            .get().getIdentification();
+                }
+                default -> {
+                    throw new ResourceNotFoundException("Submode '" + sourceSubmodelIdentifier + "' not found for AAS '" + aasIdentifier + "'");
+                }
             }
-            case SEMANTIC_ID -> {
-                Map<String, ISubmodel> submodels = aasManager.retrieveSubmodels(aasIdentifier);
-                return submodels
-                        .values()
-                        .stream()
-                        .filter(
-                                s -> s.getSemanticId()
-                                        .getKeys()
-                                        .stream()
-                                        .filter(id -> id.getValue().equals(sourceSubmodelIdentifier.getIdentifierValue())).findFirst().isPresent()
-                        ).findFirst()
-                        .get().getIdentification();
-            }
-            default -> {
-                return null;
-            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            throw new ResourceNotFoundException("Submodel '" + sourceSubmodelIdentifier.getIdentifierValue() + "' not found for AAS '" + aasIdentifier + "'");
         }
     }
 
     public abstract TransformerAction getTransformerAction();
 
-    public boolean isSubmodelSourceOfTransformerAction(Submodel submodel) {
+    public boolean isSubmodelSourceOfTransformerAction(SubmodelDescriptor submodelDescriptor) {
         var transformerAction = this.getTransformerAction();
         var submodelIdentifier = transformerAction.getSourceSubmodelIdentifier();
         var idValue = submodelIdentifier.getIdentifierValue();
 
         switch (submodelIdentifier.getIdentifierType()) {
             case ID -> {
-                return submodel.getIdentification().getId().equals(idValue);
+                return submodelDescriptor.getIdentifier().getId().equals(idValue);
             }
 
             case ID_SHORT -> {
-                return submodel.getIdShort().equals(idValue);
+                return submodelDescriptor.getIdShort().equals(idValue);
             }
 
             case SEMANTIC_ID -> {
-                return submodel
+                return submodelDescriptor
                         .getSemanticId()
                         .getKeys()
                         .stream()
