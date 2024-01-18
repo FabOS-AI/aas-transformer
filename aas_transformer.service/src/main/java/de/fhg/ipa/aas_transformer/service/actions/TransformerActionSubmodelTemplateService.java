@@ -33,7 +33,7 @@ public class TransformerActionSubmodelTemplateService extends TransformerActionS
     }
 
     @Override
-    public void execute(IIdentifier sourceAASId, ISubmodel destinationSubmodel) {
+    public void execute(IIdentifier sourceAASId, IIdentifier destinationAASId, ISubmodel destinationSubmodel) {
         Map<String, Object> renderContext = Map.of(
                 "SOURCE_AAS", sourceAASId.getId()
         );
@@ -53,7 +53,7 @@ public class TransformerActionSubmodelTemplateService extends TransformerActionS
             newDestinationSubmodel.setIdShort(destinationSubmodel.getIdShort());
             newDestinationSubmodel.setIdentification(destinationSubmodel.getIdentification());
 
-            this.aasManager.createSubmodel(sourceAASId, newDestinationSubmodel);
+            this.aasManager.createSubmodel(destinationAASId, newDestinationSubmodel);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

@@ -5,6 +5,7 @@ import de.fhg.ipa.aas_transformer.model.TransformerActionCopy;
 import de.fhg.ipa.aas_transformer.service.aas.AASManager;
 import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
 import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
+import org.eclipse.basyx.submodel.metamodel.map.Submodel;
 import org.eclipse.basyx.submodel.metamodel.map.submodelelement.SubmodelElement;
 import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
 import org.slf4j.Logger;
@@ -22,7 +23,7 @@ public class TransformerActionCopyService extends TransformerActionService {
     }
 
     @Override
-    public void execute(IIdentifier sourceAASId, ISubmodel destinationSubmodel) {
+    public void execute(IIdentifier sourceAASId, IIdentifier destinationAASId, ISubmodel destinationSubmodel) {
         var sourceSubmodelElementId = transformerAction.getSourceSubmodelElement();
 
         if(isSourceAvailable(sourceAASId, transformerAction.getSourceSubmodelIdentifier(), sourceSubmodelElementId)==false) {

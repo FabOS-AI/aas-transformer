@@ -6,7 +6,6 @@ import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
 import org.eclipse.basyx.aas.metamodel.map.descriptor.SubmodelDescriptor;
 import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
 import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
-import org.eclipse.basyx.submodel.metamodel.map.Submodel;
 import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,7 @@ public abstract class TransformerActionService {
         this.aasManager = aasManager;
     }
 
-    public abstract void execute(IIdentifier sourceAASId, ISubmodel destinationSubmodel);
+    public abstract void execute(IIdentifier sourceAASId, IIdentifier destinationAASId, ISubmodel destinationSubmodel);
 
     protected boolean isSourceAvailable(IIdentifier aasIdentifier, SubmodelIdentifier sourceSubmodelIdentifier, String sourceSubmodelElementId) {
         try {

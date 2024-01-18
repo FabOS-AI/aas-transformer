@@ -8,7 +8,8 @@ import org.eclipse.basyx.submodel.metamodel.map.Submodel
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "actionType")
 @JsonSubTypes(
-    JsonSubTypes.Type(value = TransformerActionCopy::class,      name = "COPY")
+    JsonSubTypes.Type(value = TransformerActionCopy::class, name = "COPY"),
+    JsonSubTypes.Type(value = TransformerActionSubmodelTemplate::class, name = "SUBMODEL_TEMPLATE")
 )
 
 abstract class TransformerAction(
