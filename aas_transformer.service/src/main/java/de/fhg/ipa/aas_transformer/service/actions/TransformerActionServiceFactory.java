@@ -2,11 +2,11 @@ package de.fhg.ipa.aas_transformer.service.actions;
 
 import de.fhg.ipa.aas_transformer.model.TransformerAction;
 import de.fhg.ipa.aas_transformer.model.TransformerActionCopy;
+import de.fhg.ipa.aas_transformer.model.TransformerActionSubmodelElementTemplate;
 import de.fhg.ipa.aas_transformer.model.TransformerActionSubmodelTemplate;
 import de.fhg.ipa.aas_transformer.service.aas.AASManager;
 import de.fhg.ipa.aas_transformer.service.templating.TemplateRenderer;
 import org.apache.commons.lang3.NotImplementedException;
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -34,6 +34,12 @@ public class TransformerActionServiceFactory {
             case SUBMODEL_TEMPLATE:
                 return new TransformerActionSubmodelTemplateService(
                         (TransformerActionSubmodelTemplate) transformerAction,
+                        aasManager,
+                        templateRenderer);
+
+            case SUBMODEL_ELEMENT_TEMPLATE:
+                return new TransformerActionSubmodelElementTemplateService(
+                        (TransformerActionSubmodelElementTemplate) transformerAction,
                         aasManager,
                         templateRenderer);
 

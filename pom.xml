@@ -23,8 +23,8 @@
         <maven.compiler.source>18</maven.compiler.source>
         <maven.compiler.target>18</maven.compiler.target>
 
-        <spring.boot.version>2.7.4</spring.boot.version>
-        <springdoc.openapi.version>1.6.11</springdoc.openapi.version>
+        <spring.boot.version>3.2.2</spring.boot.version>
+        <springdoc.openapi.version>2.3.0</springdoc.openapi.version>
         <slf4j.version>1.7.36</slf4j.version>
         <mariadb.client.version>2.7.4</mariadb.client.version>
         <junit.version>5.8.2</junit.version>

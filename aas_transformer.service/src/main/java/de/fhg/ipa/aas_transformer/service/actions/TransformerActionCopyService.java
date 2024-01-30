@@ -5,6 +5,7 @@ import de.fhg.ipa.aas_transformer.model.TransformerActionCopy;
 import de.fhg.ipa.aas_transformer.service.aas.AASManager;
 import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
 import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
+import org.eclipse.basyx.submodel.metamodel.connected.submodelelement.ConnectedSubmodelElementCollection;
 import org.eclipse.basyx.submodel.metamodel.map.Submodel;
 import org.eclipse.basyx.submodel.metamodel.map.submodelelement.SubmodelElement;
 import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
@@ -23,7 +24,7 @@ public class TransformerActionCopyService extends TransformerActionService {
     }
 
     @Override
-    public void execute(IIdentifier sourceAASId, IIdentifier destinationAASId, ISubmodel destinationSubmodel) {
+    public void execute(IIdentifier sourceAASId, IIdentifier sourceSMId, IIdentifier destinationAASId, ISubmodel destinationSubmodel) {
         var sourceSubmodelElementId = transformerAction.getSourceSubmodelElement();
 
         if(isSourceAvailable(sourceAASId, transformerAction.getSourceSubmodelIdentifier(), sourceSubmodelElementId)==false) {
@@ -39,14 +40,27 @@ public class TransformerActionCopyService extends TransformerActionService {
                         .getSubmodelElement(sourceSubmodelElementId)
                         .getLocalCopy();
 
+        String targetSubmodelElementId;
+        // If destinationSubmodelElement not set use same submodel element as in source submodel
+        if (transformerAction.getDestinationSubmodelElement() == null) {
+            targetSubmodelElementId = sourceSubmodelElementId;
+        } else {
+            targetSubmodelElementId = transformerAction.getDestinationSubmodelElement();
+        }
+
         try {
-            destinationSubmodel
-                    .getSubmodelElement(sourceSubmodelElementId)
-                    .setValue(destinationSubmodelElement.getValue());
-            LOG.info("Update SubmodelElement with key = '"+ sourceSubmodelElementId +"' to value = '"+ destinationSubmodelElement.getValue() +"'");
+            if (targetSubmodelElementId.contains("/")) {
+                var targetSubmodelElement = (ConnectedSubmodelElementCollection)destinationSubmodel.getSubmodelElement(targetSubmodelElementId);
+                destinationSubmodelElement.setParent(targetSubmodelElement.getReference());
+                targetSubmodelElement.addSubmodelElement(destinationSubmodelElement);
+            }
+            else {
+                var targetSubmodelElement = destinationSubmodel.getSubmodelElement(targetSubmodelElementId);
+                targetSubmodelElement.setValue(targetSubmodelElement.getValue());
+            }
+            LOG.info("Update SubmodelElement with key = '"+ targetSubmodelElementId +"' to value = '"+ destinationSubmodelElement.getValue() +"'");
         } catch(ResourceNotFoundException e) {
-            destinationSubmodel.addSubmodelElement(destinationSubmodelElement);
-            LOG.info("Create SubmodelElement with key = '"+ sourceSubmodelElementId +"' and value = '"+ destinationSubmodelElement.getValue() +"'");
+            LOG.error("Can not copy submodel element to target element '" + targetSubmodelElementId+ "', because the target element was not found");
         }
     }
 

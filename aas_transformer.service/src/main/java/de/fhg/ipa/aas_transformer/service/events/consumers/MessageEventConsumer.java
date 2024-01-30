@@ -47,7 +47,7 @@ public abstract class MessageEventConsumer implements Runnable {
                 switch (submodelMessageEvent.getChangeEventType()) {
                     case CREATED:
                     case UPDATED:
-                        transformerService.execute(submodelMessageEvent.getAasId());
+                        transformerService.execute(submodelMessageEvent.getAasId(), submodelMessageEvent.getSubmodelDescriptor().getIdentifier());
                         break;
 
                     case DELETED:

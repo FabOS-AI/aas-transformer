@@ -3,6 +3,8 @@ package de.fhg.ipa.aas_transformer.service;
 import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformerJpaRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,6 +14,9 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/aas/transformer")
 public class TransformerRestController {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TransformerRestController.class);
+
     private final TransformerJpaRepository transformerJpaRepository;
     private final TransformerHandler transformerHandler;
 
@@ -25,8 +30,9 @@ public class TransformerRestController {
 
     @RequestMapping(method = RequestMethod.POST)
     @Operation(summary = "Create Transformer")
-    public void createTransformer(@RequestBody Transformer transformer, @RequestParam(defaultValue = "false") Boolean execute) {
-        transformerHandler.saveTransformer(transformer, execute);
+    public void createTransformer(@RequestBody Transformer transformer,
+                                  @RequestParam(name = "execute", defaultValue = "false") Boolean execute) {
+        transformerHandler.createOrUpdateTransformer(transformer, execute);
     }
 
     @RequestMapping(method = RequestMethod.GET)

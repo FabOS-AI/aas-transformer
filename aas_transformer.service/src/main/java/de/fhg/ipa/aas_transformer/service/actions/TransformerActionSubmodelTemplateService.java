@@ -33,7 +33,7 @@ public class TransformerActionSubmodelTemplateService extends TransformerActionS
     }
 
     @Override
-    public void execute(IIdentifier sourceAASId, IIdentifier destinationAASId, ISubmodel destinationSubmodel) {
+    public void execute(IIdentifier sourceAASId, IIdentifier sourceSMId, IIdentifier destinationAASId, ISubmodel destinationSubmodel) {
         Map<String, Object> renderContext = Map.of(
                 "SOURCE_AAS", sourceAASId.getId()
         );

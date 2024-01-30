@@ -63,6 +63,13 @@ public class AasTemplateRendererTest extends AbstractIT {
             var result = templateRenderer.render(templateString);
             assertThat(result).isEqualTo("Ubuntu");
         }
+
+        @Test
+        public void findSubmodelByPropertyValue() {
+            var templateString = "{{ aas:find_sm_by_prop('distribution',  'Ubuntu') }}";
+            var result = templateRenderer.render(templateString);
+            assertThat(result).isEqualTo("ansible-facts");
+        }
     }
 
     @Nested

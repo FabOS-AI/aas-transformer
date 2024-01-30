@@ -63,7 +63,7 @@ public class InitialTests extends AbstractIT {
 
         transformer.addTransformerActions(transformerActions);
         var transformerService = this.transformerServiceFactory.create(transformer);
-        transformerService.execute(AAS.getIdentification());
+        transformerService.execute(AAS.getIdentification(), null);
 
         var newSubmodel = aasManager.retrieveSubmodel(AAS.getIdentification(), customId);
         assertThat(newSubmodel).isNotNull();

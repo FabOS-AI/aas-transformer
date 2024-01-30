@@ -31,7 +31,7 @@ public class OperatingSystemTransformerTest extends InstanceTest {
     @Order(10)
     public void executeTransformer()  {
         var transformerService = this.transformerServiceFactory.create(transformer);
-        transformerService.execute(GenericTestConfig.AAS.getIdentification());
+        transformerService.execute(GenericTestConfig.AAS.getIdentification(), null);
     }
 
     @Test

@@ -64,7 +64,7 @@ public class TransformerActionCopyTest extends AbstractIT {
         @Order(10)
         public void testExecuteTransformerWithCopyActions() {
             var transformerService = transformerServiceFactory.create(testTransformer);
-            transformerService.execute(GenericTestConfig.AAS.getIdentification());
+            transformerService.execute(GenericTestConfig.AAS.getIdentification(), null);
         }
 
         @Test
@@ -131,7 +131,7 @@ public class TransformerActionCopyTest extends AbstractIT {
         @Order(20)
         public void testRunTransformerAfterUpdate() {
             var transformerService = transformerServiceFactory.create(testTransformer);
-            transformerService.execute(GenericTestConfig.AAS.getIdentification());
+            transformerService.execute(GenericTestConfig.AAS.getIdentification(), null);
         }
 
         @Test

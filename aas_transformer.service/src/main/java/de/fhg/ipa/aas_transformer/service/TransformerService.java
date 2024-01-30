@@ -12,8 +12,10 @@ import org.eclipse.basyx.aas.metamodel.map.AssetAdministrationShell;
 import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
 import org.eclipse.basyx.aas.metamodel.map.descriptor.SubmodelDescriptor;
 import org.eclipse.basyx.aas.metamodel.map.parts.Asset;
+import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
 import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
 import org.eclipse.basyx.submodel.metamodel.api.reference.enums.KeyElements;
+import org.eclipse.basyx.submodel.metamodel.connected.ConnectedSubmodel;
 import org.eclipse.basyx.submodel.metamodel.map.Submodel;
 import org.eclipse.basyx.submodel.metamodel.map.reference.Reference;
 import org.eclipse.basyx.vab.exception.provider.ProviderException;
@@ -21,9 +23,7 @@ import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TransformerService {
 
@@ -54,11 +54,13 @@ public class TransformerService {
         }
     }
 
-    public void execute(IIdentifier sourceAASId) {
+    public void execute(IIdentifier sourceAASId, IIdentifier sourceSMId) {
         try {
-            Map<String, Object> renderContext = Map.of(
-                    "SOURCE_AAS", sourceAASId.getId()
-            );
+            var renderContext = new HashMap<String, Object>();
+            renderContext.put("SOURCE_AAS", sourceAASId.getId());
+            if (sourceSMId != null) {
+                renderContext.put("SOURCE_SM", sourceSMId.getId());
+            }
 
             IIdentifier destinationAASId;
             if (transformer.getDestination().getAasDestination() != null) {
@@ -90,19 +92,38 @@ public class TransformerService {
                 destinationAASId = sourceAASId;
             }
 
-            var destinationSubmodel = new Submodel();
-            destinationSubmodel.setIdShort(transformer.getDestination().getSmDestination().getIdShort());
-            destinationSubmodel.setParent(new Reference(sourceAASId, KeyElements.ASSETADMINISTRATIONSHELL, true));
-            destinationSubmodel.setIdentification(
-                    new CustomId(destinationSubmodel.getIdShort())
-            );
+            ISubmodel destinationSubmodel = null;
+            try {
+                // Check if destination SM exists
+                var destinationAASDescriptor = this.aasRegistry.lookupAAS(transformer.getDestination().getAasDestination().getIdentifier());
 
-            aasManager.createSubmodel(destinationAASId, destinationSubmodel);
-            var newDestinationSubmodel = aasManager.retrieveSubmodel(destinationAASId, destinationSubmodel.getIdentification());
+                var existingSubmodelsOfDestinationAAS = this.aasRegistry.lookupSubmodels(destinationAASId);
+                var destionationSMDescriptorOptional = existingSubmodelsOfDestinationAAS.stream().filter(
+                                smd -> smd.getIdShort().equals(transformer.getDestination().getSmDestination().getIdentifier().getId()))
+                        .findAny();
 
+                if (destionationSMDescriptorOptional.isEmpty()) {
+                    var newDestinationSubmodel = new Submodel();
+                    newDestinationSubmodel.setIdentification(new CustomId(transformer.getDestination().getSmDestination().getIdShort() + "-" + UUID.randomUUID()));
+                    newDestinationSubmodel.setIdShort(transformer.getDestination().getSmDestination().getIdShort());
+                    newDestinationSubmodel.setParent(new Reference(destinationAASId, KeyElements.ASSETADMINISTRATIONSHELL, true));
+                    newDestinationSubmodel.setIdentification(
+                            new CustomId(newDestinationSubmodel.getIdShort() + "-" + UUID.randomUUID())
+                    );
+                    aasManager.createSubmodel(destinationAASId, newDestinationSubmodel);
+                    destinationSubmodel = newDestinationSubmodel;
+                }
+                else {
+                    destinationSubmodel = aasManager.retrieveSubmodel(destinationAASId, destionationSMDescriptorOptional.get().getIdentifier());
+                }
+            }
+            catch (Exception e) {
+                LOG.error(e.getMessage());
+                e.printStackTrace();
+            }
 
             for (var transformerActionService : transformerActionServices) {
-                transformerActionService.execute(sourceAASId, destinationAASId, newDestinationSubmodel);
+                transformerActionService.execute(sourceAASId, sourceSMId, destinationAASId, destinationSubmodel);
             }
         } catch (ResourceNotFoundException e) {
             LOG.error(e.getMessage());

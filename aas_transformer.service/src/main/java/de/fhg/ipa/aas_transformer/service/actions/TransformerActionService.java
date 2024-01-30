@@ -22,7 +22,7 @@ public abstract class TransformerActionService {
         this.aasManager = aasManager;
     }
 
-    public abstract void execute(IIdentifier sourceAASId, IIdentifier destinationAASId, ISubmodel destinationSubmodel);
+    public abstract void execute(IIdentifier sourceAASId, IIdentifier sourceSMId, IIdentifier destinationAASId, ISubmodel destinationSubmodel);
 
     protected boolean isSourceAvailable(IIdentifier aasIdentifier, SubmodelIdentifier sourceSubmodelIdentifier, String sourceSubmodelElementId) {
         try {
@@ -107,13 +107,17 @@ public abstract class TransformerActionService {
             }
 
             case SEMANTIC_ID -> {
-                return submodelDescriptor
-                        .getSemanticId()
-                        .getKeys()
-                        .stream()
-                        .filter (k -> k.getValue().equals(idValue) )
-                        .findFirst()
-                        .isPresent();
+                if (submodelDescriptor.getSemanticId() != null){
+                    return submodelDescriptor
+                            .getSemanticId()
+                            .getKeys()
+                            .stream()
+                            .filter(k -> k.getValue().equals(idValue))
+                            .findFirst()
+                            .isPresent();
+                } else {
+                    return false;
+                }
             }
 
             default -> {

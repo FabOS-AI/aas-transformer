@@ -1,15 +1,18 @@
 package de.fhg.ipa.aas_transformer.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformerJpaRepository;
 import de.fhg.ipa.aas_transformer.service.aas.AASManager;
 import de.fhg.ipa.aas_transformer.service.aas.AASRegistry;
+import jakarta.transaction.Transactional;
 import org.eclipse.basyx.aas.metamodel.map.descriptor.AASDescriptor;
 import org.eclipse.basyx.aas.metamodel.map.descriptor.SubmodelDescriptor;
 import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
 import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -33,8 +36,21 @@ public class TransformerHandler {
         this.transformerServiceFactory = transformerServiceFactory;
     }
 
-    public void saveTransformer(Transformer transformer, Boolean execute) {
-        this.transformerJpaRepository.save(transformer);
+    @Autowired
+    ObjectMapper testObjectMapper;
+
+    @Transactional
+    public void createOrUpdateTransformer(Transformer transformer, Boolean execute) {
+        var savedTransformerOptional = transformerJpaRepository.findById(transformer.getId());
+        if (savedTransformerOptional.isPresent()) {
+            savedTransformerOptional.get().setDestination(transformer.getDestination());
+            savedTransformerOptional.get().setTransformerActions(transformer.getTransformerActions());
+            LOG.info("Transformer '" + transformer.getId() + "' updated");
+        }
+        else {
+            var savedTransformer = this.transformerJpaRepository.save(transformer);
+            LOG.info("Transformer '" + transformer.getId() + "' created");
+        }
 
         if(execute) {
             Optional<Transformer> newTransformer = this.transformerJpaRepository.findById(transformer.getId());
@@ -47,9 +63,10 @@ public class TransformerHandler {
 
             for(AASDescriptor aasDescriptor : aasDescriptorCollection) {
                 var transformerService = this.transformerServiceFactory.create(newTransformer.get());
-                transformerService.execute(aasDescriptor.getIdentifier());
+                transformerService.execute(aasDescriptor.getIdentifier(), null);
             }
         }
+
     }
 
     public void deleteTransformer(UUID transformerId, Boolean doCleanup) {

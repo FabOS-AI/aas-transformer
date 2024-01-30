@@ -1,0 +1,30 @@
+{
+  "id": "8f912166-f430-45d7-822b-6ddd3a956df3",
+  "destination": {
+    "aasDestination": {
+      "idShort": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, 'lotdata', 'jobId') }}",
+      "identifier": {
+        "idType": "Custom",
+        "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, 'lotdata', 'jobId') }}"
+      },
+      "endpoint": "{{ app:prop('aas.server.url') }}"
+    },
+    "smDestination": {
+      "idShort": "ProductNameplate",
+      "identifier": {
+        "idType": "Custom",
+        "id": "ProductNameplate"
+      }
+    }
+  },
+  "transformerActions": [
+    {
+      "actionType": "SUBMODEL_TEMPLATE",
+      "sourceSubmodelIdentifier": {
+        "identifierType": "ID_SHORT",
+        "identifierValue": "lotdata"
+      },
+      "submodelTemplate": "{ \"idShort\": \"ProductNameplate\", \"identification\": { \"idType\": \"Custom\", \"id\": \"ProductNameplate\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"modelType\": { \"name\": \"Submodel\" }, \"kind\": \"Instance\", \"submodelElements\": { \"MES_Product_Lot_ID\": { \"modelType\": { \"name\": \"Property\" }, \"kind\": \"Instance\", \"value\": \"{{ aas:sme_value(SOURCE_AAS, 'lotdata', 'jobId') }}\", \"valueType\": \"string\", \"idShort\": \"MES_Product_Lot_ID\" } } }"
+    }
+  ]
+}

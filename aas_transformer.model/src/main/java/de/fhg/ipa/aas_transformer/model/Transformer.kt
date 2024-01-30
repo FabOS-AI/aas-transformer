@@ -1,35 +1,32 @@
 package de.fhg.ipa.aas_transformer.model
 
-import com.vladmihalcea.hibernate.type.json.JsonStringType
-import org.eclipse.basyx.submodel.metamodel.map.Submodel
-import org.hibernate.annotations.Type
-import org.hibernate.annotations.TypeDef
-import org.hibernate.annotations.TypeDefs
+import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.Id
 
 @Entity
-@TypeDefs(TypeDef(name = "json", typeClass = JsonStringType::class))
 class Transformer(
+
     @Id
-    @Type(type="uuid-char")
-    @Column(name = "uuid", length = 36, unique = true, nullable = false)
     var id: UUID,
 
     @Column(name = "destination", columnDefinition = "LONGTEXT")
-    @Type(type = "json")
+    @JdbcTypeCode(SqlTypes.JSON)
     var destination: Destination,
 
     @Column(name = "transformerActions", columnDefinition = "LONGTEXT")
-    @Type(type = "json")
-    var transformerActions : LinkedList<TransformerAction> = LinkedList()
+    @JdbcTypeCode(SqlTypes.JSON)
+    var transformerActions : MutableList<TransformerAction> = LinkedList()
 ) {
-    constructor(destination: Destination, transformerActions: LinkedList<TransformerAction>) : this(UUID.randomUUID(), destination, transformerActions) { }
+    constructor(destination: Destination, transformerActions: MutableList<TransformerAction>) : this(UUID.randomUUID(), destination, transformerActions) { }
     constructor(destination: Destination) : this(UUID.randomUUID(), destination, LinkedList()) { }
 
     constructor() :this(Destination())
+
+    @Version
+    @Column(name="OPTLOCK")
+    var version: Int = 0
 
     fun addTransformerAction(transformerAction : TransformerAction) {
         transformerActions.add(transformerAction)
