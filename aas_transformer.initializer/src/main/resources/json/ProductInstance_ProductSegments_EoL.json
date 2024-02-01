@@ -13,7 +13,7 @@
       "idShort": "ProductSegments",
       "identifier": {
         "idType": "Custom",
-        "id": "ProductSegments"
+        "id": "ProductSegments-{{ uuid:generate() }}"
       }
     }
   },

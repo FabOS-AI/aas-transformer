@@ -13,7 +13,7 @@
       "idShort": "ProductSegments",
       "identifier": {
         "idType": "Custom",
-        "id": "ProductSegments"
+        "id": "ProductSegments-{{ uuid:generate() }}"
       }
     }
   },
@@ -25,6 +25,14 @@
         "identifierValue": "lotdata"
       },
       "submodelElementTemplate": "{ \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"StackAssembly\", \"value\": [ { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"EquipmentSpecs\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"StackAssembly\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"Material\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"StackAssembly\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"Personal\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"StackAssembly\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"ProcessParameters\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"StackAssembly\", \"idType\": \"IdShort\" } ] } } ], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"AssetAdministrationShell\", \"local\": true, \"value\": \"ProductInstance\", \"idType\": \"Custom\" }, { \"type\": \"Submodel\", \"local\": true, \"value\": \"ProductSegments\", \"idType\": \"Custom\" } ] } }"
+    },
+    {
+      "actionType": "SUBMODEL_ELEMENT_TEMPLATE",
+      "sourceSubmodelIdentifier": {
+        "identifierType": "ID_SHORT",
+        "identifierValue": "lotdata"
+      },
+      "submodelElementTemplate": "{ \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"ProductTypeDefinition\", \"value\": [ { \"modelType\": { \"name\": \"ReferenceElement\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"AAS\", \"value\": { \"keys\": [ { \"type\": \"AssetAdministrationShell\", \"local\": false, \"value\": \"ProductType_{{ aas:sme_value(SOURCE_AAS, 'lotdata', 'orderProductId') }}\", \"idType\": \"Custom\" } ] }, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"ProductTypeDefinition\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"ReferenceElement\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"SM\", \"value\": { \"keys\": [ { \"type\": \"Submodel\", \"local\": false, \"value\": \"ProductTypeDefinition\", \"idType\": \"IdShort\" } ] }, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"ProductTypeDefinition\", \"idType\": \"IdShort\" } ] } } ], \"ordered\": true, \"allowDuplicates\": true }"
     }
   ]
 }

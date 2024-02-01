@@ -13,7 +13,7 @@
       "idShort": "ProductNameplate",
       "identifier": {
         "idType": "Custom",
-        "id": "ProductNameplate"
+        "id": "ProductNameplate-{{ uuid:generate() }}"
       }
     }
   },
