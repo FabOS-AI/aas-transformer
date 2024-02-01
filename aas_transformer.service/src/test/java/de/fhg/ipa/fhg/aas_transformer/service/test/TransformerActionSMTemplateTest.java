@@ -48,7 +48,7 @@ public class TransformerActionSMTemplateTest extends AbstractIT {
     @Order(10)
     public void executeTransformer() {
         var transformerService = transformerServiceFactory.create(testTransformer);
-        transformerService.execute(GenericTestConfig.AAS.getIdentification(), null);
+        transformerService.execute(GenericTestConfig.AAS.getIdentification(), new CustomId("unsued-dummy-submodel"));
 
         this.assertSubmodelExists("sm_template_test");
 

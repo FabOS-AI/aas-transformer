@@ -56,6 +56,9 @@ public class TransformerActionSubmodelElementTemplateService extends Transformer
             var newSubmodelElement = objectMapper.readValue(submodelElementTemplateString, SubmodelElement.class);
             localExistingSubmodel.addSubmodelElement(newSubmodelElement);
             aasManager.createSubmodel(destinationAASId, localExistingSubmodel);
+            LOG.info("Transformer Action 'SUBMODEL_ELEMENT_TEMPLATE' executed | " +
+                    "Source [aas='" + sourceAASId.getId() + "' | SM='" + sourceSMId.getId() + "'] | " +
+                    "Destination [aas='" + destinationAASId.getId() + "' | SM='" + destinationSubmodel.getIdentification().getId() + "]");
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

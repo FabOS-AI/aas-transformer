@@ -6,8 +6,6 @@ import de.fhg.ipa.aas_transformer.service.aas.AASManager;
 import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
 import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
 import org.eclipse.basyx.submodel.metamodel.connected.submodelelement.ConnectedSubmodelElementCollection;
-import org.eclipse.basyx.submodel.metamodel.map.Submodel;
-import org.eclipse.basyx.submodel.metamodel.map.submodelelement.SubmodelElement;
 import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,40 +25,36 @@ public class TransformerActionCopyService extends TransformerActionService {
     public void execute(IIdentifier sourceAASId, IIdentifier sourceSMId, IIdentifier destinationAASId, ISubmodel destinationSubmodel) {
         var sourceSubmodelElementId = transformerAction.getSourceSubmodelElement();
 
-        if(isSourceAvailable(sourceAASId, transformerAction.getSourceSubmodelIdentifier(), sourceSubmodelElementId)==false) {
-            LOG.warn("Source not available anymore => Skip action");
+        if (isSourceAvailable(sourceAASId, transformerAction.getSourceSubmodelIdentifier(), sourceSubmodelElementId) == false) {
+            LOG.warn("Source [aasId='" + sourceAASId + "', smId='" + sourceSMId + "'] not available anymore => Skip action");
             return;
         }
 
-        SubmodelElement destinationSubmodelElement =
-                getSourceSubmodel(
-                        sourceAASId,
-                        transformerAction.getSourceSubmodelIdentifier()
-                )
-                        .getSubmodelElement(sourceSubmodelElementId)
-                        .getLocalCopy();
+        var submodelElementToCopy = getSourceSubmodel(sourceAASId, transformerAction.getSourceSubmodelIdentifier())
+                .getSubmodelElement(sourceSubmodelElementId)
+                .getLocalCopy();
 
-        String targetSubmodelElementId;
-        // If destinationSubmodelElement not set use same submodel element as in source submodel
-        if (transformerAction.getDestinationSubmodelElement() == null) {
-            targetSubmodelElementId = sourceSubmodelElementId;
-        } else {
-            targetSubmodelElementId = transformerAction.getDestinationSubmodelElement();
-        }
-
+        // If destinationSubmodelElement not set copy it to the highest level of the submodel
         try {
-            if (targetSubmodelElementId.contains("/")) {
-                var targetSubmodelElement = (ConnectedSubmodelElementCollection)destinationSubmodel.getSubmodelElement(targetSubmodelElementId);
-                destinationSubmodelElement.setParent(targetSubmodelElement.getReference());
-                targetSubmodelElement.addSubmodelElement(destinationSubmodelElement);
+            if (transformerAction.getDestinationSubmodelElement() == null) {
+                destinationSubmodel.addSubmodelElement(submodelElementToCopy);
+            } else {
+                var destinationSubmodelElementId = transformerAction.getDestinationSubmodelElement();
+                if (destinationSubmodelElementId.contains("/")) {
+                    var destinationSubmodelElement = (ConnectedSubmodelElementCollection) destinationSubmodel.getSubmodelElement(destinationSubmodelElementId);
+                    submodelElementToCopy.setParent(destinationSubmodelElement.getReference());
+                    destinationSubmodelElement.addSubmodelElement(submodelElementToCopy);
+                }
+                LOG.info("Transformer Action 'COPY' executed | " +
+                        "Source [aas='" + sourceAASId.getId() + "' | SM='" + sourceSMId.getId() + "'] | " +
+                        "Destination [aas='" + destinationAASId.getId() + "' | SM='" + destinationSubmodel.getIdentification().getId() + "]");
             }
-            else {
-                var targetSubmodelElement = destinationSubmodel.getSubmodelElement(targetSubmodelElementId);
-                targetSubmodelElement.setValue(targetSubmodelElement.getValue());
-            }
-            LOG.info("Update SubmodelElement with key = '"+ targetSubmodelElementId +"' to value = '"+ destinationSubmodelElement.getValue() +"'");
-        } catch(ResourceNotFoundException e) {
-            LOG.error("Can not copy submodel element to target element '" + targetSubmodelElementId+ "', because the target element was not found");
+        } catch (ResourceNotFoundException e) {
+            LOG.error("Can not copy submodel element to target element '" + transformerAction.getDestinationSubmodelElement()
+                    + "', because the destination submodel element was not found");
+        }
+        catch (Exception e) {
+            LOG.error("Can not copy submodel element to target element: " + e.getMessage());
         }
     }
 

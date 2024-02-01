@@ -95,23 +95,24 @@ public class TransformerService {
             ISubmodel destinationSubmodel = null;
             try {
                 // Check if destination SM exists
-                var destinationAASDescriptor = this.aasRegistry.lookupAAS(transformer.getDestination().getAasDestination().getIdentifier());
+                var destinationAASDescriptor = this.aasRegistry.lookupAAS(destinationAASId);
 
                 var existingSubmodelsOfDestinationAAS = this.aasRegistry.lookupSubmodels(destinationAASId);
                 var destionationSMDescriptorOptional = existingSubmodelsOfDestinationAAS.stream().filter(
-                                smd -> smd.getIdShort().equals(transformer.getDestination().getSmDestination().getIdentifier().getId()))
+                                smd -> smd.getIdShort().equals(transformer.getDestination().getSmDestination().getIdShort()))
                         .findAny();
 
                 if (destionationSMDescriptorOptional.isEmpty()) {
                     var newDestinationSubmodel = new Submodel();
-                    newDestinationSubmodel.setIdentification(new CustomId(transformer.getDestination().getSmDestination().getIdShort() + "-" + UUID.randomUUID()));
                     newDestinationSubmodel.setIdShort(transformer.getDestination().getSmDestination().getIdShort());
                     newDestinationSubmodel.setParent(new Reference(destinationAASId, KeyElements.ASSETADMINISTRATIONSHELL, true));
-                    newDestinationSubmodel.setIdentification(
-                            new CustomId(newDestinationSubmodel.getIdShort() + "-" + UUID.randomUUID())
-                    );
+                    if (transformer.getDestination().getSmDestination().getIdentifier() == null) {
+                        newDestinationSubmodel.setIdentification(new CustomId(newDestinationSubmodel.getIdShort()));
+                    } else {
+                        newDestinationSubmodel.setIdentification(transformer.getDestination().getSmDestination().getIdentifier());
+                    }
                     aasManager.createSubmodel(destinationAASId, newDestinationSubmodel);
-                    destinationSubmodel = newDestinationSubmodel;
+                    destinationSubmodel = aasManager.retrieveSubmodel(destinationAASId, newDestinationSubmodel.getIdentification());
                 }
                 else {
                     destinationSubmodel = aasManager.retrieveSubmodel(destinationAASId, destionationSMDescriptorOptional.get().getIdentifier());

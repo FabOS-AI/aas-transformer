@@ -54,6 +54,9 @@ public class TransformerActionSubmodelTemplateService extends TransformerActionS
             newDestinationSubmodel.setIdentification(destinationSubmodel.getIdentification());
 
             this.aasManager.createSubmodel(destinationAASId, newDestinationSubmodel);
+            LOG.info("Transformer Action 'SUBMODEL_TEMPLATE' executed | " +
+                    "Source [aas='" + sourceAASId.getId() + "' | SM='" + sourceSMId.getId() + "'] | " +
+                    "Destination [aas='" + destinationAASId.getId() + "' | SM='" + destinationSubmodel.getIdentification().getId() + "]");
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
