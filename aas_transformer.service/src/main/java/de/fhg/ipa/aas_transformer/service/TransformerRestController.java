@@ -43,13 +43,13 @@ public class TransformerRestController {
 
     @RequestMapping(method = RequestMethod.GET, value = "/{transformerId}")
     @Operation(summary = "Get one Transformer")
-    public Optional<Transformer> getTransformer(@PathVariable UUID transformerId) {
+    public Optional<Transformer> getTransformer(@PathVariable(name = "transformerId") UUID transformerId) {
         return transformerJpaRepository.findById(transformerId);
     }
 
     @RequestMapping(method = RequestMethod.DELETE, value = "/{transformerId}")
     @Operation(summary = "Delete one Transformer")
-    public void deleteTransformer(@PathVariable UUID transformerId, @RequestParam(defaultValue = "false") Boolean doCleanup) {
+    public void deleteTransformer(@PathVariable(name = "transformerId") UUID transformerId, @RequestParam(name = "doCleanup", defaultValue = "false") Boolean doCleanup) {
         transformerHandler.deleteTransformer(transformerId, doCleanup);
     }
 }

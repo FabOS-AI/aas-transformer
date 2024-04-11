@@ -1,0 +1,126 @@
+version: '3.9'
+
+services:
+  aas-registry:
+    image: eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    ports:
+      - 8082:8080
+    environment:
+      BASYX_CORS_ALLOWEDORIGINS: "*"
+      BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      SPRING_DATA_MONGODB_URI: mongodb://mongoAdmin:mongoPassword@aas-database:27017
+
+  sm-registry:
+    image: eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    ports:
+      - 8083:8080
+    environment:
+      BASYX_CORS_ALLOWEDORIGINS: "*"
+      BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      SPRING_DATA_MONGODB_URI: mongodb://mongoAdmin:mongoPassword@aas-database:27017
+
+  aas-env:
+    image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    environment:
+      SERVER_PORT: 8081
+      BASYX_BACKEND: MongoDB
+      SPRING_DATA_MONGODB_HOST: aas-database
+      SPRING_DATA_MONGODB_DATABASE: aas-env
+      SPRING_DATA_MONGODB_AUTHENTICATIONDATABASE: admin
+      SPRING_DATA_MONGODB_USERNAME: mongoAdmin
+      SPRING_DATA_MONGODB_PASSWORD: mongoPassword
+      MQTT_CLIENTID: AAS-Env-Example-8081
+      MQTT_HOSTNAME: mqtt
+      MQTT_PORT: 1884
+      BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED: "true"
+      BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED: "true"
+      BASYX_CORS_ALLOWEDORIGINS: "*"
+      BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION: http://aas-registry:8080
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION: http://sm-registry:8080
+      BASYX_EXTERNALURL: http://localhost:8081
+    ports:
+      - 8081:8081
+    depends_on:
+      aas-database:
+        condition: service_healthy
+      aas-broker:
+        condition: service_healthy
+      aas-registry:
+        condition: service_healthy
+      sm-registry:
+        condition: service_healthy
+
+  aas-gui:
+    image: eclipsebasyx/aas-gui:v2-240327
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    ports:
+      - "3000:3000"
+    environment:
+      AAS_REGISTRY_PATH: "http://localhost:8082"
+      SUBMODEL_REGISTRY_PATH: "http://localhost:8083"
+      AAS_DISCOVERY_PATH: "http://localhost:8084"
+      AAS_REPO_PATH: "http://localhost:8081/shells"
+      SUBMODEL_REPO_PATH: "http://localhost:8081/submodels"
+      CD_REPO_PATH: "http://localhost:8081/concept-descriptions"
+
+  aas-broker:
+    image: ghcr.io/fabos-ai/aas-transformer/aas-broker:2.0.15
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    ports:
+      - 1884:1884
+    healthcheck:
+      test: [ "CMD-SHELL", mosquitto_sub -p 1884 -t 'topic' -C 1 -E -i probe -W 3 ]
+      interval: 5s
+      retries: 3
+      start_period: 1s
+      timeout: 10s
+
+  aas-database:
+    image: mongo:5.0.10
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoAdmin
+      MONGO_INITDB_ROOT_PASSWORD: mongoPassword
+    networks:
+      default:
+        aliases:
+          - aas-database
+    volumes:
+      - "aas_database:/data/db"
+    healthcheck:
+      test: mongo
+      interval: 10s
+      start_period: 5s
+      retries: 5
+
+volumes:
+  aas_database:

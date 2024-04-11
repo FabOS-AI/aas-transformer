@@ -2,19 +2,11 @@
   "id": "c33e9656-2a78-49be-a385-814bddef7300",
   "destination": {
     "aasDestination": {
-      "idShort": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, 'lotdata', 'jobId') }}",
-      "identifier": {
-        "idType": "Custom",
         "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, 'lotdata', 'jobId') }}"
-      },
-      "endpoint": "{{ app:prop('aas.server.url') }}"
     },
-    "smDestination": {
+    "submodelDestination": {
       "idShort": "ProductSegments",
-      "identifier": {
-        "idType": "Custom",
-        "id": "ProductSegments-{{ uuid:generate() }}"
-      }
+      "id": "ProductSegments-{{ uuid:generate() }}"
     }
   },
   "transformerActions": [

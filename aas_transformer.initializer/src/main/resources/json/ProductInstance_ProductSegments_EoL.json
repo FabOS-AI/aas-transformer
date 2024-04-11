@@ -2,20 +2,11 @@
   "id": "e046e8ed-be15-40c6-91b4-a7f3bd161098",
   "destination": {
     "aasDestination": {
-      "idShort": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, SOURCE_SM, 'id') }}",
-      "identifier": {
-        "idType": "Custom",
-        "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, SOURCE_SM, 'id') }}"
-      },
-      "endpoint": "{{ app:prop('aas.server.url') }}"
+      "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, SOURCE_SM, 'id') }}"
     },
-    "smDestination": {
+    "submodelDestination": {
       "idShort": "ProductSegments",
-      "identifier": {
-        "idType": "Custom",
-        "id": "ProductSegments-{{ uuid:generate() }}"
-      }
-    }
+      "id": "ProductSegments-{{ uuid:generate() }}"
   },
   "transformerActions": [
     {

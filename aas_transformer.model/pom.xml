@@ -27,8 +27,8 @@
         <!-- Hibernate !-->
         <dependency>
             <groupId>com.vladmihalcea</groupId>
-            <artifactId>hibernate-types-52</artifactId>
-            <version>2.10.0</version>
+            <artifactId>hibernate-types-60</artifactId>
+            <version>2.21.1</version>
         </dependency>
         <!-- Testing -->
         <dependency>

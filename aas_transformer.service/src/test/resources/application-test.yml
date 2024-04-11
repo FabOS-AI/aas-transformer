@@ -57,14 +57,12 @@ database:
 aas:
   broker:
     host: localhost
-    port: 1883
-  registry:
+    port: 1884
+  submodel-registry:
     host: localhost
-    port: 4000
-    context: registry
-    url: http://${aas.registry.host}:${aas.registry.port}/${aas.registry.context}
-  server:
+    port: 8083
+    url: http://${aas.submodel-registry.host}:${aas.submodel-registry.port}
+  submodel-repository:
     host: localhost
-    port: 4001
-    context: aasServer
-    url: http://${aas.server.host}:${aas.server.port}/${aas.server.context}
+    port: 8081
+    url: http://${aas.submodel-repository.host}:${aas.submodel-repository.port}

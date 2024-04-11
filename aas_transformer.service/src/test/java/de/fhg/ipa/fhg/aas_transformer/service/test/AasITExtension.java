@@ -1,63 +1,131 @@
 package de.fhg.ipa.fhg.aas_transformer.service.test;
 
+import com.github.dockerjava.api.model.ExposedPort;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.utility.DockerImageName;
 
-import java.io.File;
+import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AasITExtension implements BeforeAllCallback, AfterAllCallback {
+public class AasITExtension extends SpringExtension implements BeforeAllCallback, AfterAllCallback {
 
-    //region DOCKER SERVICE INFO
-    private final static String REGISTRY_SERVICE_NAME = "aas-registry";
-    private final static int REGISTRY_SERVICE_PORT = 4000;
-    private final static String SERVER_SERVICE_NAME = "aas-server";
-    private final static int SERVER_SERVICE_PORT = 4001;
-    private final static String BROKER_SERVICE_NAME = "aas-mqtt-broker";
-    private final static int BROKER_SERVICE_PORT = 1883;
-    //endregion
-
-    private final String dockerComposeFilePath = "src/test/docker/aas/docker-compose.yml";
-
-    private DockerComposeContainer dockerCompose;
+    protected Network containerNetwork = Network.newNetwork();
+    protected GenericContainer mqttBrokerContainer;
+    protected GenericContainer aasGuiContainer;
+    protected GenericContainer aasRegistryContainer;
+    protected GenericContainer smRegistryContainer;
+    protected GenericContainer aasEnvContainer;
+    protected List<GenericContainer> runningContainers = new ArrayList<>();
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        if (dockerCompose == null) {
-            dockerCompose = new DockerComposeContainer(new File(dockerComposeFilePath))
-                    .withBuild(true)
-                    .withExposedService(
-                            REGISTRY_SERVICE_NAME,
-                            REGISTRY_SERVICE_PORT,
-                            Wait.forHttp("/registry/api/v1/registry")
-                    )
-                    .withExposedService(
-                            SERVER_SERVICE_NAME,
-                            SERVER_SERVICE_PORT,
-                            Wait.forHttp("/aasServer/shells")
-                    )
-                    .withExposedService(
-                            BROKER_SERVICE_NAME,
-                            BROKER_SERVICE_PORT,
-                            Wait.forListeningPort()
-                    );
+        if (runningContainers.size() == 0) {
 
-            dockerCompose.start();
+            mqttBrokerContainer = new GenericContainer<>(
+                    DockerImageName.parse("ghcr.io/fabos-ai/aas-transformer/aas-broker:2.0.15"))
+                    .withNetwork(containerNetwork)
+                    .withNetworkAliases("mqtt")
+                    .withLabel("com.docker.compose.project", "aas-transfomer-it")
+                    .dependsOn()
+                    .withExposedPorts(1884);
+            mqttBrokerContainer.start();
+            runningContainers.add(mqttBrokerContainer);
 
-            System.setProperty("aas.broker.port", dockerCompose.getServicePort(BROKER_SERVICE_NAME, BROKER_SERVICE_PORT).toString());
-            System.setProperty("aas.registry.port", dockerCompose.getServicePort(REGISTRY_SERVICE_NAME, REGISTRY_SERVICE_PORT).toString());
-            System.setProperty("aas.server.port", dockerCompose.getServicePort(SERVER_SERVICE_NAME, SERVER_SERVICE_PORT).toString());
+            aasRegistryContainer = new GenericContainer<>(
+                    DockerImageName.parse("eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT"))
+                    .withNetwork(containerNetwork)
+                    .withNetworkAliases("aas-registry")
+                    .withLabel("com.docker.compose.project", "aas-transfomer-it")
+                    .dependsOn()
+                    .withExposedPorts(8080)
+                    .withEnv("BASYX_CORS_ALLOWEDORIGINS", "*")
+                    .withEnv("BASYX_CORS_ALLOWEDMETHODS", "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD");
+            aasRegistryContainer.start();
+            runningContainers.add(aasRegistryContainer);
+
+            smRegistryContainer = new GenericContainer<>(
+                    DockerImageName.parse("eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT"))
+                    .withNetwork(containerNetwork)
+                    .withNetworkAliases("sm-registry")
+                    .withLabel("com.docker.compose.project", "aas-transfomer-it")
+                    .dependsOn()
+                    .withExposedPorts(8080)
+                    .withEnv("BASYX_CORS_ALLOWEDORIGINS", "*")
+                    .withEnv("BASYX_CORS_ALLOWEDMETHODS", "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD");
+            smRegistryContainer.start();
+            runningContainers.add(smRegistryContainer);
+
+            var socket = new ServerSocket(0);
+            var randomFreeHostPort = socket.getLocalPort();
+            socket.close();
+            aasEnvContainer = new FixedHostPortGenericContainer<>("eclipsebasyx/aas-environment:2.0.0-SNAPSHOT")
+                    .withFixedExposedPort(randomFreeHostPort, 8081)
+                    .withNetwork(containerNetwork)
+                    .withLabel("com.docker.compose.project", "aas-transfomer-it")
+                    .dependsOn()
+                    .withExposedPorts(8081)
+                    .withEnv("BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED", "true")
+                    .withEnv("BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED", "true")
+                    .withEnv("BASYX_CORS_ALLOWEDORIGINS", "*")
+                    .withEnv("BASYX_CORS_ALLOWEDMETHODS", "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD")
+                    .withEnv("BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION", "http://aas-registry:8080")
+                    .withEnv("BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION", "http://sm-registry:8080")
+                    .withEnv("BASYX_EXTERNALURL", "http://localhost:" + randomFreeHostPort)
+                    .withEnv("MQTT_CLIENTID", "aas-transformer-it_aas-env")
+                    .withEnv("MQTT_HOSTNAME", "mqtt")
+                    .withEnv("MQTT_PORT", "1884");
+            aasEnvContainer.start();
+            runningContainers.add(aasEnvContainer);
+
+            var aasRegistryPort = aasRegistryContainer.getMappedPort(8080);
+            var submodelRegistryPort = smRegistryContainer.getMappedPort(8080);
+            var aasEnvPort = aasEnvContainer.getMappedPort(8081);
+            var mqttBrokerPort = mqttBrokerContainer.getMappedPort(1884);
+
+            aasGuiContainer = new GenericContainer<>(
+                    DockerImageName.parse("eclipsebasyx/aas-gui:v2-240327"))
+                    .withNetwork(containerNetwork)
+                    .withLabel("com.docker.compose.project", "aas-transfomer-it")
+                    .dependsOn()
+                    .withExposedPorts(3000)
+                    .withEnv("AAS_REGISTRY_PATH", "http://localhost:" + aasRegistryPort)
+                    .withEnv("SUBMODEL_REGISTRY_PATH", "http://localhost:" + submodelRegistryPort)
+                    .withEnv("AAS_REPO_PATH", "http://localhost:" + aasEnvPort + "/shells")
+                    .withEnv("SUBMODEL_REPO_PATH", "http://localhost:" + aasEnvPort + "/submodels");
+            aasGuiContainer.start();
+            runningContainers.add(aasGuiContainer);
+
+            System.setProperty("aas.broker.host", "localhost");
+            System.setProperty("aas.broker.port", mqttBrokerPort.toString());
+            System.setProperty("aas.aas-registry.port", aasRegistryPort.toString());
+            System.setProperty("aas.aas-repository.port", aasEnvPort.toString());
+            System.setProperty("aas.submodel-registry.port", submodelRegistryPort.toString());
+            System.setProperty("aas.submodel-repository.port", aasEnvPort.toString());
+            System.setProperty("aas.aas-registry.url", "http://localhost:" + aasRegistryPort);
+            System.setProperty("aas.aas-repository.url", "http://localhost:" + aasEnvPort);
+            System.setProperty("aas.submodel-registry.url", "http://localhost:" + submodelRegistryPort);
+            System.setProperty("aas.submodel-repository.url", "http://localhost:" + aasEnvPort);
+
+            super.beforeAll(context);
         }
     }
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
-        if (dockerCompose != null && context.getParent().get().getParent().isEmpty()) {
-            dockerCompose.stop();
-            dockerCompose = null;
+        if (runningContainers.size() > 0 && context.getParent().get().getParent().isEmpty()) {
+            for (var container : runningContainers) {
+                container.stop();
+            }
+            runningContainers = new ArrayList<>();
         }
-    }
 
+        super.afterAll(context);
+    }
 }

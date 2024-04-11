@@ -1,25 +1,17 @@
 package de.fhg.ipa.aas_transformer.service.events;
 
-import org.eclipse.basyx.aas.metamodel.map.descriptor.SubmodelDescriptor;
-import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
+import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 
 public class SubmodelMessageEvent extends MessageEvent {
 
-    private final SubmodelDescriptor submodelDescriptor;
+    private final Submodel submodel;
 
-    private final IIdentifier aasId;
-
-    public SubmodelMessageEvent(ChangeEventType changeEventType, SubmodelDescriptor submodelDescriptor, IIdentifier aasId) {
+    public SubmodelMessageEvent(ChangeEventType changeEventType, Submodel submodel) {
         super(changeEventType);
-        this.submodelDescriptor = submodelDescriptor;
-        this.aasId = aasId;
+        this.submodel = submodel;
     }
 
-    public SubmodelDescriptor getSubmodelDescriptor() {
-        return submodelDescriptor;
-    }
-
-    public IIdentifier getAasId() {
-        return aasId;
+    public Submodel getSubmodel() {
+        return submodel;
     }
 }

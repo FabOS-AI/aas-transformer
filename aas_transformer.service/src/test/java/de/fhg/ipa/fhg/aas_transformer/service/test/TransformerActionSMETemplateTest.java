@@ -2,13 +2,14 @@ package de.fhg.ipa.fhg.aas_transformer.service.test;
 
 import de.fhg.ipa.aas_transformer.model.*;
 import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
+import org.eclipse.digitaltwin.aas4j.v3.model.Property;
+import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import static de.fhg.ipa.fhg.aas_transformer.service.test.GenericTestConfig.AAS;
-import static de.fhg.ipa.fhg.aas_transformer.service.test.GenericTestConfig.getAnsibleFactsSubmodel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
@@ -17,28 +18,24 @@ public class TransformerActionSMETemplateTest extends AbstractIT {
     private Transformer testTransformer;
 
     @BeforeAll
-    public void beforeAll() throws IOException {
+    public void beforeAll() throws IOException, DeserializationException {
         super.beforeAll();
-        // Create AAS and Submodel:
-        this.aasManager.createAAS(GenericTestConfig.AAS, getAASServerUrl());
-        this.aasManager.createSubmodel(
-                GenericTestConfig.AAS.getIdentification(),
-                getAnsibleFactsSubmodel()
-        );
-        this.assertSubmodelExists( getAnsibleFactsSubmodel().getIdShort());
+        // Create Submodel:
+        this.submodelRepository.createOrUpdateSubmodel(GenericTestConfig.getSimpleSubmodel());
+        this.assertSubmodelExists(GenericTestConfig.getSimpleSubmodel().getId());
 
         // Init testTransformer
-        String idShort = "sm_template_test";
+        String idShort = "transformed_template_submodel";
         CustomId customId = new CustomId(idShort);
 
-        this.testTransformer = new Transformer(new Destination(new DestinationSM(idShort, customId)));
-        SubmodelIdentifier sourceSubmodelIdentifier = new SubmodelIdentifier(
-                SubmodelIdentifierType.ID_SHORT,
-                "ansible-facts"
+        this.testTransformer = new Transformer(new Destination(new DestinationSubmodel(idShort, idShort)));
+        SubmodelId sourceSubmodelId = new SubmodelId(
+                SubmodelIdType.ID_SHORT,
+                GenericTestConfig.getSimpleSubmodel().getId()
         );
         ArrayList<TransformerAction> transformerActions = new ArrayList<>() {{
             add(new TransformerActionSubmodelElementTemplate(
-                    sourceSubmodelIdentifier,
+                    sourceSubmodelId,
                     TransformerActionSMETemplateTestConfig.SUBMODEL_ELEMENT_TEMPLATE));
         }};
         this.testTransformer.addTransformerActions(transformerActions);
@@ -46,20 +43,26 @@ public class TransformerActionSMETemplateTest extends AbstractIT {
 
     @Test
     @Order(10)
-    public void executeTransformer() {
+    public void executeTransformer() throws IOException, DeserializationException {
         var transformerService = transformerServiceFactory.create(testTransformer);
-        transformerService.execute(GenericTestConfig.AAS.getIdentification(), new CustomId("unused-dummy-submodel"));
+        var sourceSubmodel = submodelRepository.getSubmodel(GenericTestConfig.getSimpleSubmodel().getId());
+        transformerService.execute(sourceSubmodel);
 
-        this.assertSubmodelExists("sm_template_test");
+        this.assertSubmodelExists("transformed_template_submodel");
 
-        var destinationSubmodel = aasManager.retrieveSubmodel(
-                AAS.getIdentification(),
-                testTransformer.getDestination().getSmDestination().getIdentifier()
+        var destinationSubmodel = submodelRepository.getSubmodel(
+                testTransformer.getDestination().getSubmodelDestination().getId()
         );
         var destinationSubmodelElements = destinationSubmodel.getSubmodelElements();
 
-        assertThat(destinationSubmodelElements).containsKeys("distribution_templated");
-        assertThat(destinationSubmodelElements.get("distribution_templated").getValue()).isEqualTo("Ubuntu");
+        assertThat(destinationSubmodelElements).extracting(SubmodelElement::getIdShort).contains("TemplatedSimpleProperty");
+
+        var sourceSubmodelElementForTemplating = (Property)sourceSubmodel.getSubmodelElements().stream()
+                .filter(sme -> sme.getIdShort().equals("SimpleProperty2")).findAny().get();
+        var templatedSubmodelElement = (Property)destinationSubmodelElements.stream()
+                .filter(sme -> sme.getIdShort().equals("TemplatedSimpleProperty")).findAny().get();
+
+        assertThat(templatedSubmodelElement.getValue()).isEqualTo(sourceSubmodelElementForTemplating.getValue());
     }
 
 }

@@ -3,7 +3,6 @@ package de.fhg.ipa.aas_transformer.model
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "actionType", visible = true)
 @JsonSubTypes(
@@ -12,11 +11,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
     JsonSubTypes.Type(value = TransformerActionSubmodelElementTemplate::class, name = "SUBMODEL_ELEMENT_TEMPLATE")
 )
 abstract class TransformerAction(
+
     @JsonProperty("actionType")
     var actionType: TransformerActionType,
 
-    @JsonProperty("sourceSubmodelIdentifier")
-    open var sourceSubmodelIdentifier: SubmodelIdentifier? = null
-) {
+    @JsonProperty("sourceSubmodelId")
+    open var sourceSubmodelId: SubmodelId? = null
 
+) {
 }

@@ -28,7 +28,7 @@
         <slf4j.version>1.7.36</slf4j.version>
         <mariadb.client.version>2.7.4</mariadb.client.version>
         <junit.version>5.10.1</junit.version>
-        <testcontainers.version>1.19.1</testcontainers.version>
+        <testcontainers.version>1.19.7</testcontainers.version>
         <restassured.version>5.3.1</restassured.version>
         <assertj.version>3.24.2</assertj.version>
         <jinjava.version>2.7.1</jinjava.version>

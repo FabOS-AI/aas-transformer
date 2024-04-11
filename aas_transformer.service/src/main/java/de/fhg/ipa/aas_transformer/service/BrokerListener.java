@@ -1,6 +1,5 @@
 package de.fhg.ipa.aas_transformer.service;
 
-import de.fhg.ipa.aas_transformer.service.mqtt.AASMqttListener;
 import de.fhg.ipa.aas_transformer.service.mqtt.MqttListener;
 import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelElementMqttListener;
 import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelMqttListener;
@@ -34,7 +33,6 @@ public class BrokerListener implements Runnable {
     public BrokerListener(
             @Value("${aas.broker.host}") String brokerHost,
             @Value("${aas.broker.port}") int brokerPort,
-            AASMqttListener aasMqttListener,
             SubmodelMqttListener submodelMqttListener,
             SubmodelElementMqttListener submodelElementMqttListener
     ) throws MqttException {
@@ -44,7 +42,6 @@ public class BrokerListener implements Runnable {
                 new MemoryPersistence()
         );
 
-        this.listeners.add(aasMqttListener);
         this.listeners.add(submodelMqttListener);
         this.listeners.add(submodelElementMqttListener);
     }

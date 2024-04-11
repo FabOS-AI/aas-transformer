@@ -15,9 +15,9 @@ public class TemplateRenderer {
 
     private Map<String, Object> globalRenderContext = new HashMap<>();
 
-    public TemplateRenderer(AASTemplateFunctions aasTemplateFunctions, AppTemplateFunctions appTemplateFunctions, UUIDTemplateFunctions uuidTemplateFunctions) {
+    public TemplateRenderer(SubmodelTemplateFunctions submodelTemplateFunctions, AppTemplateFunctions appTemplateFunctions, UUIDTemplateFunctions uuidTemplateFunctions) {
         for (var templateFunctionsClass : List.of(
-                aasTemplateFunctions,
+                submodelTemplateFunctions,
                 appTemplateFunctions,
                 uuidTemplateFunctions)
         ) {

@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 class TransformerActionSubmodelTemplate(
 
     @JsonProperty("sourceSubmodelIdentifier")
-    override var sourceSubmodelIdentifier: SubmodelIdentifier?,
+    override var sourceSubmodelId: SubmodelId?,
 
     @JsonProperty("submodelTemplate")
     var submodelTemplate: String = "",
 
-) : TransformerAction(TransformerActionType.SUBMODEL_TEMPLATE, sourceSubmodelIdentifier) {
+    ) : TransformerAction(TransformerActionType.SUBMODEL_TEMPLATE, sourceSubmodelId) {
 
 }

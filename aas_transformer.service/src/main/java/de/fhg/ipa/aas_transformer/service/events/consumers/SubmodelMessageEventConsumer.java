@@ -2,8 +2,8 @@ package de.fhg.ipa.aas_transformer.service.events.consumers;
 
 import de.fhg.ipa.aas_transformer.persistence.api.TransformerJpaRepository;
 import de.fhg.ipa.aas_transformer.service.TransformerServiceFactory;
-import de.fhg.ipa.aas_transformer.service.aas.AASManager;
-import de.fhg.ipa.aas_transformer.service.aas.AASRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.service.events.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.service.events.producers.ISubmodelMessageEventProducer;
 import org.slf4j.Logger;
@@ -17,12 +17,11 @@ public class SubmodelMessageEventConsumer extends MessageEventConsumer {
 
     private final ISubmodelMessageEventProducer submodelMessageEventProducer;
 
-    public SubmodelMessageEventConsumer(AASManager aasManager,
-                                        AASRegistry aasRegistry,
-                                        TransformerServiceFactory transformerServiceFactory,
+    public SubmodelMessageEventConsumer(TransformerServiceFactory transformerServiceFactory,
                                         TransformerJpaRepository transformerJpaRepository,
+                                        SubmodelRegistry submodelRegistry, SubmodelRepository submodelRepository,
                                         ISubmodelMessageEventProducer submodelMessageEventProducer) {
-        super(aasManager, aasRegistry, transformerServiceFactory, transformerJpaRepository);
+        super(transformerServiceFactory, transformerJpaRepository, submodelRegistry, submodelRepository);
         this.submodelMessageEventProducer = submodelMessageEventProducer;
     }
 

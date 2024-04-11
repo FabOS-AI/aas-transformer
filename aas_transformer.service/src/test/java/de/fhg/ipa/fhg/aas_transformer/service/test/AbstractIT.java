@@ -1,14 +1,17 @@
 package de.fhg.ipa.fhg.aas_transformer.service.test;
 
+import de.fhg.ipa.aas_transformer.service.aas.AasRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.AasRepository;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.service.actions.TransformerActionServiceFactory;
 import de.fhg.ipa.aas_transformer.service.TransformerHandler;
 import de.fhg.ipa.aas_transformer.service.TransformerServiceFactory;
-import de.fhg.ipa.aas_transformer.service.aas.AASManager;
-import de.fhg.ipa.aas_transformer.service.aas.AASRegistry;
-import de.fhg.ipa.aas_transformer.service.templating.AASTemplateFunctions;
+import de.fhg.ipa.aas_transformer.service.templating.SubmodelTemplateFunctions;
 import de.fhg.ipa.aas_transformer.service.templating.AppTemplateFunctions;
 import de.fhg.ipa.aas_transformer.service.templating.TemplateRenderer;
 import de.fhg.ipa.aas_transformer.service.templating.UUIDTemplateFunctions;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
@@ -36,86 +39,107 @@ public abstract class AbstractIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractIT.class);
 
-    private static final String AAS_REGISTRY_DOCKER_IMAGE_NAME = "eclipsebasyx/aas-registry:1.4.0";
-    private static final int AAS_REGISTRY_PRIVATE_PORT = 4000;
+    private static final String AAS_REGISTRY_DOCKER_IMAGE_NAME = "eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT";
+    private static final int AAS_REGISTRY_PRIVATE_PORT = 8080;
     private int aasRegistryPublicPort;
 
-    public static String AAS_SERVER_DOCKER_IMAGE_NAME = "eclipsebasyx/aas-server:1.4.0";
-    private static final int AAS_SERVER_PRIVATE_PORT = 4001;
-    private int aasServerPublicPort;
+    private static final String SUBMODEL_REGISTRY_DOCKER_IMAGE_NAME = "eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT";
+    private static final int SUBMODEL_REGISTRY_PRIVATE_PORT = 8080;
+    private int submodelRegistryPublicPort;
 
-    protected AASManager aasManager;
+    public static String AAS_ENV_DOCKER_IMAGE_NAME = "eclipsebasyx/aas-environment:2.0.0-SNAPSHOT";
+    private static final int AAS_ENV_PRIVATE_PORT = 8081;
+    private int submodelRepositoryPublicPort;
+    private int aasRepositoryPublicPort;
 
-    protected AASRegistry aasRegistry;
+    protected AasRegistry aasRegistry;
+
+    protected AasRepository aasRepository;
+
+    protected SubmodelRepository submodelRepository;
+
+    protected SubmodelRegistry submodelRegistry;
 
     protected TransformerHandler transformerHandler;
 
     protected TransformerServiceFactory transformerServiceFactory;
 
-    public String getAASRegistryUrl() {
-        return "http://localhost:" + aasRegistryPublicPort + "/registry";
+    public String getAasRegistryUrl() {
+        return "http://localhost:" + aasRegistryPublicPort;
     }
 
-    public String getAASServerUrl() {
-        return "http://localhost:"+ aasServerPublicPort +"/aasServer";
+    public String getAasRepositoryUrl() {
+        return "http://localhost:"+ aasRepositoryPublicPort;
+    }
+
+    public String getSubmodelRegistryUrl() {
+        return "http://localhost:" + submodelRegistryPublicPort;
+    }
+
+    public String getSubmodelRepositoryUrl() {
+        return "http://localhost:"+ submodelRepositoryPublicPort;
     }
 
     protected static final Network containerNetwork = Network.newNetwork();
 
     @Container
-    protected static GenericContainer aasRegistryContainer;
+    protected static GenericContainer smRegistryContainer;
 
     @Container
-    protected static GenericContainer aasServerContainer;
+    protected static GenericContainer aasEnvContainer;
 
     static {
-        aasRegistryContainer = new GenericContainer<>(
-                DockerImageName.parse(AbstractIT.AAS_REGISTRY_DOCKER_IMAGE_NAME))
+        smRegistryContainer = new GenericContainer<>(
+                DockerImageName.parse(AbstractIT.SUBMODEL_REGISTRY_DOCKER_IMAGE_NAME))
                 .withNetwork(containerNetwork)
-                .withNetworkAliases("aas-registry")
+                .withNetworkAliases("sm-registry")
                 .dependsOn()
-                .withExposedPorts(AbstractIT.AAS_REGISTRY_PRIVATE_PORT)
-                .waitingFor(Wait.forHttp("/registry/api/v1/registry"));
-        aasRegistryContainer.start();
+                .withExposedPorts(AbstractIT.SUBMODEL_REGISTRY_PRIVATE_PORT)
+                .waitingFor(Wait.forHttp("/swagger-ui.html"));
+        smRegistryContainer.start();
 
         try {
             var socket = new ServerSocket(0);
             var randomFreeHostPort = socket.getLocalPort();
             socket.close();
 
-            aasServerContainer = new FixedHostPortGenericContainer(AbstractIT.AAS_SERVER_DOCKER_IMAGE_NAME)
-                    .withFixedExposedPort(randomFreeHostPort, AbstractIT.AAS_SERVER_PRIVATE_PORT)
-                    .withExposedPorts(AbstractIT.AAS_SERVER_PRIVATE_PORT)
+            aasEnvContainer = new FixedHostPortGenericContainer(AbstractIT.AAS_ENV_DOCKER_IMAGE_NAME)
+                    .withFixedExposedPort(randomFreeHostPort, AbstractIT.AAS_ENV_PRIVATE_PORT)
+                    .withExposedPorts(AbstractIT.AAS_ENV_PRIVATE_PORT)
                     .withNetwork(containerNetwork)
-                    .dependsOn(aasRegistryContainer)
-                    .withEnv("basyxaas_registry_path", "http://aas-registry:4000/registry/api/v1/registry")
-                    .withEnv("basyxaas_registry_host", "http://localhost:" + randomFreeHostPort + "/aasServer");
-            aasServerContainer.start();
+                    .dependsOn(smRegistryContainer)
+                    .withEnv("BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION", "http://sm-registry:8080")
+                    .withEnv("BASYX_EXTERNALURL", "http://localhost:" + randomFreeHostPort);
+            aasEnvContainer.start();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     @BeforeAll
-    public void beforeAll() throws IOException {
-        this.aasRegistryPublicPort = aasRegistryContainer.getFirstMappedPort();
-        this.aasServerPublicPort = aasServerContainer.getFirstMappedPort();
+    public void beforeAll() throws IOException, DeserializationException {
+        this.submodelRegistryPublicPort = smRegistryContainer.getFirstMappedPort();
+        this.submodelRepositoryPublicPort = aasEnvContainer.getFirstMappedPort();
 
-        this.aasRegistry = new AASRegistry(this.getAASRegistryUrl());
-        this.aasManager = new AASManager(this.getAASServerUrl(), this.aasRegistry);
-        var transformerActionServiceFactory = new TransformerActionServiceFactory(this.getTemplateRenderer(), aasManager);
-        this.transformerServiceFactory = new TransformerServiceFactory(this.getTemplateRenderer(), aasRegistry, aasManager, transformerActionServiceFactory);
+        this.submodelRegistry = new SubmodelRegistry(this.getSubmodelRegistryUrl(), this.getSubmodelRepositoryUrl());
+        this.submodelRepository = new SubmodelRepository(this.getSubmodelRepositoryUrl());
+        var transformerActionServiceFactory = new TransformerActionServiceFactory(this.getTemplateRenderer(), submodelRegistry, submodelRepository);
+        this.transformerServiceFactory = new TransformerServiceFactory(
+                this.getTemplateRenderer(),
+                aasRegistry, aasRepository,
+                submodelRegistry, submodelRepository,
+                transformerActionServiceFactory);
     }
 
     protected void assertSubmodelExists(String submodelId) {
-        var submodels = aasManager.retrieveSubmodels(GenericTestConfig.AAS.getIdentification());
-        assertThat(submodels).containsKey(submodelId);
+        var submodel = submodelRepository.getSubmodel(submodelId);
+        assertThat(submodel).isNotNull();
     }
 
     private TemplateRenderer getTemplateRenderer() {
         Map<String, Object> propertiesMap = Map.of("aas.server.url", "http://localhost:4001/aasServer");
 
-        var aasTemplateFunctions = new AASTemplateFunctions(this.aasRegistry, this.aasManager);
+        var aasTemplateFunctions = new SubmodelTemplateFunctions(this.submodelRegistry, this.submodelRepository);
 
         var environment = new StandardEnvironment();
         MutablePropertySources propertySources = environment.getPropertySources();

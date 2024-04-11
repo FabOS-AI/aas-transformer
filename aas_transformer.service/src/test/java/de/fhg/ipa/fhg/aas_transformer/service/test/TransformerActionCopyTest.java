@@ -1,23 +1,17 @@
 package de.fhg.ipa.fhg.aas_transformer.service.test;
 
 import de.fhg.ipa.aas_transformer.model.*;
-import de.fhg.ipa.aas_transformer.persistence.api.TransformerJpaRepository;
-import de.fhg.ipa.aas_transformer.service.TransformerHandler;
-import de.fhg.ipa.aas_transformer.service.templating.TemplateRenderer;
-import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
-import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
-import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
-import org.eclipse.basyx.submodel.metamodel.api.submodelelement.ISubmodelElement;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
+import org.eclipse.digitaltwin.aas4j.v3.model.Property;
+import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
 import org.junit.jupiter.api.*;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.UUID;
 
-import static de.fhg.ipa.fhg.aas_transformer.service.test.GenericTestConfig.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 public class TransformerActionCopyTest extends AbstractIT {
@@ -25,84 +19,70 @@ public class TransformerActionCopyTest extends AbstractIT {
     private Transformer testTransformer;
 
     @BeforeAll
-    public void beforeAll() throws IOException {
+    public void beforeAll() throws IOException, DeserializationException {
         super.beforeAll();
-        // Create AAS and Submodel:
-        this.aasManager.createAAS(GenericTestConfig.AAS, getAASServerUrl());
-        this.aasManager.createSubmodel(
-                GenericTestConfig.AAS.getIdentification(),
-                getAnsibleFactsSubmodel()
-        );
+        // Create Submodel:
+        this.submodelRepository.createOrUpdateSubmodel(GenericTestConfig.getSimpleSubmodel());
 
         // Init testTransformer
-        String idShort = "operating_system";
-        CustomId customId = new CustomId(idShort);
-
-        this.testTransformer = new Transformer(new Destination(new DestinationSM(idShort, customId)));
-        SubmodelIdentifier sourceSubmodelIdentifier = new SubmodelIdentifier(
-                SubmodelIdentifierType.ID_SHORT,
-                "ansible-facts"
+        String idShort = "simple_transformed_submodel";
+        this.testTransformer = new Transformer(new Destination(new DestinationSubmodel(idShort, idShort)));
+        SubmodelId sourceSubmodelId = new SubmodelId(
+                SubmodelIdType.ID_SHORT,
+                GenericTestConfig.getSimpleSubmodel().getId()
         );
         ArrayList<TransformerAction> transformerActions = new ArrayList<>() {{
-            add(new TransformerActionCopy(sourceSubmodelIdentifier,"distribution"));
-            add(new TransformerActionCopy(sourceSubmodelIdentifier,"distribution_major_version"));
+            add(new TransformerActionCopy(sourceSubmodelId, "SimpleProperty"));
+            add(new TransformerActionCopy(sourceSubmodelId, "SimpleProperty2"));
         }};
         this.testTransformer.addTransformerActions(transformerActions);
-    }
-
-    private ISubmodelElement getSourceSubmodelElement(IIdentifier aasId, IIdentifier submodelId, String submodelElementKey) {
-        return this.aasManager
-                .retrieveSubmodel(aasId, submodelId)
-                .getSubmodelElement(submodelElementKey);
     }
 
     @Nested
     @Order(10)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-    public class testCreateSubmodel {
+    public class createSubmodel {
         @Test
         @Order(10)
-        public void testExecuteTransformerWithCopyActions() {
+        public void executeTransformerWithCopyActions() throws IOException, DeserializationException {
             var transformerService = transformerServiceFactory.create(testTransformer);
-            transformerService.execute(GenericTestConfig.AAS.getIdentification(), null);
+            var sourceSubmodel = submodelRepository.getSubmodel(GenericTestConfig.getSimpleSubmodel().getId());
+
+            transformerService.execute(sourceSubmodel);
+
+            assertThatCode(() -> {
+                var transformedSubmodel = submodelRepository
+                        .getSubmodel(testTransformer.getDestination().getSubmodelDestination().getId());
+                assertThat(transformedSubmodel).isNotNull();
+            }).doesNotThrowAnyException();
         }
 
         @Test
         @Order(20)
-        public void testCountOfSubmodelsExpectTwo() {
-            Map<String, ISubmodel> submodelMap = aasManager.retrieveSubmodels(GenericTestConfig.AAS.getIdentification());
-
-            assertEquals(2, submodelMap.size());
-        }
-
-        @Test
-        @Order(30)
-        public void testDestinationSubmodelElementsHaveCorrectKeysAndValues() throws IOException {
-            var osSubmodel = aasManager.retrieveSubmodel(
-                    AAS.getIdentification(),
-                    testTransformer.getDestination().getSmDestination().getIdentifier()
+        public void checkDestinationSubmodelElementsHaveCorrectKeysAndValues() throws IOException, DeserializationException {
+            var destinationSubmodel = submodelRepository.getSubmodel(
+                    testTransformer.getDestination().getSubmodelDestination().getId()
             );
-            var osSubmodelElements = osSubmodel.getSubmodelElements();
+            var destinationSubmodelElements = destinationSubmodel.getSubmodelElements();
 
-
-            for(TransformerAction a : testTransformer.getTransformerActions()) {
+            for (TransformerAction a : testTransformer.getTransformerActions()) {
                 TransformerActionCopy copyAction = (TransformerActionCopy) a;
-                String sourceSubmodelElementKey = copyAction.getSourceSubmodelElement();
+                String sourceSubmodelElementIdShort = copyAction.getSourceSubmodelElement();
 
-                var sourceSubmodelElement = getSourceSubmodelElement(
-                        AAS.getIdentification(),
-                        getAnsibleFactsSubmodel().getIdentification(),
-                        sourceSubmodelElementKey
+                var sourceSubmodelElement = submodelRepository.getSubmodelElement(
+                        GenericTestConfig.getSimpleSubmodel().getId(),
+                        sourceSubmodelElementIdShort
                 );
 
-                assertThat(osSubmodelElements)
-                        .containsKey(sourceSubmodelElementKey)
+                assertThat(destinationSubmodelElements)
+                        .extracting(SubmodelElement::getIdShort)
+                        .contains(sourceSubmodelElementIdShort)
                         .usingRecursiveComparison();
 
-                assertThat(osSubmodelElements.get(sourceSubmodelElementKey))
+                assertThat(destinationSubmodelElements)
                         .usingRecursiveComparison()
                         .comparingOnlyFields("value", "idShort")
-                        .isEqualTo(sourceSubmodelElement);;
+                        .isEqualTo(sourceSubmodelElement);
             }
         }
     }
@@ -110,41 +90,27 @@ public class TransformerActionCopyTest extends AbstractIT {
     @Nested
     @Order(20)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-    public class testSubmodelUpdate {
-        String keyOfSubmodelElement = "distribution";
-        String newValueOfSubmodelElement = "Windows";
-
+    public class updateSubmodel {
         @Test
         @Order(10)
-        public void testUpdateOfSubmodelElementValue() throws IOException {
-            // Get ansible-facts submodel
-            ISubmodel sourceSubmodel = aasManager.retrieveSubmodel(
-                    AAS.getIdentification(),
-                    getAnsibleFactsSubmodel().getIdentification()
-            );
+        public void updateOfSubmodelElementValue() throws IOException, DeserializationException {
+            var sourceSubmodel = submodelRepository.getSubmodel(GenericTestConfig.getSimpleSubmodel().getId());
+            var submodelElementToUpdate = (Property) sourceSubmodel.getSubmodelElements().get(0);
+            submodelElementToUpdate.setValue(UUID.randomUUID().toString());
 
-            // Change value of SubmodelElement with key 'distribution'
-            sourceSubmodel.getSubmodelElement(keyOfSubmodelElement).setValue(newValueOfSubmodelElement);
-        }
+            submodelRepository.createOrUpdateSubmodelElement(GenericTestConfig.getSimpleSubmodel().getId(),
+                    submodelElementToUpdate.getIdShort(), submodelElementToUpdate);
 
-        @Test
-        @Order(20)
-        public void testRunTransformerAfterUpdate() {
+            sourceSubmodel = submodelRepository.getSubmodel(GenericTestConfig.getSimpleSubmodel().getId());
             var transformerService = transformerServiceFactory.create(testTransformer);
-            transformerService.execute(GenericTestConfig.AAS.getIdentification(), null);
-        }
+            transformerService.execute(sourceSubmodel);
 
-        @Test
-        @Order(30)
-        public void testDestinationSubmodelHasUpdatedValue() throws IOException {
-            var destinationSubmodelElementValue = getSourceSubmodelElement(
-                    AAS.getIdentification(),
-                    getAnsibleFactsSubmodel().getIdentification(),
-                    keyOfSubmodelElement
+            var destinationSubmodelElementValue = (Property) submodelRepository.getSubmodelElement(
+                    testTransformer.getDestination().getSubmodelDestination().getId(),
+                    submodelElementToUpdate.getIdShort()
             );
 
-            assertThat(destinationSubmodelElementValue.getValue()).isEqualTo(newValueOfSubmodelElement);
+            assertThat(destinationSubmodelElementValue.getValue()).isEqualTo(submodelElementToUpdate.getValue());
         }
     }
-
 }

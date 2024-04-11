@@ -4,13 +4,13 @@ class Destination () {
 
     var aasDestination: DestinationAAS? = null
 
-    var smDestination: DestinationSM? = null
+    var submodelDestination: DestinationSubmodel? = null
 
-    constructor (smDestination: DestinationSM) : this() {
-        this.smDestination = smDestination
+    constructor (submodelDestination: DestinationSubmodel) : this() {
+        this.submodelDestination = submodelDestination
     }
 
-    constructor (aasDestination: DestinationAAS, smDestination: DestinationSM) : this (smDestination) {
+    constructor (aasDestination: DestinationAAS, submodelDestination: DestinationSubmodel) : this (submodelDestination) {
         this.aasDestination = aasDestination
     }
 

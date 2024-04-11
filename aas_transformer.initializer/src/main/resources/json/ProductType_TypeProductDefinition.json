@@ -2,19 +2,11 @@
   "id": "ac5cb847-6c38-4af2-9df6-3b97ca2f75a5",
   "destination": {
     "aasDestination": {
-      "idShort": "ProductType_{{ aas:sme_value(SOURCE_AAS, 'productdata', 'id') }}",
-      "identifier": {
-        "idType": "Custom",
-        "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, 'productdata', 'id') }}"
-      },
-      "endpoint": "{{ app:prop('aas.server.url') }}"
+      "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, 'productdata', 'id') }}"
     },
-    "smDestination": {
+    "submodelDestination": {
       "idShort": "TypeProductDefinition",
-      "identifier": {
-        "idType": "Custom",
-        "id": "TypeProductDefinition"
-      }
+      "id": "TypeProductDefinition"
     }
   },
   "transformerActions": [

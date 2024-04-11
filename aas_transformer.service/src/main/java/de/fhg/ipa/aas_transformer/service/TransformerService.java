@@ -1,29 +1,25 @@
 package de.fhg.ipa.aas_transformer.service;
 
 import de.fhg.ipa.aas_transformer.model.Transformer;
-import de.fhg.ipa.aas_transformer.service.aas.AASManager;
-import de.fhg.ipa.aas_transformer.service.aas.AASRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.AasRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.AasRepository;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.service.actions.TransformerActionService;
 import de.fhg.ipa.aas_transformer.service.actions.TransformerActionServiceFactory;
-import de.fhg.ipa.aas_transformer.service.events.consumers.MessageEventConsumer;
 import de.fhg.ipa.aas_transformer.service.templating.TemplateRenderer;
-import org.eclipse.basyx.aas.metamodel.api.parts.asset.AssetKind;
-import org.eclipse.basyx.aas.metamodel.map.AssetAdministrationShell;
-import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
-import org.eclipse.basyx.aas.metamodel.map.descriptor.SubmodelDescriptor;
-import org.eclipse.basyx.aas.metamodel.map.parts.Asset;
-import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
-import org.eclipse.basyx.submodel.metamodel.api.identifier.IIdentifier;
-import org.eclipse.basyx.submodel.metamodel.api.reference.enums.KeyElements;
-import org.eclipse.basyx.submodel.metamodel.connected.ConnectedSubmodel;
-import org.eclipse.basyx.submodel.metamodel.map.Submodel;
-import org.eclipse.basyx.submodel.metamodel.map.reference.Reference;
-import org.eclipse.basyx.vab.exception.provider.ProviderException;
-import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonSerializer;
+import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
+import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
+import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
+import org.eclipse.digitaltwin.basyx.aasregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class TransformerService {
 
@@ -33,19 +29,29 @@ public class TransformerService {
 
     private final TemplateRenderer templateRenderer;
 
-    private final AASRegistry aasRegistry;
+    private final AasRegistry aasRegistry;
 
-    private final AASManager aasManager;
+    private final AasRepository aasRepository;
+
+    private final SubmodelRegistry submodelRegistry;
+
+    private final SubmodelRepository submodelRepository;
 
     private final TransformerActionServiceFactory transformerActionServiceFactory;
 
     private List<TransformerActionService> transformerActionServices = new ArrayList<>();
 
-    public TransformerService(Transformer transformer, TemplateRenderer templateRenderer, AASRegistry aasRegistry, AASManager aasManager, TransformerActionServiceFactory transformerActionServiceFactory) {
+    public TransformerService(Transformer transformer,
+                              TemplateRenderer templateRenderer,
+                              AasRegistry aasRegistry, AasRepository aasRepository,
+                              SubmodelRegistry submodelRegistry, SubmodelRepository submodelRepository,
+                              TransformerActionServiceFactory transformerActionServiceFactory) {
         this.transformer = transformer;
         this.templateRenderer = templateRenderer;
         this.aasRegistry = aasRegistry;
-        this.aasManager = aasManager;
+        this.aasRepository = aasRepository;
+        this.submodelRegistry = submodelRegistry;
+        this.submodelRepository = submodelRepository;
         this.transformerActionServiceFactory = transformerActionServiceFactory;
 
         for (var transformerAction : transformer.getTransformerActions()) {
@@ -54,91 +60,65 @@ public class TransformerService {
         }
     }
 
-    public void execute(IIdentifier sourceAASId, IIdentifier sourceSMId) {
+    public void execute(Submodel sourceSubmodel) {
+        // Set context for template rendering
+        var context = new HashMap<String, Object>();
+        var jsonSerializer = new JsonSerializer();
         try {
-            var renderContext = new HashMap<String, Object>();
-            renderContext.put("SOURCE_AAS", sourceAASId.getId());
-            if (sourceSMId != null) {
-                renderContext.put("SOURCE_SM", sourceSMId.getId());
-            }
-
-            IIdentifier destinationAASId;
-            if (transformer.getDestination().getAasDestination() != null) {
-                destinationAASId = this.templateRenderer
-                        .render(transformer.getDestination().getAasDestination().getIdentifier(), renderContext);
-                var destinationAASIdShort = this.templateRenderer
-                        .render(transformer.getDestination().getAasDestination().getIdShort(), renderContext);
-
-                if (!sourceAASId.equals(transformer.getDestination().getAasDestination().getIdentifier())) {
-
-                    try {
-                        // Check if destination AAS exists
-                        var destinationAASDescriptor = this.aasRegistry.lookupAAS(transformer.getDestination().getAasDestination().getIdentifier());
-                    } catch (ProviderException e) {
-                        // Create destination AAS if not existing
-                        var newDestinationAAS = new AssetAdministrationShell(
-                                destinationAASIdShort,
-                                destinationAASId,
-                                new Asset(destinationAASIdShort,
-                                        destinationAASId,
-                                        AssetKind.INSTANCE)
-                        );
-                        var aasServerEndpoint = this.templateRenderer
-                                .render(transformer.getDestination().getAasDestination().getEndpoint(), renderContext);
-                        this.aasManager.createAAS(newDestinationAAS, aasServerEndpoint);
-                    }
-                }
-            } else {
-                destinationAASId = sourceAASId;
-            }
-
-            ISubmodel destinationSubmodel = null;
-            try {
-                // Check if destination SM exists
-                var destinationSMId = this.templateRenderer
-                        .render(transformer.getDestination().getSmDestination().getIdentifier(), renderContext);
-                var destinationSMIdShort = this.templateRenderer
-                        .render(transformer.getDestination().getSmDestination().getIdShort(), renderContext);
-
-                var destinationAASDescriptor = this.aasRegistry.lookupAAS(destinationAASId);
-
-                var existingSubmodelsOfDestinationAAS = this.aasRegistry.lookupSubmodels(destinationAASId);
-                var destionationSMDescriptorOptional = existingSubmodelsOfDestinationAAS.stream().filter(
-                                smd -> smd.getIdShort().equals(destinationSMIdShort))
-                        .findAny();
-
-                if (destionationSMDescriptorOptional.isEmpty()) {
-                    var newDestinationSubmodel = new Submodel();
-                    newDestinationSubmodel.setIdShort(destinationSMIdShort);
-                    newDestinationSubmodel.setParent(new Reference(destinationAASId, KeyElements.ASSETADMINISTRATIONSHELL, true));
-                    if (transformer.getDestination().getSmDestination().getIdentifier() == null) {
-                        newDestinationSubmodel.setIdentification(new CustomId(newDestinationSubmodel.getIdShort()));
-                    } else {
-                        newDestinationSubmodel.setIdentification(destinationSMId);
-                    }
-                    aasManager.createSubmodel(destinationAASId, newDestinationSubmodel);
-                    destinationSubmodel = aasManager.retrieveSubmodel(destinationAASId, newDestinationSubmodel.getIdentification());
-                }
-                else {
-                    destinationSubmodel = aasManager.retrieveSubmodel(destinationAASId, destionationSMDescriptorOptional.get().getIdentifier());
-                }
-            }
-            catch (Exception e) {
-                LOG.error(e.getMessage());
-                e.printStackTrace();
-            }
-
-            for (var transformerActionService : transformerActionServices) {
-                transformerActionService.execute(sourceAASId, sourceSMId, destinationAASId, destinationSubmodel);
-            }
-        } catch (ResourceNotFoundException e) {
+            var serializedSourceSubmodel = jsonSerializer.write(sourceSubmodel);
+            context.put("SOURCE_SUBMODEL", serializedSourceSubmodel);
+        } catch (SerializationException e) {
             LOG.error(e.getMessage());
+        }
+
+        try {
+            // Create or get destination submodel
+            var destinationSubmodelId = this.templateRenderer
+                    .render(this.transformer.getDestination().getSubmodelDestination().getId(), context);
+            var destinationSubmodelIdShort = this.templateRenderer
+                    .render(this.transformer.getDestination().getSubmodelDestination().getIdShort(), context);
+
+            var optionalSubmodelDescriptor = this.submodelRegistry.findSubmodelDescriptor(destinationSubmodelId);
+            if (optionalSubmodelDescriptor.isEmpty()) {
+                var newDestinationSubmodel = new DefaultSubmodel();
+                newDestinationSubmodel.setIdShort(destinationSubmodelIdShort);
+                newDestinationSubmodel.setId(destinationSubmodelId);
+                this.submodelRepository.createOrUpdateSubmodel(newDestinationSubmodel);
+            }
+            var destinationSubmodel = this.submodelRepository.getSubmodel(destinationSubmodelId);
+
+            // Execute transformer actions
+            for (var transformerActionService : this.transformerActionServices) {
+                transformerActionService.execute(sourceSubmodel, destinationSubmodel, context);
+            }
+
+            // Add reference to submodel in destination AAS
+            if (transformer.getDestination().getAasDestination() != null) {
+                var destinationAasId = this.templateRenderer
+                        .render(transformer.getDestination().getAasDestination().getId(), context);
+                // Check if destination AAS exists
+                var destinationAASDescriptorOptional = this.aasRegistry.getAasDescriptor(destinationAasId);
+                if (destinationAASDescriptorOptional.isEmpty()) {
+                    var newDestinationAAS = new DefaultAssetAdministrationShell.Builder()
+                            .id(destinationAasId)
+                            .build();
+                    this.aasRepository.createAas(newDestinationAAS);
+                }
+
+                var destinationAas = this.aasRepository.getAas(destinationAasId);
+                var destinationSubmodelDescriptorOptional = this.submodelRegistry.findSubmodelDescriptor(destinationSubmodel.getId());
+                this.aasRegistry.addSubmodelDescriptorToAas(destinationAas.getId(), destinationSubmodelDescriptorOptional.get());
+                this.aasRepository.addSubmodelReferenceToAas(destinationAas.getId(), destinationSubmodel);
+            }
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    public boolean isSubmodelSourceOfTransformerActions(SubmodelDescriptor submodelDescriptor) {
+    public boolean isSubmodelSourceOfTransformerActions(Submodel submodel) {
         for (var transformerActionService : this.transformerActionServices) {
-            if (transformerActionService.isSubmodelSourceOfTransformerAction(submodelDescriptor)) {
+            if (transformerActionService.isSubmodelSourceOfTransformerAction(submodel)) {
                 return true;
             }
         }

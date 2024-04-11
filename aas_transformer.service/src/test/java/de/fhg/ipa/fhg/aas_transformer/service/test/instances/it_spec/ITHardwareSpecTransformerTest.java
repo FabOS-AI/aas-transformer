@@ -1,49 +1,69 @@
 package de.fhg.ipa.fhg.aas_transformer.service.test.instances.it_spec;
 
-import de.fhg.ipa.aas_transformer.model.MqttVerb;
-import de.fhg.ipa.fhg.aas_transformer.service.test.GenericTestConfig;
+import de.fhg.ipa.aas_transformer.model.TransformerAction;
+import de.fhg.ipa.aas_transformer.model.TransformerActionCopy;
 import de.fhg.ipa.fhg.aas_transformer.service.test.instances.InstanceTest;
-import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
+import de.fhg.ipa.fhg.aas_transformer.service.test.instances.operating_system.OperatingSystemTransformerTest;
+import org.eclipse.digitaltwin.aas4j.v3.model.Property;
+import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static de.fhg.ipa.fhg.aas_transformer.service.test.GenericTestConfig.AAS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ITHardwareSpecTransformerTest extends InstanceTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ITHardwareSpecTransformerTest.class);
+
     public ITHardwareSpecTransformerTest() {
-        super("ansible-facts", "it_hardware_spec");
+        super("ansible-facts-submodel.json", "it_hardware_spec.json");
     }
 
     @Test
     @Order(10)
     public void executeTransformer()  {
-        var transformerService = this.transformerServiceFactory.create(transformer);
-        transformerService.execute(GenericTestConfig.AAS.getIdentification(), null);
+        var transformerService = this.transformerServiceFactory.create(this.transformer);
+        var submodel = this.submodelRepository.getSubmodel(sourceSubmodel.getId());
+        transformerService.execute(submodel);
     }
 
     @Test
     @Order(20)
-    public void checkSubmodelExists() {
-        var submodels = aasManager.retrieveSubmodels(GenericTestConfig.AAS.getIdentification());
-        assertThat(submodels).containsKey("it_hardware_spec");
+    public void checkItSpecSubmodelExists() {
+        this.assertSubmodelExists(this.transformer.getDestination().getSubmodelDestination().getId());
     }
 
     @Test
     @Order(30)
     public void checkSubmodelElementCountEqualsTransformerActionCount() {
-        ISubmodel newSubmodel = aasManager.retrieveSubmodel(
-                GenericTestConfig.AAS.getIdentification(),
-                transformer.getDestination().getSmDestination().getIdentifier()
-        );
+        var newSubmodel = submodelRepository.getSubmodel(transformer.getDestination().getSubmodelDestination().getId());
 
-        assertEquals(
-                transformer.getTransformerActions().size(),
-                newSubmodel.getSubmodelElements().size()
-        );
+        for (var submodelElement : newSubmodel.getSubmodelElements()) {
+            LOG.warn("Id: " + submodelElement.getIdShort() + " | Value: " + ((Property)submodelElement).getValue());
+        }
+
+        for(TransformerAction a : transformer.getTransformerActions()) {
+            var copyAction = (TransformerActionCopy) a;
+            var sourceSubmodelElementKey = copyAction.getSourceSubmodelElement();
+
+            var sourceSubmodelElement = sourceSubmodel.getSubmodelElements().stream()
+                    .filter(sme -> sme.getIdShort().equals(sourceSubmodelElementKey)).findAny().get();
+
+            assertThat(newSubmodel.getSubmodelElements())
+                    .extracting(SubmodelElement::getIdShort)
+                    .contains(sourceSubmodelElementKey);
+
+            var destinationSubmodelElement = newSubmodel.getSubmodelElements().stream()
+                    .filter(sme -> sme.getIdShort().equals(sourceSubmodelElementKey)).findAny().get();
+            assertThat(destinationSubmodelElement)
+                    .usingRecursiveComparison()
+                    .comparingOnlyFields("value", "idShort")
+                    .isEqualTo(sourceSubmodelElement);;
+        }
     }
 }

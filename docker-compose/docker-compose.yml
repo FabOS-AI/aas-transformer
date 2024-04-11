@@ -52,5 +52,4 @@ services:
       - "aas_transformer_database:/var/lib/mysql"
 
 volumes:
-  aas_database:
   aas_transformer_database:

@@ -1,14 +1,14 @@
 package de.fhg.ipa.aas_transformer.service.mqtt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import de.fhg.ipa.aas_transformer.service.aas.AASManager;
-import de.fhg.ipa.aas_transformer.service.aas.AASRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.service.events.ChangeEventType;
 import de.fhg.ipa.aas_transformer.service.events.MessageEvent;
 import de.fhg.ipa.aas_transformer.service.events.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.service.events.producers.ISubmodelMessageEventProducer;
-import org.eclipse.basyx.aas.metamodel.map.descriptor.CustomId;
-import org.eclipse.basyx.aas.metamodel.map.descriptor.SubmodelDescriptor;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
+import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
+import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodelRepository;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
@@ -25,10 +25,9 @@ public class SubmodelMqttListener extends MqttListener implements IMqttMessageLi
 
     private LinkedBlockingQueue<SubmodelMessageEvent> submodelEventCache = new LinkedBlockingQueue();
 
-    public SubmodelMqttListener(AASManager aasManager, AASRegistry aasRegistry) {
-        super(aasManager, aasRegistry);
-        this.topics.add("aas-registry/aas-registry/shells/+/submodels/+");
-        this.topics.add("aas-repository/aas-server/shells/+/submodels/+");
+    public SubmodelMqttListener(SubmodelRegistry submodelRegistry, SubmodelRepository submodelRepository) {
+        super(submodelRegistry, submodelRepository);
+        this.topics.add("sm-repository/+/submodels/+");
     }
 
     @Override
@@ -38,23 +37,23 @@ public class SubmodelMqttListener extends MqttListener implements IMqttMessageLi
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
-        var objectMapper = new ObjectMapper();
         try {
-            var submodelDescriptor = objectMapper.readValue(message.toString(), SubmodelDescriptor.class);
-
-            var topicRegEx = ".*/shells/(.*)/submodels/([a-zA-Z]*)";
+            // Get info from topic
+            var topicRegEx = "sm-repository/([-\\w.]+)/submodels/([a-zA-Z]+)";
             var regExPattern = Pattern.compile(topicRegEx);
             var matcher = regExPattern.matcher(topic);
             matcher.find();
+            var submodelRepositoryId = matcher.group(1);
+            var changeEventTypeString = matcher.group(2);
+            var changeEventType = ChangeEventType.valueOf(changeEventTypeString.toUpperCase());
+            // Parse submodel
+            JsonDeserializer jsonDeserializer = new JsonDeserializer();
+            var submodel = jsonDeserializer.read(message.toString(), Submodel.class);
 
-            var aasId = matcher.group(1);
-            var operationType = matcher.group(2);
-            var changeEventType = ChangeEventType.valueOf(operationType.toUpperCase());
-
-            var submodelMessageEvent = new SubmodelMessageEvent(changeEventType, submodelDescriptor, new CustomId(aasId));
+            var submodelMessageEvent = new SubmodelMessageEvent(changeEventType, submodel);
             submodelEventCache.add(submodelMessageEvent);
         } catch (Exception e) {
-            LOG.error(e.getMessage() + " | " + message.toString());
+            LOG.error(e.getMessage() + " | TOPIC: "  + topic + " | MESSAGE: " + message.toString());
             e.printStackTrace();
         }
     }

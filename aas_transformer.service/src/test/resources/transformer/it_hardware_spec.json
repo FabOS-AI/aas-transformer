@@ -1,76 +1,73 @@
 {
   "id": "d67fbf7f-83b8-4e09-8701-8f2a11e3a5ab",
   "destination": {
-    "smDestination": {
+    "submodelDestination": {
       "idShort": "it_hardware_spec",
-      "identifier": {
-        "idType": "Custom",
-        "id": "it_hardware_spec"
-      }
+      "id": "it_hardware_spec"
     }
   },
   "transformerActions": [
     {
       "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "ansible-facts"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
       },
       "sourceSubmodelElement": "architecture"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "ansible-facts"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
       },
       "sourceSubmodelElement": "bios_date"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "ansible-facts"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
       },
       "sourceSubmodelElement": "bios_vendor"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "ansible-facts"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
       },
       "sourceSubmodelElement": "bios_version"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "ansible-facts"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
       },
       "sourceSubmodelElement": "board_serial"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "ansible-facts"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
       },
       "sourceSubmodelElement": "board_vendor"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "ansible-facts"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
       },
       "sourceSubmodelElement": "board_version"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "ansible-facts"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
       },
       "sourceSubmodelElement": "processor"
     }

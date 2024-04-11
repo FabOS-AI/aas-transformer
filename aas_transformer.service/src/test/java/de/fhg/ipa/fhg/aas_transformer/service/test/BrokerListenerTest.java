@@ -1,49 +1,42 @@
 package de.fhg.ipa.fhg.aas_transformer.service.test;
 
-import de.fhg.ipa.aas_transformer.service.Application;
-import de.fhg.ipa.aas_transformer.service.actions.TransformerActionServiceFactory;
-import de.fhg.ipa.aas_transformer.service.aas.AASManager;
-import de.fhg.ipa.aas_transformer.service.aas.AASRegistry;
-import de.fhg.ipa.aas_transformer.service.mqtt.AASMqttListener;
+import de.fhg.ipa.aas_transformer.service.BrokerListener;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRegistry;
+import de.fhg.ipa.aas_transformer.service.aas.SubmodelRepository;
+import de.fhg.ipa.aas_transformer.service.events.ChangeEventType;
+import de.fhg.ipa.aas_transformer.service.events.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelElementMqttListener;
 import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelMqttListener;
-import org.eclipse.basyx.vab.exception.provider.ResourceNotFoundException;
+import org.eclipse.digitaltwin.aas4j.v3.model.Property;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(AasITExtension.class)
-@SpringBootTest(classes = { Application.class, TransformerActionServiceFactory.class })
+@ContextConfiguration(classes = {
+        BrokerListener.class,
+        SubmodelMqttListener.class, SubmodelElementMqttListener.class,
+        SubmodelRegistry.class, SubmodelRepository.class })
 @ActiveProfiles("test")
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 public class BrokerListenerTest {
 
     @SpyBean
-    private AASMqttListener aasMqttListener;
-
-    @SpyBean
     private SubmodelMqttListener submodelMqttListener;
 
-    @SpyBean
-    private SubmodelElementMqttListener submodelElementMqttListener;
-
     @Autowired
-    public AASManager aasManager;
-
-    @Autowired
-    private AASRegistry aasRegistry;
+    public SubmodelRepository submodelRepository;
 
     @Test
     @Order(10)
     public void testContextLoaded() {
-        assertThat(aasMqttListener).isNotNull();
         assertThat(submodelMqttListener).isNotNull();
     }
 
@@ -51,66 +44,71 @@ public class BrokerListenerTest {
     @Order(20)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     public class testAasCrudOperations {
+
         @Test
         @Order(10)
-        public void testCreateAas() {
-            aasManager.createAAS(GenericTestConfig.AAS);
-
-            Mockito.verifyNoInteractions(submodelMqttListener);
-        }
-
-        @Test
-        @Order(20)
         public void testCreateSubmodel() throws Exception {
-            aasManager.createSubmodel(
-                    GenericTestConfig.AAS.getIdentification(),
-                    GenericTestConfig.getAnsibleFactsSubmodel()
-            );
-
-            ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
-            Mockito.verify(submodelMqttListener, Mockito.atLeast(3)).messageArrived(argumentTopic.capture(), Mockito.any());
-            assertThat(argumentTopic.getAllValues())
-                    .contains("aas-registry/aas-registry/shells/aas-id/submodels/created")
-                    .contains("aas-repository/aas-server/shells/aas-id/submodels/created")
-                    .contains("aas-registry/aas-registry/shells/aas-id/submodels/updated");
-        }
-
-        @Test
-        @Order(30)
-        public void testUpdateSubmodelElement() throws Exception {
-            String keyOfSubmodelElement = "distribution";
-            String newValueOfSubmodelElement = "Windows";
-
-            var sourceSubmodel = aasManager.retrieveSubmodel(
-                    GenericTestConfig.AAS.getIdentification(),
-                    GenericTestConfig.getAnsibleFactsIdentifier()
-            );
-            //Change value of SubmodelElement with key 'distribution'
-            sourceSubmodel.getSubmodelElement(keyOfSubmodelElement).setValue(newValueOfSubmodelElement);
-
-            ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
-            Mockito.verify(submodelElementMqttListener).messageArrived(argumentTopic.capture(), Mockito.any());
-            assertThat(argumentTopic.getValue())
-                    .isEqualTo("aas-repository/aas-server/shells/aas-id/submodels/ansible-facts/submodelElements/distribution/value");
-        }
-
-        @Test
-        @Order(40)
-        public void testDeleteSubmodel() throws Exception {
-            try {
-                aasManager.deleteSubmodel(
-                        GenericTestConfig.AAS.getIdentification(),
-                        GenericTestConfig.getAnsibleFactsIdentifier()
-                );
-            } catch(ResourceNotFoundException e) {}
-
+            Thread.sleep(500);
+            submodelRepository.createOrUpdateSubmodel(GenericTestConfig.getSimpleSubmodel());
             Thread.sleep(100);
 
             ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
             Mockito.verify(submodelMqttListener, Mockito.atLeast(1)).messageArrived(argumentTopic.capture(), Mockito.any());
             assertThat(argumentTopic.getAllValues())
-                    .contains("aas-registry/aas-registry/shells/aas-id/submodels/deleted")
-                    .contains("aas-repository/aas-server/shells/aas-id/submodels/deleted");
+                    .contains("sm-repository/sm-repo/submodels/created");
+            Thread.sleep(100);
+            assertThat(submodelMqttListener.getMessageEventCache()).hasSize(1);
+            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)submodelMqttListener.getMessageEventCache().poll();
+            assertThat(submodelMessageEvent.getChangeEventType()).isEqualTo(ChangeEventType.CREATED);
+            assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
+        }
+
+        @Test
+        @Order(30)
+        public void testUpdateSubmodelElement() throws Exception {
+            String keyOfSubmodelElement = "SimpleProperty";
+            String newValueOfSubmodelElement = "NewValue";
+
+            var updatedSubmodel = GenericTestConfig.getSimpleSubmodel();
+            var submodelElements = updatedSubmodel.getSubmodelElements();
+            var submodelElementToUpdateOptional = submodelElements.stream()
+                    .filter(se -> se.getIdShort().equals(keyOfSubmodelElement)).findAny();
+            var updatedSubmodelElement = ((Property)submodelElementToUpdateOptional.get());
+            updatedSubmodelElement.setValue(newValueOfSubmodelElement);
+            submodelElements.remove(submodelElementToUpdateOptional.get());
+            submodelElements.add(updatedSubmodelElement);
+            updatedSubmodel.setSubmodelElements(submodelElements);
+
+            submodelRepository.createOrUpdateSubmodel(updatedSubmodel);
+
+            ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
+            Mockito.verify(submodelMqttListener).messageArrived(argumentTopic.capture(), Mockito.any());
+            assertThat(argumentTopic.getAllValues())
+                    .contains("sm-repository/sm-repo/submodels/updated");
+            Thread.sleep(100);
+            assertThat(submodelMqttListener.getMessageEventCache()).hasSize(1);
+            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)submodelMqttListener.getMessageEventCache().poll();
+            assertThat(submodelMessageEvent.getChangeEventType()).isEqualTo(ChangeEventType.UPDATED);
+            assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
+            updatedSubmodelElement = (Property)submodelMessageEvent.getSubmodel().getSubmodelElements().stream()
+                    .filter(se -> se.getIdShort().equals(keyOfSubmodelElement)).findAny().get();
+            assertThat(updatedSubmodelElement.getValue()).isEqualTo(newValueOfSubmodelElement);
+        }
+
+        @Test
+        @Order(40)
+        public void testDeleteSubmodel() throws Exception {
+            submodelRepository.deleteSubmodel(GenericTestConfig.getSimpleSubmodel().getId());
+
+            ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
+            Mockito.verify(submodelMqttListener, Mockito.atLeast(1)).messageArrived(argumentTopic.capture(), Mockito.any());
+            assertThat(argumentTopic.getAllValues())
+                    .contains("sm-repository/sm-repo/submodels/deleted");
+            Thread.sleep(100);
+            assertThat(submodelMqttListener.getMessageEventCache()).hasSize(1);
+            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)submodelMqttListener.getMessageEventCache().poll();
+            assertThat(submodelMessageEvent.getChangeEventType()).isEqualTo(ChangeEventType.DELETED);
+            assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
         }
     }
 }

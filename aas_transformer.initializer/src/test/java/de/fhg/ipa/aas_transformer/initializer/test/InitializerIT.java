@@ -76,7 +76,7 @@ public class InitializerIT {
                     .assertThat()
                     .statusCode(200)
                     .body("id", equalTo(transformer.getId().toString()))
-                    .body("destination.idShort", equalTo(transformer.getDestination().getSmDestination().getIdShort()))
+                    .body("destination.idShort", equalTo(transformer.getDestination().getSubmodelDestination().getIdShort()))
                     .body("transformerActions.size()", is(transformer.getTransformerActions().size()));
         }
     }
