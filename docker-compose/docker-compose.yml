@@ -16,6 +16,7 @@ services:
         aliases:
           - aas-transformer
     environment:
+      AAS_BROKER_HOST: aas-broker
       DATABASE_HOST: aas-transformer-database
       DATABASE_PASSWORD: password
     extra_hosts:
@@ -42,7 +43,7 @@ services:
         aliases:
           - aas-transformer-database
     ports:
-      - "3306:3306"
+      - "3307:3306"
     environment:
       MARIADB_USER: aas_transformer
       MARIADB_PASSWORD: ${AAS_TRANSFORMER_DATABASE_PASSWORD}

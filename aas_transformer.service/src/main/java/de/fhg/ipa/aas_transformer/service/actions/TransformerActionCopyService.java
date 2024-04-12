@@ -4,12 +4,10 @@ import de.fhg.ipa.aas_transformer.model.TransformerAction;
 import de.fhg.ipa.aas_transformer.model.TransformerActionCopy;
 import de.fhg.ipa.aas_transformer.service.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.service.aas.SubmodelRepository;
-import org.eclipse.digitaltwin.aas4j.v3.model.Property;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElementCollection;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElementList;
 import org.eclipse.digitaltwin.basyx.core.exceptions.ElementDoesNotExistException;
-import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodelRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

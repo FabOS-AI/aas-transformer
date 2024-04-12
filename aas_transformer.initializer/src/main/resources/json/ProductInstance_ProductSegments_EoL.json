@@ -2,29 +2,30 @@
   "id": "e046e8ed-be15-40c6-91b4-a7f3bd161098",
   "destination": {
     "aasDestination": {
-      "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, SOURCE_SM, 'id') }}"
+      "id": "ProductInstance_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}"
     },
     "submodelDestination": {
       "idShort": "ProductSegments",
       "id": "ProductSegments-{{ uuid:generate() }}"
-  },
-  "transformerActions": [
-    {
-      "actionType": "SUBMODEL_ELEMENT_TEMPLATE",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "SEMANTIC_ID",
-        "identifierValue": "EoLTestData"
-      },
-      "submodelElementTemplate": "{ \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"EoLTest\", \"value\": [ { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"EquipmentSpecs\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"EoLTest\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"Material\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"EoLTest\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"Personal\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"EoLTest\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"ProcessParameters\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"EoLTest\", \"idType\": \"IdShort\" } ] } } ], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"AssetAdministrationShell\", \"local\": true, \"value\": \"ProductInstance\", \"idType\": \"Custom\" }, { \"type\": \"Submodel\", \"local\": true, \"value\": \"ProductSegments\", \"idType\": \"Custom\" } ] } }"
     },
-    {
-      "actionType": "COPY",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "SEMANTIC_ID",
-        "identifierValue": "EoLTestData"
+    "transformerActions": [
+      {
+        "actionType": "SUBMODEL_ELEMENT_TEMPLATE",
+        "sourceSubmodelId": {
+          "type": "SEMANTIC_ID",
+          "id": "EoLTestData"
+        },
+        "submodelElementTemplate": "{ \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"EoLTest\", \"value\": [ { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"EquipmentSpecs\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"EoLTest\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"Material\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"EoLTest\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"Personal\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"EoLTest\", \"idType\": \"IdShort\" } ] } }, { \"modelType\": { \"name\": \"SubmodelElementCollection\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"kind\": \"Instance\", \"idShort\": \"ProcessParameters\", \"value\": [], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"SubmodelElementCollection\", \"local\": true, \"value\": \"EoLTest\", \"idType\": \"IdShort\" } ] } } ], \"ordered\": true, \"allowDuplicates\": true, \"parent\": { \"keys\": [ { \"type\": \"AssetAdministrationShell\", \"local\": true, \"value\": \"ProductInstance\", \"idType\": \"Custom\" }, { \"type\": \"Submodel\", \"local\": true, \"value\": \"ProductSegments\", \"idType\": \"Custom\" } ] } }"
       },
-      "sourceSubmodelElement": "stack/measurement",
-      "destinationSubmodelElement": "EoLTest/ProcessParameters"
-    }
-  ]
+      {
+        "actionType": "COPY",
+        "sourceSubmodelId": {
+          "type": "SEMANTIC_ID",
+          "id": "EoLTestData"
+        },
+        "sourceSubmodelElement": "stack/measurement",
+        "destinationSubmodelElement": "EoLTest/ProcessParameters"
+      }
+    ]
+  }
 }

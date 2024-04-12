@@ -3,13 +3,15 @@ FROM openjdk:18.0.2.1-jdk-slim-buster
 ENV DATABASE_HOST="aas-transformer-database" \
     DATABASE_PORT=3306 \
     AAS_BROKER_HOST="aas-broker" \
-    AAS_BROKER_PORT=1883 \
-    AAS_REGISTRY_HOST="aas-registry" \
-    AAS_REGISTRY_PORT=4000 \
-    AAS_REGISTRY_CONTEXT="registry" \
-    AAS_SERVER_HOST="aas-server" \
-    AAS_SERVER_PORT=4001 \
-    AAS_SERVER_CONTEXT="aasServer"
+    AAS_BROKER_PORT=1884 \
+    AAS_AAS_REGISTRY_HOST="aas-registry" \
+    AAS_AAS_REGISTRY_PORT=8080 \
+    AAS_AAS_REPOSITORY_HOST="aas-env" \
+    AAS_AAS_REPOSITORY_Port=8081 \
+    AAS_SUBMODEL_REGISTRY_HOST="sm-registry" \
+    AAS_SUBMODEL_REGISTRY_PORT=8080 \
+    AAS_SUBMODEL_REPOSITORY_HOST="aas-env" \
+    AAS_SUBMODEL_REPOSITORY_Port=8081
 
 RUN apt update && \
     apt install -y curl jq

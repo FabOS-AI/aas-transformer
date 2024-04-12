@@ -1,6 +1,6 @@
 package de.fhg.ipa.fhg.aas_transformer.service.test;
 
-import de.fhg.ipa.aas_transformer.service.BrokerListener;
+import de.fhg.ipa.aas_transformer.service.mqtt.BrokerListener;
 import de.fhg.ipa.aas_transformer.service.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.service.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.service.events.ChangeEventType;

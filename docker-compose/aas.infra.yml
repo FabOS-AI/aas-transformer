@@ -1,6 +1,28 @@
 version: '3.9'
 
 services:
+  aas-discovery:
+    image: eclipsebasyx/aas-discovery:2.0.0-SNAPSHOT
+    restart: always
+    ports:
+      - 8084:8081
+    networks:
+      default:
+        aliases:
+          - aas-discovery
+    environment:
+      SERVER_PORT: 8081
+      SPRING_APPLICATION_NAME: AAS Discovery Service
+      BASYX_AASDISCOVERYSERVICE_NAME: aas-discovery-service
+      BASYX_BACKEND: MongoDB
+      SPRING_DATA_MONGODB_HOST: aas-database
+      SPRING_DATA_MONGODB_DATABASE: aas-discovery
+      SPRING_DATA_MONGODB_AUTHENTICATIONDATABASE: admin
+      SPRING_DATA_MONGODB_USERNAME: mongoAdmin
+      SPRING_DATA_MONGODB_PASSWORD: mongoPassword
+      BASYX_CORS_ALLOWEDORIGINS: "*"
+      BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+
   aas-registry:
     image: eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT
     restart: unless-stopped
@@ -11,6 +33,10 @@ services:
         max-size: ${LOGGING_MAX_SIZE}
     ports:
       - 8082:8080
+    networks:
+      default:
+        aliases:
+          - aas-registry
     environment:
       BASYX_CORS_ALLOWEDORIGINS: "*"
       BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
@@ -26,6 +52,10 @@ services:
         max-size: ${LOGGING_MAX_SIZE}
     ports:
       - 8083:8080
+    networks:
+      default:
+        aliases:
+          - sm-registry
     environment:
       BASYX_CORS_ALLOWEDORIGINS: "*"
       BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
@@ -47,8 +77,8 @@ services:
       SPRING_DATA_MONGODB_AUTHENTICATIONDATABASE: admin
       SPRING_DATA_MONGODB_USERNAME: mongoAdmin
       SPRING_DATA_MONGODB_PASSWORD: mongoPassword
-      MQTT_CLIENTID: AAS-Env-Example-8081
-      MQTT_HOSTNAME: mqtt
+      MQTT_CLIENTID: aas-transformer_aas-env
+      MQTT_HOSTNAME: aas-broker
       MQTT_PORT: 1884
       BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED: "true"
       BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED: "true"
@@ -59,6 +89,10 @@ services:
       BASYX_EXTERNALURL: http://localhost:8081
     ports:
       - 8081:8081
+    networks:
+      default:
+        aliases:
+          - aas-env
     depends_on:
       aas-database:
         condition: service_healthy
@@ -97,6 +131,10 @@ services:
         max-size: ${LOGGING_MAX_SIZE}
     ports:
       - 1884:1884
+    networks:
+      default:
+        aliases:
+          - aas-broker
     healthcheck:
       test: [ "CMD-SHELL", mosquitto_sub -p 1884 -t 'topic' -C 1 -E -i probe -W 3 ]
       interval: 5s

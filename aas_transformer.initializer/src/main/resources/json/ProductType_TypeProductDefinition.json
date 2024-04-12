@@ -2,7 +2,7 @@
   "id": "ac5cb847-6c38-4af2-9df6-3b97ca2f75a5",
   "destination": {
     "aasDestination": {
-      "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, 'productdata', 'id') }}"
+      "id": "ProductInstance_{{ submodel:sme_value(SOURCE_SUBMODEL, 'id') }}"
     },
     "submodelDestination": {
       "idShort": "TypeProductDefinition",
@@ -12,11 +12,11 @@
   "transformerActions": [
     {
       "actionType": "SUBMODEL_TEMPLATE",
-      "sourceSubmodelIdentifier": {
-        "identifierType": "ID_SHORT",
-        "identifierValue": "productdata"
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "productdata"
       },
-      "submodelTemplate": "{\n  \"idShort\": \"TypeProductDefinition\",\n  \"identification\": {\n    \"idType\": \"Custom\",\n    \"id\": \"TypeProductDefinition\"\n  },\n  \"dataSpecification\": [],\n  \"embeddedDataSpecifications\": [],\n  \"modelType\": {\n    \"name\": \"Submodel\"\n  },\n  \"kind\": \"Instance\",\n  \"submodelElements\": {\n    \"MES_Product_Type_ID\": {\n      \"modelType\": {\n        \"name\": \"Property\"\n      },\n      \"kind\": \"Instance\",\n      \"value\": \"{{ aas:sme_value(SOURCE_AAS, 'productdata', 'id') }}\",\n      \"valueType\": \"string\",\n      \"idShort\": \"MES_Product_Lot_ID\"\n    }\n  },\n  \"parent\": {\n    \"keys\": [\n      {\n        \"type\": \"AssetAdministrationShell\",\n        \"local\": true,\n        \"value\": \"ProductType_{{ aas:sme_value(SOURCE_AAS, 'productdata', 'id') }}\",\n        \"idType\": \"Custom\"\n      }\n    ]\n  }\n}"
+      "submodelTemplate": "{ \"idShort\": \"TypeProductDefinition\", \"identification\": \"TypeProductDefinition\", \"modelType\": \"Submodel\", \"kind\": \"Instance\", \"submodelElements\": [ { \"modelType\": \"Property\", \"kind\": \"Instance\", \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'id') }}\", \"valueType\": \"string\", \"idShort\": \"MES_Product_ID\" } ] }"
     }
   ]
 }

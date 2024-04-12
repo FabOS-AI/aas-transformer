@@ -1,8 +1,5 @@
-package de.fhg.ipa.aas_transformer.service;
+package de.fhg.ipa.aas_transformer.service.mqtt;
 
-import de.fhg.ipa.aas_transformer.service.mqtt.MqttListener;
-import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelElementMqttListener;
-import de.fhg.ipa.aas_transformer.service.mqtt.SubmodelMqttListener;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
@@ -64,7 +61,7 @@ public class BrokerListener implements Runnable {
             try {
                 for (var listener : this.listeners) {
                     for (var topic : listener.getTopics()) {
-                        mqttClient.subscribe(topic, 2, listener);
+                        this.mqttClient.subscribe(topic, 2, listener);
                     }
                 }
                 LOG.info("MQTT subscribed successfully");
@@ -75,7 +72,7 @@ public class BrokerListener implements Runnable {
                 } catch (InterruptedException ex) {
                     throw new RuntimeException(ex);
                 }
-                LOG.error("MQTT client failed to subscribe... sleeping and retry");
+                LOG.error("MQTT client for broker '" + this.mqttClient.getServerURI() + "' failed to subscribe... sleeping and retry: " + e.getMessage());
             } catch (Exception e) {
                 LOG.error(e.getMessage());
                 e.printStackTrace();

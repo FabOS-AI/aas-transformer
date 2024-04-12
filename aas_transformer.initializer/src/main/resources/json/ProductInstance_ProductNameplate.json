@@ -2,7 +2,8 @@
   "id": "8f912166-f430-45d7-822b-6ddd3a956df3",
   "destination": {
     "aasDestination": {
-      "id": "ProductInstance_{{ aas:sme_value(SOURCE_AAS, 'lotdata', 'jobId') }}"
+      "id": "ProductInstance_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}",
+      "test": ""
     },
     "submodelDestination": {
       "idShort": "ProductNameplate",
@@ -12,11 +13,11 @@
   "transformerActions": [
     {
       "actionType": "SUBMODEL_TEMPLATE",
-      "sourceSubmodelIdentifier": {
+      "sourceSubmodelId": {
         "type": "ID_SHORT",
         "id": "lotdata"
       },
-      "submodelTemplate": "{ \"idShort\": \"ProductNameplate\", \"identification\": { \"idType\": \"Custom\", \"id\": \"ProductNameplate\" }, \"dataSpecification\": [], \"embeddedDataSpecifications\": [], \"modelType\": { \"name\": \"Submodel\" }, \"kind\": \"Instance\", \"submodelElements\": { \"MES_Product_Lot_ID\": { \"modelType\": { \"name\": \"Property\" }, \"kind\": \"Instance\", \"value\": \"{{ aas:sme_value(SOURCE_AAS, 'lotdata', 'jobId') }}\", \"valueType\": \"string\", \"idShort\": \"MES_Product_Lot_ID\" } } }"
+      "submodelTemplate": "{ \"modelType\": \"Submodel\", \"kind\":\"Instance\", \"idShort\":\"ProductNameplate\", \"id\": \"ProductNameplate_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \"submodelElements\": [ \t{ \t \"modelType\": \"Property\", \t \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \t \"valueType\": \"xs:string\", \t \"idShort\": \"MES_Product_Lot_ID\" \t} ] }"
     }
   ]
 }

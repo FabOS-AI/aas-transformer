@@ -25,6 +25,9 @@
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>dockerfile-maven-plugin</artifactId>
+                <configuration>
+                    <tag>2.0.15</tag>
+                </configuration>
             </plugin>
         </plugins>
     </build>
