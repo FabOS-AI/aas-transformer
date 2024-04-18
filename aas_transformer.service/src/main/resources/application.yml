@@ -55,16 +55,20 @@ aas:
   aas-registry:
     host: localhost
     port: 8082
-    url: http://${aas.aas-registry.host}:${aas.aas-registry.port}
+    path:
+    url: http://${aas.aas-registry.host}:${aas.aas-registry.port}${aas.aas-registry.path}
   aas-repository:
     host: localhost
     port: 8081
-    url: http://${aas.aas-repository.host}:${aas.aas-repository.port}
+    path:
+    url: http://${aas.aas-repository.host}:${aas.aas-repository.port}${aas.aas-repository.path}
   submodel-registry:
     host: localhost
     port: 8083
-    url: http://${aas.submodel-registry.host}:${aas.submodel-registry.port}
+    path:
+    url: http://${aas.submodel-registry.host}:${aas.submodel-registry.port}${aas.aas-repository.path}
   submodel-repository:
     host: localhost
     port: 8081
-    url: http://${aas.submodel-repository.host}:${aas.submodel-repository.port}
+    path:
+    url: http://${aas.submodel-repository.host}:${aas.submodel-repository.port}${aas.aas-repository.path}
