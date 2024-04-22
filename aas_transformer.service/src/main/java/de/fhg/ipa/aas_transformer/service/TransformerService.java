@@ -13,7 +13,6 @@ import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonSerializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
-import org.eclipse.digitaltwin.basyx.aasregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +101,7 @@ public class TransformerService {
                     var newDestinationAAS = new DefaultAssetAdministrationShell.Builder()
                             .id(destinationAasId)
                             .build();
-                    this.aasRepository.createAas(newDestinationAAS);
+                    this.aasRepository.createOrUpdateAas(newDestinationAAS);
                 }
 
                 var destinationAas = this.aasRepository.getAas(destinationAasId);

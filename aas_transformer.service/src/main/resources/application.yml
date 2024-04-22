@@ -67,6 +67,7 @@ aas:
     port: 8083
     path:
     url: http://${aas.submodel-registry.host}:${aas.submodel-registry.port}${aas.aas-repository.path}
+    url: http://${aas.submodel-registry.host}:${aas.submodel-registry.port}${aas.submodel-registry.path}
   submodel-repository:
     host: localhost
     port: 8081
