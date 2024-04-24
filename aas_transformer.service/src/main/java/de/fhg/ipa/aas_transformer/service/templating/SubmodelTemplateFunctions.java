@@ -39,10 +39,17 @@ public class SubmodelTemplateFunctions extends AbstractTemplateFunctions {
             var getSubmodelElementValueOfSubmodelMethodRef = SubmodelTemplateFunctions.class.getDeclaredMethod(
                     "getSubmodelElementValueOfSubmodel",
                     String.class, String.class);
-            var SubmodelElementValueOfSubmodelTemplateMethod = InjectedContextFunctionProxy.defineProxy(
+            var submodelElementValueOfSubmodelTemplateMethod = InjectedContextFunctionProxy.defineProxy(
                     SubmodelTemplateFunctions.NAMESPACE, "sme_value",
                     getSubmodelElementValueOfSubmodelMethodRef, this);
-            this.templateFunctions.add(SubmodelElementValueOfSubmodelTemplateMethod);
+            this.templateFunctions.add(submodelElementValueOfSubmodelTemplateMethod);
+
+            var getIdOfSubmodelMethodRef = SubmodelTemplateFunctions.class.getDeclaredMethod(
+                    "getSubmodelIdOfSubmodel", String.class);
+            var idOfSubmodelTemplateMethod = InjectedContextFunctionProxy.defineProxy(
+                    SubmodelTemplateFunctions.NAMESPACE, "id",
+                    getIdOfSubmodelMethodRef, this);
+            this.templateFunctions.add(idOfSubmodelTemplateMethod);
 
 //            var resolveToSubmodelElementValueBySemanticIdMethodRef = SubmodelTemplateFunctions.class.getDeclaredMethod(
 //                    "resolveToSubmodelElementValueBySemanticId",
@@ -64,11 +71,22 @@ public class SubmodelTemplateFunctions extends AbstractTemplateFunctions {
         }
     }
 
-    public String getSubmodelElementValueOfSubmodel(String serializedSubmodel, String smeId) {
+    public String getSubmodelIdOfSubmodel(String serializedSubmodel) {
         try {
             var jsonDeserializer = new JsonDeserializer();
             var sourceSubmodel = jsonDeserializer.read(serializedSubmodel, Submodel.class);
-            var submodelElementOptional = this.findSubmodelElement(sourceSubmodel.getSubmodelElements(), smeId);
+            return sourceSubmodel.getId();
+        } catch (DeserializationException e) {
+            LOG.error(e.getMessage());
+            return "ERROR: " + e.getMessage();
+        }
+    }
+
+    public String getSubmodelElementValueOfSubmodel(String serializedSubmodel, String smeIdShortPath) {
+        try {
+            var jsonDeserializer = new JsonDeserializer();
+            var sourceSubmodel = jsonDeserializer.read(serializedSubmodel, Submodel.class);
+            var submodelElementOptional = this.findSubmodelElement(sourceSubmodel.getSubmodelElements(), smeIdShortPath);
             if (submodelElementOptional.isPresent()) {
                 var submodelElement = submodelElementOptional.get();
                  if (submodelElement instanceof Property) {
@@ -76,24 +94,34 @@ public class SubmodelTemplateFunctions extends AbstractTemplateFunctions {
                     return value;
                 }
                  else {
-                     return "Submodel Element [id='" + smeId + "'] not a property";
+                     return "Submodel Element [id='" + smeIdShortPath + "'] not a property";
                  }
             }
-            return "ERROR: Submodel Element [id='" + smeId + "'] not found";
+            return "ERROR: Submodel Element [id='" + smeIdShortPath + "'] not found";
         } catch (DeserializationException e) {
            LOG.error(e.getMessage());
            return "ERROR: " + e.getMessage();
         }
     }
 
-    private Optional<SubmodelElement> findSubmodelElement(List<SubmodelElement> submodelElements, String smeId) {
+    private Optional<SubmodelElement> findSubmodelElement(List<SubmodelElement> submodelElements, String smeIdShortPath) {
+        String idOfNextSubmodelElement;
+        var pathSegments = smeIdShortPath.split("\\.");
+        if (pathSegments.length > 1) {
+            idOfNextSubmodelElement = pathSegments[0];
+            smeIdShortPath = smeIdShortPath.replaceFirst(idOfNextSubmodelElement + ".", "");
+        }
+        else {
+            idOfNextSubmodelElement = smeIdShortPath;
+        }
+
         var submodelElementOptional = submodelElements.stream()
-                .filter(sme -> sme.getIdShort().equals(smeId)).findAny();
+                .filter(sme -> sme.getIdShort().equals(idOfNextSubmodelElement)).findAny();
         if (submodelElementOptional.isPresent()) {
             var submodelElement = submodelElementOptional.get();
             if (submodelElement instanceof SubmodelElementCollection) {
                 var nestedSubmodelElements = ((SubmodelElementCollection)submodelElement).getValue();
-                return this.findSubmodelElement(nestedSubmodelElements, smeId);
+                return this.findSubmodelElement(nestedSubmodelElements, smeIdShortPath);
             }
             else {
                 return Optional.of(submodelElement);

@@ -7,6 +7,9 @@ class TransformerActionSubmodelElementTemplate(
     @JsonProperty("sourceSubmodelId")
     override var sourceSubmodelId: SubmodelId?,
 
+    @JsonProperty("destinationSubmodelElementId")
+    var destinationSubmodelElementId: String = "",
+
     @JsonProperty("submodelElementTemplate")
     var submodelElementTemplate: String = "",
 

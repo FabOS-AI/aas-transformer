@@ -7,7 +7,7 @@
     },
     "submodelDestination": {
       "idShort": "ProductNameplate",
-      "id": "ProductNameplate-{{ uuid:generate() }}"
+      "id": "ProductNameplate_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}"
     }
   },
   "transformerActions": [
@@ -17,7 +17,7 @@
         "type": "ID_SHORT",
         "id": "lotdata"
       },
-      "submodelTemplate": "{ \"modelType\": \"Submodel\", \"kind\":\"Instance\", \"idShort\":\"ProductNameplate\", \"id\": \"ProductNameplate_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \"submodelElements\": [ \t{ \t \"modelType\": \"Property\", \t \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \t \"valueType\": \"xs:string\", \t \"idShort\": \"MES_Product_Lot_ID\" \t} ] }"
+      "submodelTemplate": "{ \"modelType\": \"Submodel\", \"kind\":\"Instance\", \"idShort\":\"ProductNameplate\", \"id\": \"ProductNameplate_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \"submodelElements\": [ \t{ \t \"modelType\": \"Property\", \t \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \t \"valueType\": \"xs:string\", \t \"idShort\": \"id\" \t} ] }"
     }
   ]
 }

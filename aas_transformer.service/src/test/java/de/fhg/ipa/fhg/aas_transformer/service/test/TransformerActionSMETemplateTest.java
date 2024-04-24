@@ -36,6 +36,7 @@ public class TransformerActionSMETemplateTest extends AbstractIT {
         ArrayList<TransformerAction> transformerActions = new ArrayList<>() {{
             add(new TransformerActionSubmodelElementTemplate(
                     sourceSubmodelId,
+                    "",
                     TransformerActionSMETemplateTestConfig.SUBMODEL_ELEMENT_TEMPLATE));
         }};
         this.testTransformer.addTransformerActions(transformerActions);

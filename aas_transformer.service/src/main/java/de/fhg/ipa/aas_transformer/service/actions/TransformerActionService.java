@@ -47,7 +47,7 @@ public abstract class TransformerActionService {
                             .getSemanticId()
                             .getKeys()
                             .stream()
-                            .filter(k -> k.getValue().equals(submodelId.getType()))
+                            .filter(k -> k.getValue().equals(submodelId.getId()))
                             .findFirst()
                             .isPresent();
                 } else {
