@@ -1,7 +1,8 @@
 FROM ubuntu
 
 ENV TRANSFORMER_HOST=aas-transformer \
-    TRANSFORMER_PORT=4010
+    TRANSFORMER_PORT=4010 \
+    TRANSFORMER_PATH=""
 
 COPY ./src/main/resources /aas-transformer-initializer
 
