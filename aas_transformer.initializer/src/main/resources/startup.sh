@@ -15,5 +15,5 @@ done
 for file_path in $json_files_folder/*json;
 do
         echo "Import "$file_path" ..."
-        curl -X 'POST' "http://${transformer_base_url}/aas/transformer" -H 'Content-Type: application/json' -d @$file_path
+        curl -X 'POST' "${transformer_base_url}/aas/transformer" -H 'Content-Type: application/json' -d @$file_path
 done
