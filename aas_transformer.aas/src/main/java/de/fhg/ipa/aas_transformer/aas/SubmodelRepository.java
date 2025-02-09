@@ -13,9 +13,12 @@ import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodel
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,7 @@ public class SubmodelRepository {
 
     private final static int DEFAULT_IN_MEMORY_SIZE = 16 * 1024 * 1024;
     private final String submodelRepositoryUrl;
+    private WebClient webClient;
 
     private final ConnectedSubmodelRepository connectedSubmodelRepository;
 
@@ -35,7 +39,20 @@ public class SubmodelRepository {
     ) {
         this.submodelRepositoryUrl = submodelRepositoryUrl;
         this.connectedSubmodelRepository = new ConnectedSubmodelRepository(submodelRepositoryUrl);
+        webClient = WebClient.builder()
+                .baseUrl(submodelRepositoryUrl)
+                .build();
         LOG.info("SubmodelRepository initialized with URL: {}", submodelRepositoryUrl);
+    }
+
+    public boolean isSubmodelRepositoryAvailable() {
+        try {
+            webClient.get().retrieve().toBodilessEntity().block().getStatusCode();
+        } catch (WebClientResponseException e) {
+            if (!e.getStatusCode().is4xxClientError())
+                return false;
+        }
+        return true;
     }
 
     public List<Submodel> getAllSubmodels() throws DeserializationException {
