@@ -9,8 +9,8 @@ JVM to execute the programme and to run  tests:
 ```--add-opens java.base/java.lang=ALL-UNNAMED```
 
 Edit JVM options in IntelliJ:
-![image](./docs/images/IntellJ_JVM-Options_1.png)
-![image](./docs/images/IntellJ_JVM-Options_2.png)
+![image](./images/IntellJ_JVM-Options_1.png)
+![image](./images/IntellJ_JVM-Options_2.png)
 
 
 ## Templating

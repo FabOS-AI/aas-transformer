@@ -6,9 +6,11 @@ import org.hibernate.type.SqlTypes
 import java.util.*
 
 @Entity
-class Transformer(
+class Transformer (
 
+//    @javax.persistence.Id
     @Id
+    @org.springframework.data.annotation.Id
     var id: UUID,
 
     @Column(name = "destination", columnDefinition = "LONGTEXT")
@@ -17,15 +19,22 @@ class Transformer(
 
     @Column(name = "transformerActions", columnDefinition = "LONGTEXT")
     @JdbcTypeCode(SqlTypes.JSON)
-    var transformerActions : MutableList<TransformerAction> = LinkedList()
-) {
-    constructor(destination: Destination, transformerActions: MutableList<TransformerAction>) : this(UUID.randomUUID(), destination, transformerActions) { }
-    constructor(destination: Destination) : this(UUID.randomUUID(), destination, LinkedList()) { }
+    var transformerActions : MutableList<TransformerAction> = LinkedList(),
 
-    constructor() :this(Destination())
+    @Column(name = "sourceSubmodelRules", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    var sourceSubmodelIdRules : MutableList<SourceSubmodelIdRule> = LinkedList()
+) : AbstractTransformer() {
+    constructor(destination: Destination, transformerActions: MutableList<TransformerAction>, sourceSubmodelIdRules: MutableList<SourceSubmodelIdRule>)
+            : this(UUID.randomUUID(), destination, transformerActions, sourceSubmodelIdRules) { }
+    constructor(destination: Destination)
+            : this(UUID.randomUUID(), destination, LinkedList(), LinkedList()) { }
+    constructor()
+            :this(Destination())
 
     @Version
     @Column(name="OPTLOCK")
+    @org.springframework.data.annotation.Version
     var version: Int = 0
 
     fun addTransformerAction(transformerAction : TransformerAction) {

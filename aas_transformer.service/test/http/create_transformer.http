@@ -1,0 +1,5 @@
+### POST /aas/transformer
+POST http://{{host}}:{{port}}/aas/transformer
+Content-Type: application/json
+
+< ./transformer/copy_transformer.json

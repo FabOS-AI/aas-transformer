@@ -15,16 +15,25 @@
         <module>aas_transformer.model</module>
         <module>aas_transformer.persistence</module>
         <module>aas_transformer.service</module>
+        <module>aas_transformer.aas</module>
+        <module>aas_transformer.clients</module>
+        <module>aas_transformer.test</module>
+        <module>aas_transformer.transformation</module>
+        <module>aas_transformer.open_api</module>
     </modules>
 
     <properties>
-        <revision>1.0.0-SNAPSHOT</revision>
+        <revision>2.0.0-SNAPSHOT</revision>
+
+        <resource.delimiter>^</resource.delimiter>
 
         <maven.compiler.source>18</maven.compiler.source>
         <maven.compiler.target>18</maven.compiler.target>
 
-        <spring.boot.version>3.2.2</spring.boot.version>
+        <spring.boot.version>3.3.6</spring.boot.version>
+        <spring.framework.version>6.1.15</spring.framework.version>
         <springdoc.openapi.version>2.3.0</springdoc.openapi.version>
+        <swagger.version>2.2.22</swagger.version>
         <slf4j.version>1.7.36</slf4j.version>
         <mariadb.client.version>2.7.4</mariadb.client.version>
         <junit.version>5.10.1</junit.version>
@@ -32,7 +41,11 @@
         <restassured.version>5.3.1</restassured.version>
         <assertj.version>3.24.2</assertj.version>
         <jinjava.version>2.7.1</jinjava.version>
+        <basyx.version>2.0.0-milestone-04</basyx.version>
+        <wiremock.version>3.10.0</wiremock.version>
+        <aas4j.version>1.0.2</aas4j.version>
 
+        <maven.plugin.apache.resources.version>3.2.0</maven.plugin.apache.resources.version>
         <maven.plugin.codehaus.exec.version>1.2.1</maven.plugin.codehaus.exec.version>
         <maven.plugin.spring.boot.version>${spring.boot.version}</maven.plugin.spring.boot.version>
         <maven.plugin.dockerfile.version>1.4.10</maven.plugin.dockerfile.version>
@@ -68,7 +81,25 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
+            <!-- Resources !-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven.plugin.apache.resources.version}</version>
+                <configuration>
+                    <delimiters>
+                        <delimiter>${resource.delimiter}</delimiter>
+                    </delimiters>
+                    <useDefaultDelimiters>false</useDefaultDelimiters>
+                </configuration>
+            </plugin>
             <!-- Spring Boot !-->
             <plugin>
                 <groupId>org.springframework.boot</groupId>

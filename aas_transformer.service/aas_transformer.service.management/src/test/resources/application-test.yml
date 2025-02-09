@@ -1,0 +1,12 @@
+#spring:
+#  jpa:
+#    database-platform: org.hibernate.dialect.H2Dialect
+#  r2dbc:
+#    url: r2dbc:h2:mem:///test
+aas_transformer:
+  services:
+    management:
+      schema: http
+      host: localhost
+      port: 4010
+      base-url: ${aas_transformer.services.management.schema}://${aas_transformer.services.management.host}:${aas_transformer.services.management.port}

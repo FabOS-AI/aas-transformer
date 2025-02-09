@@ -1,0 +1,87 @@
+### Application
+application:
+  name: "^project.artifactId^"
+  version: "^project.version^"
+  timestamp: "^timestamp^"
+
+### Server / API
+server:
+  port: 4010
+  error:
+    include-message: always
+
+open-api:
+  title: "^project.artifactId^"
+  description: REST API of AAS Transformer Management
+  version: "^project.version^"
+  contact:
+    name: Fraunhofer IPA
+    url: https://www.ipa.fraunhofer.de
+    email: benjamin.goetz@ipa.fraunhofer.de
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+spring:
+  application:
+    name: aas_transformer_management
+  jpa:
+    hibernate:
+      ddl-auto: update
+  r2dbc:
+    url: r2dbc:mariadb://${database.host}:${database.port}/${database.schema}?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: ${database.username}
+    password: ${database.password}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      username: default
+      password: password
+
+management:
+  metrics:
+    tags:
+      application: ${application.name}
+      version: ${application.version}
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+
+### Database
+database:
+  host: localhost
+  port: 3307
+  schema: aas_transformer
+  username: aas_transformer
+  password: password
+
+### AAS
+aas:
+  broker:
+    host: localhost
+    port: 1884
+  aas-registry:
+    host: localhost
+    port: 8082
+    path:
+    url: http://${aas.aas-registry.host}:${aas.aas-registry.port}${aas.aas-registry.path}
+  aas-repository:
+    host: localhost
+    port: 8081
+    path:
+    url: http://${aas.aas-repository.host}:${aas.aas-repository.port}${aas.aas-repository.path}
+  submodel-registry:
+    host: localhost
+    port: 8083
+    path:
+    url: http://${aas.submodel-registry.host}:${aas.submodel-registry.port}${aas.submodel-registry.path}
+  submodel-repository:
+    host: localhost
+    port: 8081
+    path:
+    url: http://${aas.submodel-repository.host}:${aas.submodel-repository.port}${aas.aas-repository.path}

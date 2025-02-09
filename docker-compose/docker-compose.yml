@@ -52,5 +52,13 @@ services:
     volumes:
       - "aas_transformer_database:/var/lib/mysql"
 
+  aas-transformer-redis:
+    image: redis:7
+    command: redis-server /redis.conf
+    volumes:
+      - "./redis.conf/:/redis.conf"
+    ports:
+      - "6379:6379"
+
 volumes:
   aas_transformer_database:

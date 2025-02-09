@@ -1,0 +1,2 @@
+### DELETE /aas/transformer/{id}
+DELETE http://{{host}}:{{port}}/aas/transformer/{{transformerId}}

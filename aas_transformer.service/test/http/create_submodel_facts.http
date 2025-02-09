@@ -1,0 +1,27 @@
+### POST /submodels
+POST http://{{submodelRepoHost}}:{{submodelRepoPort}}{{submodelRepoContextPath}}/submodels
+Content-Type: application/json
+
+< ./submodels/ansible_facts_random.json
+
+> {%
+  client.global.set("newSubmodelId", response.body["id"]);
+%}
+
+
+
+### POST /shells/{aasId}/submodel-refs
+POST http://{{aasRepoHost}}:{{aasRepoPort}}{{aasRepoContextPath}}/shells/{{aasIdEnc}}/submodel-refs
+Content-Type: application/json
+
+{
+  "type":"ModelReference",
+  "keys":[
+    {
+      "type":"Submodel",
+      "value":"{{newSubmodelId}}"
+    }
+  ]
+}
+
+###

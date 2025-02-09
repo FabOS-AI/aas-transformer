@@ -1,0 +1,35 @@
+### POST /shells
+POST http://{{aasRepoHost}}:{{aasRepoPort}}{{aasRepoContextPath}}/shells
+Content-Type: application/json
+
+{
+  "modelType": {
+    "name": "AssetAdministrationShell"
+  },
+  "idShort": "{{aasIdShort}}",
+  "modelType": "AssetAdministrationShell",
+  "id": "{{aasId}}",
+  "endpoints": [],
+  "assetInformation": {
+    "assetKind": "Instance",
+    "globalAssetId": "{{assetId}}"
+  }
+}
+
+### PUT /shells/{aasId}
+PUT http://{{aasRepoHost}}:{{aasRepoPort}}{{aasRepoContextPath}}/shells/{{aasIdEnc}}
+Content-Type: application/json
+
+{
+  "modelType": {
+    "name": "AssetAdministrationShell"
+  },
+  "idShort": "{{aasIdShort}}",
+  "modelType": "AssetAdministrationShell",
+  "id": "{{aasId}}",
+  "endpoints": [],
+  "assetInformation": {
+    "assetKind": "Instance",
+    "globalAssetId": "{{assetId}}"
+  }
+}

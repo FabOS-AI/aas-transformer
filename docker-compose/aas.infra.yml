@@ -79,7 +79,7 @@ services:
       SPRING_DATA_MONGODB_PASSWORD: mongoPassword
       MQTT_CLIENTID: aas-transformer_aas-env
       MQTT_HOSTNAME: aas-broker
-      MQTT_PORT: 1884
+      MQTT_PORT: 1883
       BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED: "true"
       BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED: "true"
       BASYX_CORS_ALLOWEDORIGINS: "*"
@@ -130,13 +130,16 @@ services:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
     ports:
-      - 1884:1884
+      - 1883:1883
+      - 9001:9001
     networks:
       default:
         aliases:
           - aas-broker
+    volumes:
+      - "./mosquitto.conf:/mosquitto/config/mosquitto.conf"
     healthcheck:
-      test: [ "CMD-SHELL", mosquitto_sub -p 1884 -t 'topic' -C 1 -E -i probe -W 3 ]
+      test: [ "CMD-SHELL", mosquitto_sub -p 1883 -t 'topic' -C 1 -E -i probe -W 3 ]
       interval: 5s
       retries: 3
       start_period: 1s

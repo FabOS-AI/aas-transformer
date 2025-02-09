@@ -1,0 +1,64 @@
+### Get datasources
+GET http://admin:admin@localhost:61280/api/datasources
+
+### Create datasource
+POST http://admin:admin@localhost:54968/api/datasources
+Content-Type: application/json
+
+{
+  "orgId": 1,
+  "name": "transformer-prometheus",
+  "type": "prometheus",
+  "typeName": "Prometheus",
+  "typeLogoUrl": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
+  "access": "proxy",
+  "url": "http://host.docker.internal:54876",
+  "user": "",
+  "database": "",
+  "basicAuth": false,
+  "isDefault": true,
+  "jsonData": {
+    "httpMethod": "POST"
+  },
+  "readOnly": false
+}
+
+### Delete datasource
+DELETE http://admin:admin@localhost:54968/api/datasources/2
+
+### Get dashboards
+GET http://admin:admin@localhost:63114/api/search?type=dash-db
+
+### Get dashboard by uid
+GET http://admin:admin@localhost:63114/api/dashboards/uid/ceaku7esd337kd
+
+### Create Dashboard - Transformer
+POST http://admin:admin@localhost:55059/api/dashboards/db
+Content-Type: application/json
+
+< ./grafana_dashboard_transformer.json
+
+### Create Dashboard - Container
+POST http://admin:admin@localhost:63603/api/dashboards/db
+Content-Type: application/json
+
+< ./grafana_dashboard_container.json
+
+### Delete dashboard by uid
+DELETE http://admin:admin@localhost:63114/api/dashboards/uid/feakotilqxgjke
+
+
+### Create organization annotation
+POST http://admin:admin@localhost:56362/api/annotations
+Content-Type: application/json
+
+{
+  "time": 1738682941772,
+  "timeEnd": 1738682941772,
+  "tags": ["tag1", "tag2"],
+  "text": "executor scale"
+}
+
+
+### Get annotations
+GET http://admin:admin@localhost:60085/api/annotations

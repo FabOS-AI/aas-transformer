@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.fhg.ipa</groupId>
+        <artifactId>aas_transformer.clients</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>aas_transformer.clients.management</artifactId>
+
+    <properties>
+        <maven.compiler.source>18</maven.compiler.source>
+        <maven.compiler.target>18</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <!-- SPRING -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- AAS -->
+        <dependency>
+            <groupId>org.eclipse.digitaltwin.aas4j</groupId>
+            <artifactId>aas4j-model</artifactId>
+            <version>${aas4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.digitaltwin.aas4j</groupId>
+            <artifactId>aas4j-dataformat-json</artifactId>
+            <version>${aas4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
+
+        <!-- SHARED -->
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.model</artifactId>
+            <version>${revision}</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.10.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+<!--                            <inputSpec>http://localhost:4010/v3/api-docs</inputSpec>-->
+                            <inputSpec>${project.basedir}/src/main/resources/swagger.yml</inputSpec>
+                            <generatorName>java</generatorName>
+                            <library>webclient</library>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <generateModelTests>false</generateModelTests>
+                            <generateModels>false</generateModels>
+                            <configOptions>
+                                <sourceFolder>src/main/java</sourceFolder>
+                                <apiPackage>de.fhg.ipa.aas_transformer.clients.management</apiPackage>
+                            </configOptions>
+                            <importMappings>
+                                <importMapping>DefaultSubmodel=org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel</importMapping>
+                                <importMapping>Destination=de.fhg.ipa.aas_transformer.model.Destination</importMapping>
+                                <importMapping>DestinationAAS=de.fhg.ipa.aas_transformer.model.DestinationAAS</importMapping>
+                                <importMapping>DestinationSubmodel=de.fhg.ipa.aas_transformer.model.DestinationSubmodel</importMapping>
+                                <importMapping>Submodel=org.eclipse.digitaltwin.aas4j.v3.model.Submodel</importMapping>
+                                <importMapping>SubmodelId=de.fhg.ipa.aas_transformer.model.SubmodelId</importMapping>
+                                <importMapping>TransformationJob=de.fhg.ipa.aas_transformer.model.TransformationJob</importMapping>
+                                <importMapping>TransformationJobAction=de.fhg.ipa.aas_transformer.model.TransformationJobAction</importMapping>
+                                <importMapping>TransformationLog=de.fhg.ipa.aas_transformer.model.TransformationLog</importMapping>
+                                <importMapping>Transformer=de.fhg.ipa.aas_transformer.model.Transformer</importMapping>
+                                <importMapping>TransformerAction=de.fhg.ipa.aas_transformer.model.TransformerAction</importMapping>
+                                <importMapping>TransformerActionCopy=de.fhg.ipa.aas_transformer.model.TransformerActionCopy</importMapping>
+                                <importMapping>TransformerActionSubmodelElementTemplate=de.fhg.ipa.aas_transformer.model.TransformerActionSubmodelElementTemplate</importMapping>
+                                <importMapping>TransformerActionSubmodelTemplate=de.fhg.ipa.aas_transformer.model.TransformerActionSubmodelTemplate</importMapping>
+                                <importMapping>TransformerActionType=de.fhg.ipa.aas_transformer.model.TransformerActionType</importMapping>
+                                <importMapping>TransformerChangeEvent=de.fhg.ipa.aas_transformer.model.TransformerChangeEvent</importMapping>
+                                <importMapping>TransformerChangeEventDTOListener=de.fhg.ipa.aas_transformer.model.TransformerChangeEventDTOListener</importMapping>
+                                <importMapping>transformerChangeEventType=de.fhg.ipa.aas_transformer.model.TransformerChangeEventType</importMapping>
+                                <importMapping>TransformerDTOListener=de.fhg.ipa.aas_transformer.model.TransformerDTOListener</importMapping>
+                            </importMappings>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

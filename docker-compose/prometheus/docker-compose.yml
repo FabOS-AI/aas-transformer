@@ -1,0 +1,24 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+        - "9090:9090"
+
+  redis-exporter:
+    image: bitnami/redis-exporter:1.67.0
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: redis://host.docker.internal:63459
+      REDIS_USER:
+      REDIS_PASSWORD:
+#      REDIS_EXPORTER_CHECK_KEYS: proc_jobs* # wrong?
+      REDIS_EXPORTER_CHECK_SINGLE_KEYS: jobs
+      REDIS_EXPORTER_COUNT_KEYS: proc_jobs*
+
+
+
+#  grafana:
+#    ...

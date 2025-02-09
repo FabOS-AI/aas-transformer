@@ -1,0 +1,2 @@
+### DELETE /shells/{aasId}
+DELETE http://{{aasRepoHost}}:{{aasRepoPort}}{{aasRepoContextPath}}/shells/{{aasIdEnc}}

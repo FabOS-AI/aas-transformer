@@ -7,231 +7,23 @@
         <version>${revision}</version>
     </parent>
 
-    <name>aas_transformer.service</name>
-    <groupId>de.fhg.ipa</groupId>
     <artifactId>aas_transformer.service</artifactId>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
+    <modules>
+        <module>aas_transformer.service.listener</module>
+        <module>aas_transformer.service.executor</module>
+        <module>aas_transformer.service.lock_management</module>
+        <module>aas_transformer.service.management</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <docker.image.name>service</docker.image.name>
-        <docker.image.skip>false</docker.image.skip>
     </properties>
 
     <dependencies>
-        <!-- SHARED MODULES -->
-        <dependency>
-            <groupId>de.fhg.ipa</groupId>
-            <artifactId>aas_transformer.persistence.mariadb</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- SPRING -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- SPRING DOC -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>${springdoc.openapi.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
-            <version>${springdoc.openapi.version}</version>
-        </dependency>
-
-        <!-- HTTP !-->
-        <!-- Java REST Jersey client (for WebServiceRawClient) -->
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-common</artifactId>
-            <version>2.40</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>2.40</version>
-        </dependency>
-
-        <!-- Jersey InjectionManager (for Jersey client)  -->
-        <dependency>
-            <groupId>org.glassfish.jersey.inject</groupId>
-            <artifactId>jersey-hk2</artifactId>
-            <version>2.40</version>
-        </dependency>
-
-        <!-- MQTT !-->
-        <dependency>
-            <groupId>org.eclipse.paho</groupId>
-            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
-            <version>1.2.5</version>
-        </dependency>
-
-        <!-- BASYX !-->
-        <dependency>
-            <groupId>org.eclipse.digitaltwin.basyx</groupId>
-            <artifactId>basyx.aasrepository-client</artifactId>
-            <version>2.0.0-milestone-02</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.digitaltwin.basyx</groupId>
-            <artifactId>basyx.aasrepository-client</artifactId>
-            <version>2.0.0-milestone-02</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.digitaltwin.basyx</groupId>
-            <artifactId>basyx.submodelrepository-client</artifactId>
-            <version>2.0.0-milestone-02</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.digitaltwin.basyx</groupId>
-            <artifactId>basyx.aasregistry-client-native</artifactId>
-            <version>2.0.0-milestone-02</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.digitaltwin.basyx</groupId>
-            <artifactId>basyx.submodelregistry-client-native</artifactId>
-            <version>2.0.0-milestone-02</version>
-        </dependency>
-
-        <!-- JSON PARSER-->
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-kotlin</artifactId>
-        </dependency>
-
-        <!-- JINJAVA !-->
-        <dependency>
-            <groupId>com.hubspot.jinjava</groupId>
-            <artifactId>jinjava</artifactId>
-            <version>${jinjava.version}</version>
-        </dependency>
-
-        <!-- SHARED !-->
-        <dependency>
-            <groupId>de.fhg.ipa</groupId>
-            <artifactId>aas_transformer.model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>de.fhg.ipa</groupId>
-            <artifactId>aas_transformer.persistence.api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <!-- TESTING -->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>${testcontainers.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>mariadb</artifactId>
-            <version>${testcontainers.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${testcontainers.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <version>${restassured.version}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.codehaus.groovy</groupId>
-                    <artifactId>groovy</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.codehaus.groovy</groupId>
-                    <artifactId>groovy-xml</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <!-- Spring Boot !-->
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${maven.plugin.spring.boot.version}</version>
-                <configuration>
-                    <compilerArguments>-parameters</compilerArguments>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                            <goal>build-info</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>exec</classifier>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Compilation !-->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>${maven.plugin.codehaus.exec.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <mainClass>de.fhg.ipa.aas_transformer.service.Application</mainClass>
-                </configuration>
-            </plugin>
-            <!-- Docker Image !-->
-            <plugin>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>

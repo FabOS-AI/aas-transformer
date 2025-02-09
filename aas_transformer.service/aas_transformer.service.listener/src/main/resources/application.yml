@@ -1,0 +1,81 @@
+### Application
+application:
+  name: "^project.artifactId^"
+  version: "^project.version^"
+  timestamp: "^timestamp^"
+
+### Server / API
+server:
+  port: 4020
+  error:
+    include-message: always
+
+open-api:
+  title: "^project.artifactId^"
+  description: REST API of AAS Transformer Listener
+  version: "^project.version^"
+  contact:
+    name: Fraunhofer IPA
+    url: https://www.ipa.fraunhofer.de
+    email: benjamin.goetz@ipa.fraunhofer.de
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+spring:
+  application:
+    name: listener
+  autoconfigure:
+    # Disable Spring Data auto-configuration
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      username: default
+      password: password
+
+### TRANSFORMER
+aas_transformer:
+  services:
+    listener:
+      strict-mode:
+        enabled: false
+    management:
+      schema: http
+      host: localhost
+      port: 4010
+      base-url: ${aas_transformer.services.management.schema}://${aas_transformer.services.management.host}:${aas_transformer.services.management.port}
+
+### AAS
+aas:
+  broker:
+    host: localhost
+    port: 1883
+  aas-registry:
+    host: localhost
+    port: 8082
+    path:
+    url: http://${aas.aas-registry.host}:${aas.aas-registry.port}${aas.aas-registry.path}
+  aas-repository:
+    host: localhost
+    port: 8081
+    path:
+    url: http://${aas.aas-repository.host}:${aas.aas-repository.port}${aas.aas-repository.path}
+  submodel-registry:
+    host: localhost
+    port: 8083
+    path:
+    url: http://${aas.submodel-registry.host}:${aas.submodel-registry.port}${aas.submodel-registry.path}
+  submodel-repository:
+    host: localhost
+    port: 8081
+    path:
+    url: http://${aas.submodel-repository.host}:${aas.submodel-repository.port}${aas.aas-repository.path}

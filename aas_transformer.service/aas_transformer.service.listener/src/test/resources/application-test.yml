@@ -1,0 +1,49 @@
+### Application
+application:
+  name: "^project.artifactId^"
+  version: "^project.version^"
+  timestamp: "^timestamp^"
+
+### Server / API
+server:
+  port: 4020
+  error:
+    include-message: always
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+spring:
+  application:
+    name: resource_management
+  autoconfigure:
+    # Disable Spring Data auto-configuration
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration
+
+### AAS
+aas:
+  broker:
+    host: localhost
+    port: 1884
+  submodel-registry:
+    host: localhost
+    port: 8083
+    url: http://${aas.submodel-registry.host}:${aas.submodel-registry.port}
+  submodel-repository:
+    host: localhost
+    port: 8081
+    url: http://${aas.submodel-repository.host}:${aas.submodel-repository.port}
+
+### AAS Transformer
+aas_transformer:
+  services:
+    listener:
+      strict-mode:
+        enabled: true
