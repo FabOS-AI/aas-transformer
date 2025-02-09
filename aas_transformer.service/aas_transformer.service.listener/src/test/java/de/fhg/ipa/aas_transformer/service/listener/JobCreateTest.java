@@ -54,6 +54,7 @@ import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAn
 import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -107,6 +108,12 @@ public class JobCreateTest {
     public void testContextLoaded() {
         assertThat(submodelRepository).isNotNull();
         assertThat(redisJobProducer).isNotNull();
+    }
+
+    @Test
+    @Order(15)
+    public void testSubmodelRepoConnection() {
+        assertTrue(submodelRepository.isSubmodelRepositoryAvailable());
     }
 
     @Test
