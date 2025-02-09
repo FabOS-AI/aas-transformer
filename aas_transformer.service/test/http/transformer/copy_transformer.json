@@ -1,0 +1,29 @@
+{
+  "id": "{{transformerId}}",
+  "destination": {
+    "submodelDestination": {
+      "idShort": "operating-system",
+      "id": "operating-system-{{destinationId}}"
+    }
+  },
+  "transformerActions": [
+    {
+      "actionType": "COPY",
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible-facts"
+      },
+      "sourceSubmodelElement": "distribution",
+      "destinationSubmodelElement": "distribution_new"
+    },
+    {
+      "actionType": "COPY",
+      "sourceSubmodelId": {
+        "type": "ID_SHORT",
+        "id": "ansible-facts"
+      },
+      "sourceSubmodelElement": "distribution_major_version",
+      "destinationSubmodelElement": "distribution_major_version_new"
+    }
+  ]
+}
