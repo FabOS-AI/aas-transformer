@@ -196,7 +196,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
     private GenericContainer getAasEnvContainer() throws IOException {
         ServerSocket socket = new ServerSocket(0);
-        int randomFreeHostPort = socket.getLocalPort();
+//        int randomFreeHostPort = socket.getLocalPort();
         socket.close();
         String mqttClientId = "aas-transformer-it_aas-env"+ UUID.randomUUID().toString().split("-")[0];
 
@@ -214,8 +214,10 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
         aasEnvLabels.putAll(containerLabels);
         aasEnvLabels.putAll(traefikLabels);
 
-        return new FixedHostPortGenericContainer<>("eclipsebasyx/aas-environment:2.0.0-SNAPSHOT")
-                .withFixedExposedPort(randomFreeHostPort, 8081)
+//        return new FixedHostPortGenericContainer<>("eclipsebasyx/aas-environment:2.0.0-SNAPSHOT")
+//                .withFixedExposedPort(randomFreeHostPort, 8081)
+        return new GenericContainer<>(
+                DockerImageName.parse("eclipsebasyx/aas-environment:2.0.0-SNAPSHOT"))
                 .withNetwork(containerNetwork)
                 .withLabels(aasEnvLabels)
                 .dependsOn()
