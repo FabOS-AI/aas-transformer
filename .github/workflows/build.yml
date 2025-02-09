@@ -26,6 +26,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install additional packages
         run: sudo apt update && sudo apt install -y netcat-traditional
+      - name: debug netcat
+        run: nc -h
       - name: Set up JDK 19
         uses: actions/setup-java@v3
         with:
