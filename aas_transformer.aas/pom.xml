@@ -94,7 +94,7 @@
         <dependency>
             <groupId>de.fhg.ipa</groupId>
             <artifactId>aas_transformer.persistence.api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
 
