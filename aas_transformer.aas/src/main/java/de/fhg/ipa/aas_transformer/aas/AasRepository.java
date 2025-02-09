@@ -30,6 +30,7 @@ public class AasRepository {
     public AasRepository(@Value("${aas.aas-repository.url}") String aasRepositoryUrl) {
         this.aasRepositoryUrl = aasRepositoryUrl;
         this.connectedAasRepository = new ConnectedAasRepository(this.aasRepositoryUrl);
+        LOG.info("AasRepository initialized with URL: {}", aasRepositoryUrl);
     }
 
     public void createAasOrDoNothing(AssetAdministrationShell aas) {

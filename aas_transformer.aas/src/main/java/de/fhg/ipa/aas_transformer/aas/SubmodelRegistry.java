@@ -34,6 +34,7 @@ public class SubmodelRegistry {
         var objectMapper = new ObjectMapper();
         var submodelRegistryClient = new org.eclipse.digitaltwin.basyx.submodelregistry.client.ApiClient(HttpClient.newBuilder(), objectMapper, this.submodelRegistryUrl);
         this.submodelRegistryApi = new SubmodelRegistryApi(submodelRegistryClient);
+        LOG.info("SubmodelRegistry initialized with URL: {}", submodelRegistryUrl);
     }
 
     public Optional<SubmodelDescriptor> findSubmodelDescriptor(String submodelId) {

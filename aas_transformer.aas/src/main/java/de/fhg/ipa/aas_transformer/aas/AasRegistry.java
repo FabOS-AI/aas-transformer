@@ -37,6 +37,7 @@ public class AasRegistry {
         var objectMapper = new ObjectMapper();
         var aasRegistryClient = new ApiClient(HttpClient.newBuilder(), objectMapper, this.aasRegistryUrl);
         this.aasRegistryApi = new RegistryAndDiscoveryInterfaceApi(aasRegistryClient);
+        LOG.info("AasRegistry initialized with URL: {}", aasRegistryUrl);
     }
 
     public Optional<AssetAdministrationShellDescriptor> getAasDescriptor(String aasId) throws ApiException {

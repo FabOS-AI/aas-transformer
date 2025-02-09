@@ -35,6 +35,7 @@ public class SubmodelRepository {
     ) {
         this.submodelRepositoryUrl = submodelRepositoryUrl;
         this.connectedSubmodelRepository = new ConnectedSubmodelRepository(submodelRepositoryUrl);
+        LOG.info("SubmodelRepository initialized with URL: {}", submodelRepositoryUrl);
     }
 
     public List<Submodel> getAllSubmodels() throws DeserializationException {
