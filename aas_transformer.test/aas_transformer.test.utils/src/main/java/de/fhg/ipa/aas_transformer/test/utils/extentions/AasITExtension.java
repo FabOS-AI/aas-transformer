@@ -157,7 +157,11 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
             }
             System.out.println("AAS Registry: http://localhost:" + aasRegistryPort);
             System.out.println("Submodel Registry: http://localhost:" + submodelRegistryPort);
-            System.out.println("AAS Environment: http://localhost:" + traefikWebPort + aasEnvUrlPrefix);
+            if(RUN_LOAD_BALANCER) {
+                System.out.println("AAS Environment: http://localhost:" + traefikWebPort + aasEnvUrlPrefix);
+            } else {
+                System.out.println("AAS Environment: http://localhost:" + aasEnvPort);
+            }
             System.out.println("AAS Env Db: http://localhost:" + aasEnvMongoDbPort);
             System.out.println("MQTT Broker: tcp://localhost:" + mqttBrokerPort);
             System.out.println("MQTT WS Broker: ws://localhost:" + mqttBrokerWsPort);
