@@ -10,6 +10,7 @@ import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodel
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class GenericTestConfig {
     public static int SUBMODEL_REGISTRY_PUBLIC_PORT = 8083;
@@ -21,8 +22,6 @@ public class GenericTestConfig {
     public static ConnectedSubmodelRepository submodelRepository;
     public static ObjectMapper objectMapper = new ObjectMapper();
 
-    public static File simpleSubmodelFile = new File("src/test/resources/submodels/simple-submodel.json");
-
     public static String getAASRegistryUrl() {
         return "http://localhost:"+ SUBMODEL_REGISTRY_PUBLIC_PORT +"/registry";
     }
@@ -31,8 +30,9 @@ public class GenericTestConfig {
     }
 
     public static Submodel getSimpleSubmodel() throws IOException, DeserializationException {
+        InputStream in = GenericTestConfig.class.getClassLoader().getResourceAsStream("simple-submodel.json");
         JsonDeserializer jsonDeserializer = new JsonDeserializer();
-        var submodel = jsonDeserializer.read(new FileInputStream(simpleSubmodelFile), Submodel.class);
+        var submodel = jsonDeserializer.read(in, Submodel.class);
 
         return submodel;
     }
