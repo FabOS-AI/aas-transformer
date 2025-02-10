@@ -79,8 +79,10 @@ public class SubmodelRepository {
 
     public void createOrUpdateSubmodel(Submodel submodel) {
         try {
+            LOG.info("Creating submodel with id: {}", submodel.getId());
             this.connectedSubmodelRepository.createSubmodel(submodel);
         } catch (CollidingIdentifierException e) {
+            LOG.info("Updating submodel with id: {}", submodel.getId());
             this.connectedSubmodelRepository.updateSubmodel(submodel.getId(), submodel);
         }
         catch (RuntimeException e) {
