@@ -45,8 +45,6 @@ abstract class AbstractAasInfraExtension {
                 .withEnv("BASYX_CORS_ALLOWEDMETHODS", "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD")
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
 
-        container.setPortBindings(List.of("8080:8080"));
-
         return container;
     }
 
@@ -61,8 +59,6 @@ abstract class AbstractAasInfraExtension {
                 .withEnv("BASYX_CORS_ALLOWEDORIGINS", "*")
                 .withEnv("BASYX_CORS_ALLOWEDMETHODS", "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD")
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
-
-        container.setPortBindings(List.of("8082:8080"));
 
         return container;
     }
