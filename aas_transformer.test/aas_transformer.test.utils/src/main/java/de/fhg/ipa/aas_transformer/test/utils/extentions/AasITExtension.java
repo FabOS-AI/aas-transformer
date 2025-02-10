@@ -22,7 +22,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofMinutes(5);
     private static boolean RUN_LOAD_BALANCER = true;
-    private static String HOSTNAME = "host.docker.internal";
+    private static String HOSTNAME = "localhost";
 
     protected Network containerNetwork = Network.newNetwork();
     protected GenericContainer traefikContainer;
@@ -170,7 +170,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
     }
 
     private GenericContainer getAasRegistryContainer() {
-        return new GenericContainer<>(
+        GenericContainer container = new GenericContainer<>(
                 DockerImageName.parse("eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT"))
                 .withNetwork(containerNetwork)
                 .withNetworkAliases("aas-registry")
@@ -180,10 +180,14 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
                 .withEnv("BASYX_CORS_ALLOWEDORIGINS", "*")
                 .withEnv("BASYX_CORS_ALLOWEDMETHODS", "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD")
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
+
+        container.setPortBindings(List.of("8080:8080"));
+
+        return container;
     }
 
     private GenericContainer getSmRegistryContainer() {
-        return new GenericContainer<>(
+        GenericContainer container = new GenericContainer<>(
                 DockerImageName.parse("eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT"))
                 .withNetwork(containerNetwork)
                 .withNetworkAliases("sm-registry")
@@ -193,6 +197,10 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
                 .withEnv("BASYX_CORS_ALLOWEDORIGINS", "*")
                 .withEnv("BASYX_CORS_ALLOWEDMETHODS", "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD")
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
+
+        container.setPortBindings(List.of("8082:8080"));
+
+        return container;
     }
 
     private List<GenericContainer> getAasEnvContainerList(Integer traefikHttpPort) {
@@ -207,12 +215,12 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
     }
 
     private List<GenericContainer> getAasEnvContainerList() {
-        return List.of(
-                getAasEnvContainer("")
-        );
+        return List.of(getAasEnvContainer(""));
     }
 
     private GenericContainer getAasEnvContainer(String externalUrl) {
+        String externalPort = "8081";
+        List<String> portMapping = null;
         int randomFreeHostPort;
         try {
             ServerSocket socket = new ServerSocket(0);
@@ -223,7 +231,8 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
         }
 
         if(externalUrl.equals("")) {
-            externalUrl = "http://" + HOSTNAME + ":" + randomFreeHostPort;
+            externalUrl = "http://" + HOSTNAME + ":" + externalPort;
+            portMapping = List.of( "8081:8081");
         }
         String mqttClientId = "aas-transformer-it_aas-env"+ UUID.randomUUID().toString().split("-")[0];
 
@@ -241,9 +250,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
         aasEnvLabels.putAll(containerLabels);
         aasEnvLabels.putAll(traefikLabels);
 
-//        return new FixedHostPortGenericContainer<>("eclipsebasyx/aas-environment:2.0.0-SNAPSHOT")
-//                .withFixedExposedPort(randomFreeHostPort, 8081)
-        return new GenericContainer<>(
+        GenericContainer container = new GenericContainer<>(
                 DockerImageName.parse("eclipsebasyx/aas-environment:2.0.0-SNAPSHOT"))
                 .withNetwork(containerNetwork)
                 .withLabels(aasEnvLabels)
@@ -266,6 +273,12 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
                 .withEnv("MQTT_HOSTNAME", "mqtt")
                 .withEnv("MQTT_PORT", "1883")
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
+
+        if(portMapping != null) {
+            container.setPortBindings(portMapping);
+        }
+
+        return container;
     }
 
     private GenericContainer getAasEnvMongoDbContainer() {
