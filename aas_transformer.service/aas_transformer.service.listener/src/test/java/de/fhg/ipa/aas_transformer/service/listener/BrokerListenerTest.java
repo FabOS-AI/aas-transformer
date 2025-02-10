@@ -55,6 +55,21 @@ public class BrokerListenerTest {
         assertThat(brokerListener).isNotNull();
     }
 
+    @Test
+    @Order(20)
+    public void testMqttConnection() throws InterruptedException {
+        int tryCount = 0;
+        int tryLimit = 10;
+        while (!brokerListener.isConnected()) {
+            tryCount++;
+            if (tryCount > tryLimit)
+                throw new AssertionError("Mqtt connection was not established within the expected retries.");
+            sleep(500);
+        }
+
+        assertTrue(brokerListener.isConnected());
+    }
+
     @Nested
     @Order(20)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
