@@ -22,7 +22,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofMinutes(5);
     private static boolean RUN_LOAD_BALANCER = true;
-    private static String HOSTNAME = "localhost";
+    private static String HOSTNAME = "172.17.0.1";
 
     protected Network containerNetwork = Network.newNetwork();
     protected GenericContainer traefikContainer;
