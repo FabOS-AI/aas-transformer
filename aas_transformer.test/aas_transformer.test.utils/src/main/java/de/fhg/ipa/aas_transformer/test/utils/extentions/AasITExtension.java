@@ -4,11 +4,14 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
@@ -19,6 +22,8 @@ import java.time.Duration;
 import java.util.*;
 
 public class AasITExtension extends AbstractExtension implements BeforeAllCallback, AfterAllCallback {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AasITExtension.class);
 
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofMinutes(5);
     private static boolean RUN_LOAD_BALANCER = true;
@@ -101,6 +106,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
                 runningContainers.addAll(aasEnvContainers);
             } else {
                 runningContainers.add(aasEnvContainers.get(0));
+                aasEnvContainers.get(0).followOutput(new Slf4jLogConsumer(LOG));
             }
             runningContainers.add(mqttBrokerContainer);
             runningContainers.add(mqttGuiContainer);
