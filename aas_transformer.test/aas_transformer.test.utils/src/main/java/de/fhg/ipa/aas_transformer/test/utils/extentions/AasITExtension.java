@@ -22,6 +22,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofMinutes(5);
     private static boolean RUN_LOAD_BALANCER = true;
+    private static String HOSTNAME = "localhost";
 
     protected Network containerNetwork = Network.newNetwork();
     protected GenericContainer traefikContainer;
@@ -57,6 +58,14 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
     public void beforeAll(ExtensionContext context) throws Exception {
         if (runningContainers.size() == 0) {
             traefikContainer = getTraefikContainer();
+            Integer traefikHttpPort = null;
+            Integer traefikHttpsPort = null;
+            Integer traefikApiPort = null;
+            if(RUN_LOAD_BALANCER) {
+                traefikHttpPort = traefikContainer.getMappedPort(80);
+                traefikHttpsPort = traefikContainer.getMappedPort(443);
+                traefikApiPort = traefikContainer.getMappedPort(8080);
+            }
 
             mqttBrokerContainer = getMqttBrokerContainer();
             mqttExporterContainer = getMqttExporterContainer();
@@ -65,13 +74,10 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
             aasRegistryContainer = getAasRegistryContainer();
             smRegistryContainer = getSmRegistryContainer();
-            aasEnvContainers = List.of(
-                    getAasEnvContainer(),
-                    getAasEnvContainer(),
-                    getAasEnvContainer(),
-                    getAasEnvContainer(),
-                    getAasEnvContainer()
-            );
+            if(RUN_LOAD_BALANCER)
+                aasEnvContainers = getAasEnvContainerList(traefikHttpPort);
+            else
+                aasEnvContainers = getAasEnvContainerList();
             aasEnvMongoDbContainer = getAasEnvMongoDbContainer();
 
             // Start AAS backend containers
@@ -103,15 +109,6 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
             runningContainers.add(aasRegistryContainer);
             runningContainers.add(smRegistryContainer);
 
-            Integer traefikHttpPort = null;
-            Integer traefikHttpsPort = null;
-            Integer traefikApiPort = null;
-            if(RUN_LOAD_BALANCER) {
-                traefikHttpPort = traefikContainer.getMappedPort(80);
-                traefikHttpsPort = traefikContainer.getMappedPort(443);
-                traefikApiPort = traefikContainer.getMappedPort(8080);
-
-            }
             Integer aasRegistryPort = aasRegistryContainer.getMappedPort(8080);
             Integer submodelRegistryPort = smRegistryContainer.getMappedPort(8080);
             Integer aasEnvPort = aasEnvContainers.get(0).getMappedPort(8081);
@@ -127,46 +124,46 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
             var aasGuiPort = aasGuiContainer.getMappedPort(3000);
 
-            System.setProperty("aas.broker.host", "localhost");
+            System.setProperty("aas.broker.host", HOSTNAME);
             System.setProperty("aas.broker.port", mqttBrokerPort.toString());
             System.setProperty("aas.aas-registry.port", aasRegistryPort.toString());
             System.setProperty("aas.submodel-registry.port", submodelRegistryPort.toString());
-            System.setProperty("aas.aas-registry.url", "http://localhost:" + aasRegistryPort);
-            System.setProperty("aas.submodel-registry.url", "http://localhost:" + submodelRegistryPort);
+            System.setProperty("aas.aas-registry.url", "http://" + HOSTNAME + ":" + aasRegistryPort);
+            System.setProperty("aas.submodel-registry.url", "http://" + HOSTNAME + ":" + submodelRegistryPort);
 
             if (RUN_LOAD_BALANCER) {
                 System.setProperty("aas.aas-repository.port", String.valueOf(traefikWebPort));
                 System.setProperty("aas.aas-repository.path", aasEnvUrlPrefix);
-                System.setProperty("aas.aas-repository.url", "http://localhost:" + traefikWebPort + aasEnvUrlPrefix);
+                System.setProperty("aas.aas-repository.url", "http://" + HOSTNAME + ":" + traefikWebPort + aasEnvUrlPrefix);
 
                 System.setProperty("aas.submodel-repository.port", String.valueOf(traefikWebPort));
                 System.setProperty("aas.submodel-repository.path", aasEnvUrlPrefix);
-                System.setProperty("aas.submodel-repository.url", "http://localhost:" + traefikWebPort + aasEnvUrlPrefix);
+                System.setProperty("aas.submodel-repository.url", "http://" + HOSTNAME + ":" + traefikWebPort + aasEnvUrlPrefix);
             } else {
                 System.setProperty("aas.aas-repository.port", String.valueOf(aasEnvPort));
-                System.setProperty("aas.aas-repository.url", "http://localhost:" + String.valueOf(aasEnvPort));
+                System.setProperty("aas.aas-repository.url", "http://" + HOSTNAME + ":" + String.valueOf(aasEnvPort));
 
                 System.setProperty("aas.submodel-repository.port", String.valueOf(aasEnvPort));
-                System.setProperty("aas.submodel-repository.url", "http://localhost:" + String.valueOf(aasEnvPort));
+                System.setProperty("aas.submodel-repository.url", "http://" + HOSTNAME + ":" + String.valueOf(aasEnvPort));
             }
 
             if(traefikApiPort != null) {
-                System.out.println("Traefik (http): http://localhost:" + traefikHttpPort);
-                System.out.println("Traefik (https): http://localhost:" + traefikHttpsPort);
-                System.out.println("Traefik Dashboard: http://localhost:" + traefikApiPort+ "/dashboard/");
+                System.out.println("Traefik (http): http://" + HOSTNAME + ":" + traefikHttpPort);
+                System.out.println("Traefik (https): http://" + HOSTNAME + ":" + traefikHttpsPort);
+                System.out.println("Traefik Dashboard: http://" + HOSTNAME + ":" + traefikApiPort+ "/dashboard/");
             }
-            System.out.println("AAS Registry: http://localhost:" + aasRegistryPort);
-            System.out.println("Submodel Registry: http://localhost:" + submodelRegistryPort);
+            System.out.println("AAS Registry: http://" + HOSTNAME + ":" + aasRegistryPort);
+            System.out.println("Submodel Registry: http://" + HOSTNAME + ":" + submodelRegistryPort);
             if(RUN_LOAD_BALANCER) {
-                System.out.println("AAS Environment: http://localhost:" + traefikWebPort + aasEnvUrlPrefix);
+                System.out.println("AAS Environment: http://" + HOSTNAME + ":" + traefikWebPort + aasEnvUrlPrefix);
             } else {
-                System.out.println("AAS Environment: http://localhost:" + aasEnvPort);
+                System.out.println("AAS Environment: http://" + HOSTNAME + ":" + aasEnvPort);
             }
-            System.out.println("AAS Env Db: http://localhost:" + aasEnvMongoDbPort);
-            System.out.println("MQTT Broker: tcp://localhost:" + mqttBrokerPort);
-            System.out.println("MQTT WS Broker: ws://localhost:" + mqttBrokerWsPort);
-            System.out.println("MQTT GUI: http://localhost:" + mqttGuiPort);
-            System.out.println("AAS GUI: http://localhost:" + aasGuiPort);
+            System.out.println("AAS Env Db: http://" + HOSTNAME + ":" + aasEnvMongoDbPort);
+            System.out.println("MQTT Broker: tcp://" + HOSTNAME + ":" + mqttBrokerPort);
+            System.out.println("MQTT WS Broker: ws://" + HOSTNAME + ":" + mqttBrokerWsPort);
+            System.out.println("MQTT GUI: http://" + HOSTNAME + ":" + mqttGuiPort);
+            System.out.println("AAS GUI: http://" + HOSTNAME + ":" + aasGuiPort);
 
             super.beforeAll(context);
         }
@@ -198,10 +195,36 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
     }
 
-    private GenericContainer getAasEnvContainer() throws IOException {
-        ServerSocket socket = new ServerSocket(0);
-//        int randomFreeHostPort = socket.getLocalPort();
-        socket.close();
+    private List<GenericContainer> getAasEnvContainerList(Integer traefikHttpPort) {
+        String externalUrl = "http://" + HOSTNAME + ":" + traefikHttpPort + aasEnvUrlPrefix;
+        return List.of(
+                getAasEnvContainer(externalUrl),
+                getAasEnvContainer(externalUrl),
+                getAasEnvContainer(externalUrl),
+                getAasEnvContainer(externalUrl),
+                getAasEnvContainer(externalUrl)
+        );
+    }
+
+    private List<GenericContainer> getAasEnvContainerList() {
+        return List.of(
+                getAasEnvContainer("")
+        );
+    }
+
+    private GenericContainer getAasEnvContainer(String externalUrl) {
+        int randomFreeHostPort;
+        try {
+            ServerSocket socket = new ServerSocket(0);
+            randomFreeHostPort = socket.getLocalPort();
+            socket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if(externalUrl.equals("")) {
+            externalUrl = "http://" + HOSTNAME + ":" + randomFreeHostPort;
+        }
         String mqttClientId = "aas-transformer-it_aas-env"+ UUID.randomUUID().toString().split("-")[0];
 
         Map<String,String> traefikLabels = Map.of(
@@ -238,7 +261,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
                 .withEnv("BASYX_CORS_ALLOWEDMETHODS", "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD")
                 .withEnv("BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION", "http://aas-registry:8080")
                 .withEnv("BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION", "http://sm-registry:8080")
-                .withEnv("BASYX_EXTERNALURL", "http://localhost:" + traefikWebPort + aasEnvUrlPrefix)
+                .withEnv("BASYX_EXTERNALURL", externalUrl)
                 .withEnv("MQTT_CLIENTID", mqttClientId)
                 .withEnv("MQTT_HOSTNAME", "mqtt")
                 .withEnv("MQTT_PORT", "1883")
