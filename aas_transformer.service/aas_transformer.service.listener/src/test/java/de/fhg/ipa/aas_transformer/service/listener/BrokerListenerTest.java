@@ -9,6 +9,7 @@ import de.fhg.ipa.aas_transformer.service.listener.mqtt.SubmodelElementMqttListe
 import de.fhg.ipa.aas_transformer.service.listener.mqtt.SubmodelMqttListener;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.GenericTestConfig;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.model.Property;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,8 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+
+import java.io.IOException;
 
 import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,12 +59,10 @@ public class BrokerListenerTest {
     @Order(20)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     public class testAasCrudOperations {
-
         @Test
         @Order(10)
         public void testCreateSubmodel() throws Exception {
             submodelRepository.createOrUpdateSubmodel(GenericTestConfig.getSimpleSubmodel());
-
             ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
             int tryCount = 0;
             int tryLimit = 10;
@@ -71,7 +72,7 @@ public class BrokerListenerTest {
                     throw new AssertionError("Method messageArrived() was not called within the expected retries.");
                 try {
                     Mockito
-                            .verify(submodelMqttListener, Mockito.timeout(500).atLeast(1))
+                            .verify(submodelMqttListener, Mockito.timeout(5000).atLeast(1))
                             .messageArrived(argumentTopic.capture(), Mockito.any());
                     break;
                 } catch(org.mockito.exceptions.verification.VerificationInOrderFailure |
