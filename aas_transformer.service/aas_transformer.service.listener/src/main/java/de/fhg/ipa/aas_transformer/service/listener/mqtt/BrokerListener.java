@@ -44,6 +44,10 @@ public class BrokerListener implements Runnable, MqttCallback {
         this.listeners.add(submodelElementMqttListener);
     }
 
+    public boolean isConnected() {
+        return this.mqttClient.isConnected();
+    }
+
     @PostConstruct
     public void init() {
         var thread = new Thread(this);
