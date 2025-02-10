@@ -36,13 +36,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MariaDbExtension.class)
+@ExtendWith(AasITExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class GetOrphanDestinationSubmodelTest {
-    @RegisterExtension
-    static AasITExtension aasITExtension = new AasITExtension(false);
-
     // region Testvars
     // Service Addresses:
     @LocalServerPort

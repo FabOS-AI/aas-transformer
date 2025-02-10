@@ -22,13 +22,11 @@ import static de.fhg.ipa.aas_transformer.test.utils.GenericTestConfig.getSimpleS
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MariaDbExtension.class)
+@ExtendWith(AasITExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class MetricsRestControllerIT {
-    @RegisterExtension
-    static AasITExtension aasITExtension = new AasITExtension(false);
-
     // Service Addresses:
     @LocalServerPort
     private  int transformerManagementPort;

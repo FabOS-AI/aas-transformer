@@ -56,15 +56,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(AasITExtension.class)
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class JobCreateTest {
-    @RegisterExtension
-    static AasITExtension aasITExtension = new AasITExtension(false);
-
     @Container
     @ServiceConnection(name = "redis")
     static RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:7"));

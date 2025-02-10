@@ -34,13 +34,11 @@ import static org.junit.Assert.assertEquals;
 
 @ExtendWith(MariaDbExtension.class)
 @ExtendWith(RedisExtension.class)
+@ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class JobPushTest {
-    @RegisterExtension
-    static AasITExtension aasITExtension = new AasITExtension(false);
-
     static AasRegistry aasRegistry;
     static AasRepository aasRepository;
     static SubmodelRegistry smRegistry;

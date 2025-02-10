@@ -43,12 +43,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MariaDbExtension.class)
+@ExtendWith(AasITExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class TransformerRestControllerOrphanTest {
-    @RegisterExtension
-    static AasITExtension aasITExtension = new AasITExtension(false);
     // region Test Vars
     // Service Addresses:
     @LocalServerPort

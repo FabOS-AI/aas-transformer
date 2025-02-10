@@ -25,6 +25,7 @@ import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(AasITExtension.class)
 @ContextConfiguration(classes = {
         BrokerListener.class,
         SubmodelMqttListener.class,
@@ -36,10 +37,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class BrokerListenerTest {
-
-    @RegisterExtension
-    static AasITExtension aasITExtension = new AasITExtension(false);
-
     @SpyBean
     private SubmodelMqttListener submodelMqttListener;
     @SpyBean

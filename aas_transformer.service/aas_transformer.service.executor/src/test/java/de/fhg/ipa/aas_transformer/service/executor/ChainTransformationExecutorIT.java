@@ -47,12 +47,11 @@ import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpec
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(RedisExtension.class)
+@ExtendWith(AasITExtension.class)
+@ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ChainTransformationExecutorIT {
-    @RegisterExtension
-    static AasITExtension aasITExtension = new AasITExtension(false);
-
     // region Test vars
     // Service Ports:
     String aasRegistryPort = System.getProperty("aas.aas-registry.port");
