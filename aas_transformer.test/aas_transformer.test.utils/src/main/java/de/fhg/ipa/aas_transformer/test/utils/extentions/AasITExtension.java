@@ -25,6 +25,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
     private static final Logger LOG = LoggerFactory.getLogger(AasITExtension.class);
 
+    private static final String basyxImageVersion = "2.0.0-milestone-04";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofMinutes(5);
     private static boolean RUN_LOAD_BALANCER = true;
     private static String HOSTNAME = "localhost";
@@ -177,7 +178,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
     private GenericContainer getAasRegistryContainer() {
         GenericContainer container = new GenericContainer<>(
-                DockerImageName.parse("eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT"))
+                DockerImageName.parse("eclipsebasyx/aas-registry-log-mem:"+basyxImageVersion))
                 .withNetwork(containerNetwork)
                 .withNetworkAliases("aas-registry")
                 .withLabels(containerLabels)
@@ -194,7 +195,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
 
     private GenericContainer getSmRegistryContainer() {
         GenericContainer container = new GenericContainer<>(
-                DockerImageName.parse("eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT"))
+                DockerImageName.parse("eclipsebasyx/submodel-registry-log-mem:"+basyxImageVersion))
                 .withNetwork(containerNetwork)
                 .withNetworkAliases("sm-registry")
                 .withLabels(containerLabels)
@@ -257,7 +258,7 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
         aasEnvLabels.putAll(traefikLabels);
 
         GenericContainer container = new GenericContainer<>(
-                DockerImageName.parse("eclipsebasyx/aas-environment:2.0.0-SNAPSHOT"))
+                DockerImageName.parse("eclipsebasyx/aas-environment:"+basyxImageVersion))
                 .withNetwork(containerNetwork)
                 .withLabels(aasEnvLabels)
                 .dependsOn()
