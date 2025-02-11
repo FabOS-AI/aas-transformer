@@ -104,8 +104,8 @@ public class PrometheusExtension extends AbstractExtension implements BeforeAllC
                 .withNetwork(containerNetwork)
                 .withNetworkAliases("grafana")
                 .withExposedPorts(3000)
-                .withEnv("GF_SECURITY_ADMIN_PASSWORD", GRAFANA_USERNAME)
                 .withEnv("GF_SECURITY_ADMIN_USER", GRAFANA_PASSWORD)
+                .withEnv("GF_SECURITY_ADMIN_PASSWORD", GRAFANA_USERNAME)
                 .withEnv("GF_USERS_ALLOW_SIGN_UP", "false")
                 .withEnv("GF_USERS_ALLOW_ORG_CREATE", "false")
                 .withEnv("GF_USERS_AUTO_ASSIGN_ORG", "true")
@@ -141,9 +141,6 @@ public class PrometheusExtension extends AbstractExtension implements BeforeAllC
         );
     }
 
-    public void getAllAnnotations() {
-
-    }
 
     private void createGrafanaDashboard(String fileName, String datasourceUid) throws IOException {
         JsonNode grafanaDashboard = loadJsonFile(fileName);
