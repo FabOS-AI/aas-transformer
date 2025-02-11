@@ -13,11 +13,16 @@
   "transformerActions": [
     {
       "actionType": "SUBMODEL_TEMPLATE",
+      "submodelTemplate": "{ \"idShort\": \"ProductSegments\", \"id\": \"ProductSegments_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \"kind\": \"Instance\", \"modelType\": \"Submodel\", \"submodelElements\": [ { \"idShort\": \"Segments\", \"modelType\": \"SubmodelElementList\", \"typeValueListElement\": \"SubmodelElement\", \"value\": [ ] } ] }"
+    }
+  ],
+  "sourceSubmodelIdRules": [
+    {
+      "ruleOperator": "EQUALS",
       "sourceSubmodelId": {
         "type": "ID_SHORT",
         "id": "lotdata"
-      },
-      "submodelTemplate": "{ \"idShort\": \"ProductSegments\", \"id\": \"ProductSegments_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \"kind\": \"Instance\", \"modelType\": \"Submodel\", \"submodelElements\": [ { \"idShort\": \"Segments\", \"modelType\": \"SubmodelElementList\", \"typeValueListElement\": \"SubmodelElement\", \"value\": [ ] } ] }"
+      }
     }
   ]
 }

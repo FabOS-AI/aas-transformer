@@ -13,11 +13,16 @@
   "transformerActions": [
     {
       "actionType": "SUBMODEL_TEMPLATE",
+      "submodelTemplate": "{ \"modelType\": \"Submodel\", \"kind\":\"Instance\", \"idShort\":\"ProductNameplate\", \"id\": \"ProductNameplate_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \"submodelElements\": [ \t{ \t \"modelType\": \"Property\", \t \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \t \"valueType\": \"xs:string\", \t \"idShort\": \"id\" \t} ] }"
+    }
+  ],
+  "sourceSubmodelIdRules": [
+    {
+      "ruleOperator": "EQUALS",
       "sourceSubmodelId": {
         "type": "ID_SHORT",
         "id": "lotdata"
-      },
-      "submodelTemplate": "{ \"modelType\": \"Submodel\", \"kind\":\"Instance\", \"idShort\":\"ProductNameplate\", \"id\": \"ProductNameplate_{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \"submodelElements\": [ \t{ \t \"modelType\": \"Property\", \t \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'jobId') }}\", \t \"valueType\": \"xs:string\", \t \"idShort\": \"id\" \t} ] }"
+      }
     }
   ]
 }
