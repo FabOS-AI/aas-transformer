@@ -1,8 +1,6 @@
-version: '3'
-
 services:
-  aas-transformer:
-    image: ghcr.io/fabos-ai/aas-transformer/service:${VERSION}
+  aas-transformer-management:
+    image: ghcr.io/fabos-ai/aas-transformer/management:${VERSION}
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -10,25 +8,127 @@ services:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
     ports:
-      - "4010:4010"
+      - "${AAS_TRANSFORMER_SERVICES_MANAGEMENT_EXT_PORT}:${AAS_TRANSFORMER_SERVICES_MANAGEMENT_PORT}"
     networks:
       default:
         aliases:
-          - aas-transformer
+          - ${AAS_TRANSFORMER_SERVICES_MANAGEMENT_HOST}
+    healthcheck:
+      test: "curl -f http://localhost:${AAS_TRANSFORMER_SERVICES_MANAGEMENT_PORT}/actuator || exit 1"
     environment:
-      AAS_BROKER_HOST: aas-broker
-      DATABASE_HOST: aas-transformer-database
-      DATABASE_PASSWORD: password
+      AAS_AAS_REGISTRY_HOST: ${AAS_AAS_REGISTRY_HOST}
+      AAS_AAS_REGISTRY_PORT: ${AAS_AAS_REGISTRY_PORT}
+      AAS_AAS_REPOSITORY_HOST: ${AAS_AAS_ENV_HOST}
+      AAS_AAS_REPOSITORY_PORT: ${AAS_AAS_ENV_PORT}
+      AAS_AAS_REPOSITORY_PATH: ${AAS_AAS_ENV_PATH}
+      AAS_SUBMODEL_REGISTRY_HOST: ${AAS_SUBMODEL_REGISTRY_HOST}
+      AAS_SUBMODEL_REGISTRY_PORT: ${AAS_SUBMODEL_REGISTRY_PORT}
+      AAS_SUBMODEL_REPOSITORY_HOST: ${AAS_AAS_ENV_HOST}
+      AAS_SUBMODEL_REPOSITORY_PORT: ${AAS_AAS_ENV_PORT}
+      AAS_SUBMODEL_REPOSITORY_PATH: ${AAS_AAS_ENV_PATH}
+      AAS_BROKER_HOST: ${AAS_BROKER_HOST}
+      AAS_BROKER_PORT: ${AAS_BROKER_PORT}
+      DATABASE_HOST: ${AAS_TRANSFORMER_DATABASE_HOST}
+      DATABASE_PORT: ${AAS_TRANSFORMER_DATABASE_PORT}
+      DATABASE_USERNAME: ${AAS_TRANSFORMER_DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${AAS_TRANSFORMER_DATABASE_PASSWORD}
+      DATABASE_SCHEMA: ${AAS_TRANSFORMER_DATABASE_NAME}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_DATA_REDIS_USERNAME: ${REDIS_USERNAME}
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SERVER_PORT: ${AAS_TRANSFORMER_SERVICES_MANAGEMENT_PORT}
     extra_hosts:
       - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
 
-  aas-transformer-init:
-    image: ghcr.io/fabos-ai/aas-transformer/initializer:1.0.0-SNAPSHOT
+  aas-transformer-listener:
+    image: ghcr.io/fabos-ai/aas-transformer/listener:${VERSION}
+    restart: unless-stopped
     logging:
       driver: "json-file"
       options:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
+    ports:
+      - "${AAS_TRANSFORMER_SERVICES_LISTENER_EXT_PORT}:${AAS_TRANSFORMER_SERVICES_LISTENER_PORT}"
+    networks:
+      default:
+        aliases:
+          - ${AAS_TRANSFORMER_SERVICES_LISTENER_HOST}
+    healthcheck:
+      test: "curl -f http://localhost:${AAS_TRANSFORMER_SERVICES_LISTENER_PORT}/actuator || exit 1"
+    environment:
+      AAS_AAS_REGISTRY_HOST: ${AAS_AAS_REGISTRY_HOST}
+      AAS_AAS_REGISTRY_PORT: ${AAS_AAS_REGISTRY_PORT}
+      AAS_AAS_REPOSITORY_HOST: ${AAS_AAS_ENV_HOST}
+      AAS_AAS_REPOSITORY_PORT: ${AAS_AAS_ENV_PORT}
+      AAS_AAS_REPOSITORY_PATH: ${AAS_AAS_ENV_PATH}
+      AAS_SUBMODEL_REGISTRY_HOST: ${AAS_SUBMODEL_REGISTRY_HOST}
+      AAS_SUBMODEL_REGISTRY_PORT: ${AAS_SUBMODEL_REGISTRY_PORT}
+      AAS_SUBMODEL_REPOSITORY_HOST: ${AAS_AAS_ENV_HOST}
+      AAS_SUBMODEL_REPOSITORY_PORT: ${AAS_AAS_ENV_PORT}
+      AAS_SUBMODEL_REPOSITORY_PATH: ${AAS_AAS_ENV_PATH}
+      AAS_TRANSFORMER_SERVICES_MANAGEMENT_HOST: ${AAS_TRANSFORMER_SERVICES_MANAGEMENT_HOST}
+      AAS_TRANSFORMER_SERVICES_MANAGEMENT_PORT: ${AAS_TRANSFORMER_SERVICES_MANAGEMENT_PORT}
+      AAS_BROKER_HOST: ${AAS_BROKER_HOST}
+      AAS_BROKER_PORT: ${AAS_BROKER_PORT}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_DATA_REDIS_USERNAME: ${REDIS_USERNAME}
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SERVER_PORT: ${AAS_TRANSFORMER_SERVICES_LISTENER_PORT}
+    extra_hosts:
+      - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
+
+  aas-transformer-executor:
+    image: ghcr.io/fabos-ai/aas-transformer/executor:${VERSION}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    ports:
+      - "${AAS_TRANSFORMER_SERVICES_EXECUTOR_EXT_PORT}:${AAS_TRANSFORMER_SERVICES_EXECUTOR_PORT}"
+    networks:
+      default:
+        aliases:
+          - ${AAS_TRANSFORMER_SERVICES_EXECUTOR_HOST}
+    healthcheck:
+      test: "curl -f http://localhost:${AAS_TRANSFORMER_SERVICES_EXECUTOR_PORT}/actuator || exit 1"
+    environment:
+      AAS_AAS_REGISTRY_HOST: ${AAS_AAS_REGISTRY_HOST}
+      AAS_AAS_REGISTRY_PORT: ${AAS_AAS_REGISTRY_PORT}
+      AAS_AAS_REPOSITORY_HOST: ${AAS_AAS_ENV_HOST}
+      AAS_AAS_REPOSITORY_PORT: ${AAS_AAS_ENV_PORT}
+      AAS_AAS_REPOSITORY_PATH: ${AAS_AAS_ENV_PATH}
+      AAS_SUBMODEL_REGISTRY_HOST: ${AAS_SUBMODEL_REGISTRY_HOST}
+      AAS_SUBMODEL_REGISTRY_PORT: ${AAS_SUBMODEL_REGISTRY_PORT}
+      AAS_SUBMODEL_REPOSITORY_HOST: ${AAS_AAS_ENV_HOST}
+      AAS_SUBMODEL_REPOSITORY_PORT: ${AAS_AAS_ENV_PORT}
+      AAS_SUBMODEL_REPOSITORY_PATH: ${AAS_AAS_ENV_PATH}
+      AAS_TRANSFORMER_SERVICES_MANAGEMENT_HOST: ${AAS_TRANSFORMER_SERVICES_MANAGEMENT_HOST}
+      AAS_TRANSFORMER_SERVICES_MANAGEMENT_PORT: ${AAS_TRANSFORMER_SERVICES_MANAGEMENT_PORT}
+      AAS_BROKER_HOST: ${AAS_BROKER_HOST}
+      AAS_BROKER_PORT: ${AAS_BROKER_PORT}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_DATA_REDIS_USERNAME: ${REDIS_USERNAME}
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SERVER_PORT: ${AAS_TRANSFORMER_SERVICES_EXECUTOR_PORT}
+    extra_hosts:
+      - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
+
+  aas-transformer-init:
+    image: ghcr.io/fabos-ai/aas-transformer/initializer:${VERSION}
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    environment:
+      TRANSFORMER_HOST: ${AAS_TRANSFORMER_SERVICES_MANAGEMENT_HOST}
+      TRANSFORMER_PORT: ${AAS_TRANSFORMER_SERVICES_MANAGEMENT_PORT}
 
   aas-transformer-database:
     image: mariadb:10.5
@@ -41,24 +141,35 @@ services:
     networks:
       default:
         aliases:
-          - aas-transformer-database
+          - ${AAS_TRANSFORMER_DATABASE_HOST}
     ports:
-      - "3307:3306"
+      - "${AAS_TRANSFORMER_DATABASE_EXT_PORT}:${AAS_TRANSFORMER_DATABASE_PORT}"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     environment:
-      MARIADB_USER: aas_transformer
+      MARIADB_USER: ${AAS_TRANSFORMER_DATABASE_USERNAME}
       MARIADB_PASSWORD: ${AAS_TRANSFORMER_DATABASE_PASSWORD}
-      MARIADB_DATABASE: aas_transformer
+      MARIADB_DATABASE: ${AAS_TRANSFORMER_DATABASE_NAME}
       MARIADB_ROOT_PASSWORD: ${AAS_TRANSFORMER_DATABASE_ROOT_PASSWORD}
     volumes:
       - "aas_transformer_database:/var/lib/mysql"
 
   aas-transformer-redis:
     image: redis:7
-    command: redis-server /redis.conf
-    volumes:
-      - "./redis.conf/:/redis.conf"
+    networks:
+      default:
+        aliases:
+          - ${REDIS_HOST}
     ports:
-      - "6379:6379"
+      - "6379:${REDIS_PORT}"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   aas_transformer_database:
