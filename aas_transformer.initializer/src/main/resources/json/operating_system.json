@@ -12,67 +12,42 @@
   "transformerActions": [
     {
       "actionType": "COPY",
-      "sourceSubmodelId": {
-        "type": "ID_SHORT",
-        "id": "ansible_facts"
-      },
       "sourceSubmodelElement": "distribution"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelId": {
-        "type": "ID_SHORT",
-        "id": "ansible_facts"
-      },
       "sourceSubmodelElement": "distribution_release"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelId": {
-        "type": "ID_SHORT",
-        "id": "ansible_facts"
-      },
       "sourceSubmodelElement": "distribution_version"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelId": {
-        "type": "ID_SHORT",
-        "id": "ansible_facts"
-      },
       "sourceSubmodelElement": "distribution_major_version"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelId": {
-        "type": "ID_SHORT",
-        "id": "ansible_facts"
-      },
       "sourceSubmodelElement": "os_family"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelId": {
-        "type": "ID_SHORT",
-        "id": "ansible_facts"
-      },
       "sourceSubmodelElement": "system"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelId": {
-        "type": "ID_SHORT",
-        "id": "ansible_facts"
-      },
       "sourceSubmodelElement": "kernel"
     },
     {
       "actionType": "COPY",
-      "sourceSubmodelId": {
-        "type": "ID_SHORT",
-        "id": "ansible_facts"
-      },
       "sourceSubmodelElement": "kernel_version"
     }
-  ]
+  ],
+  "sourceSubmodelRules": [{
+    "ruleOperator": "EQUALS",
+    "sourceSubmodelId": {
+      "type": "ID_SHORT",
+      "id": "ansible_facts"
+    }
+  }]
 }
