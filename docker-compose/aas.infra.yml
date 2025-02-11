@@ -1,30 +1,28 @@
-version: '3.9'
-
 services:
   aas-discovery:
-    image: eclipsebasyx/aas-discovery:2.0.0-SNAPSHOT
+    image: eclipsebasyx/aas-discovery:${BASYX_VERSION}
     restart: always
     ports:
-      - 8084:8081
+      - 8084:${AAS_AAS_DISCOVERY_PORT}
     networks:
       default:
         aliases:
-          - aas-discovery
+          - ${AAS_AAS_DISCOVERY_HOST}
     environment:
-      SERVER_PORT: 8081
+      SERVER_PORT: ${AAS_AAS_DISCOVERY_PORT}
       SPRING_APPLICATION_NAME: AAS Discovery Service
       BASYX_AASDISCOVERYSERVICE_NAME: aas-discovery-service
       BASYX_BACKEND: MongoDB
-      SPRING_DATA_MONGODB_HOST: aas-database
+      SPRING_DATA_MONGODB_HOST: ${AAS_BACKEND_DB_HOSTNAME}
       SPRING_DATA_MONGODB_DATABASE: aas-discovery
       SPRING_DATA_MONGODB_AUTHENTICATIONDATABASE: admin
-      SPRING_DATA_MONGODB_USERNAME: mongoAdmin
-      SPRING_DATA_MONGODB_PASSWORD: mongoPassword
+      SPRING_DATA_MONGODB_USERNAME: ${AAS_BACKEND_DB_ROOT_USERNAME}
+      SPRING_DATA_MONGODB_PASSWORD: ${AAS_BACKEND_DB_ROOT_PASSWORD}
       BASYX_CORS_ALLOWEDORIGINS: "*"
       BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
 
   aas-registry:
-    image: eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT
+    image: eclipsebasyx/aas-registry-log-mem:${BASYX_VERSION}
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -32,18 +30,19 @@ services:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
     ports:
-      - 8082:8080
+      - 8082:${AAS_AAS_REGISTRY_PORT}
     networks:
       default:
         aliases:
-          - aas-registry
+          - ${AAS_AAS_REGISTRY_HOST}
     environment:
+      SERVER_PORT: ${AAS_AAS_REGISTRY_PORT}
       BASYX_CORS_ALLOWEDORIGINS: "*"
       BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-      SPRING_DATA_MONGODB_URI: mongodb://mongoAdmin:mongoPassword@aas-database:27017
+      SPRING_DATA_MONGODB_URI: mongodb://${AAS_BACKEND_DB_ROOT_USERNAME}:${AAS_BACKEND_DB_ROOT_PASSWORD}@aas-database:${AAS_BACKEND_DB_PORT}
 
   sm-registry:
-    image: eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT
+    image: eclipsebasyx/submodel-registry-log-mem:${BASYX_VERSION}
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -51,48 +50,49 @@ services:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
     ports:
-      - 8083:8080
+      - 8083:${AAS_SUBMODEL_REGISTRY_PORT}
     networks:
       default:
         aliases:
-          - sm-registry
+          - ${AAS_SUBMODEL_REGISTRY_HOST}
     environment:
+      SERVER_PORT: ${AAS_SUBMODEL_REGISTRY_PORT}
       BASYX_CORS_ALLOWEDORIGINS: "*"
       BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-      SPRING_DATA_MONGODB_URI: mongodb://mongoAdmin:mongoPassword@aas-database:27017
+      SPRING_DATA_MONGODB_URI: mongodb://${AAS_BACKEND_DB_ROOT_USERNAME}:${AAS_BACKEND_DB_ROOT_PASSWORD}@aas-database:${AAS_BACKEND_DB_PORT}
 
   aas-env:
-    image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
+    image: eclipsebasyx/aas-environment:${BASYX_VERSION}
     restart: unless-stopped
     logging:
       driver: "json-file"
       options:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
+    ports:
+      - ${AAS_AAS_ENV_EXT_PORT}:${AAS_AAS_ENV_PORT}
     environment:
-      SERVER_PORT: 8081
+      SERVER_PORT: ${AAS_AAS_ENV_PORT}
       BASYX_BACKEND: MongoDB
-      SPRING_DATA_MONGODB_HOST: aas-database
+      SPRING_DATA_MONGODB_HOST: ${AAS_BACKEND_DB_HOSTNAME}
       SPRING_DATA_MONGODB_DATABASE: aas-env
       SPRING_DATA_MONGODB_AUTHENTICATIONDATABASE: admin
-      SPRING_DATA_MONGODB_USERNAME: mongoAdmin
-      SPRING_DATA_MONGODB_PASSWORD: mongoPassword
+      SPRING_DATA_MONGODB_USERNAME: ${AAS_BACKEND_DB_ROOT_USERNAME}
+      SPRING_DATA_MONGODB_PASSWORD: ${AAS_BACKEND_DB_ROOT_PASSWORD}
       MQTT_CLIENTID: aas-transformer_aas-env
-      MQTT_HOSTNAME: aas-broker
-      MQTT_PORT: 1883
+      MQTT_HOSTNAME: ${AAS_BROKER_HOST}
+      MQTT_PORT: ${AAS_BROKER_PORT}
       BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED: "true"
       BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED: "true"
       BASYX_CORS_ALLOWEDORIGINS: "*"
       BASYX_CORS_ALLOWEDMETHODS: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION: http://aas-registry:8080
-      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION: http://sm-registry:8080
-      BASYX_EXTERNALURL: http://localhost:8081
-    ports:
-      - 8081:8081
+      BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION: http://${AAS_AAS_REGISTRY_HOST}:${AAS_AAS_REGISTRY_PORT}
+      BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION: http://${AAS_SUBMODEL_REGISTRY_HOST}:${AAS_SUBMODEL_REGISTRY_PORT}
+      BASYX_EXTERNALURL: http://${AAS_TRANSFORMER_HOST}:${AAS_AAS_ENV_EXT_PORT}
     networks:
       default:
         aliases:
-          - aas-env
+          - ${AAS_AAS_ENV_HOST}
     depends_on:
       aas-database:
         condition: service_healthy
@@ -104,7 +104,7 @@ services:
         condition: service_healthy
 
   aas-gui:
-    image: eclipsebasyx/aas-gui:v2-240327
+    image: eclipsebasyx/aas-gui:${AAS_GUI_VERSION}
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -112,14 +112,19 @@ services:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
     ports:
-      - "3000:3000"
+      - "3000:${AAS_GUI_PORT}"
     environment:
-      AAS_REGISTRY_PATH: "http://localhost:8082"
-      SUBMODEL_REGISTRY_PATH: "http://localhost:8083"
-      AAS_DISCOVERY_PATH: "http://localhost:8084"
-      AAS_REPO_PATH: "http://localhost:8081/shells"
-      SUBMODEL_REPO_PATH: "http://localhost:8081/submodels"
-      CD_REPO_PATH: "http://localhost:8081/concept-descriptions"
+      AAS_REGISTRY_PATH: "http://${AAS_TRANSFORMER_HOST}:${AAS_AAS_REGISTRY_EXT_PORT}"
+      SUBMODEL_REGISTRY_PATH: "http://${AAS_TRANSFORMER_HOST}:${AAS_SUBMODEL_REGISTRY_EXT_PORT}"
+      AAS_DISCOVERY_PATH: "http://${AAS_TRANSFORMER_HOST}:${AAS_AAS_DISCOVERY_EXT_PORT}"
+      AAS_REPO_PATH: "http://${AAS_TRANSFORMER_HOST}:${AAS_AAS_ENV_EXT_PORT}/shells"
+      SUBMODEL_REPO_PATH: "http://${AAS_TRANSFORMER_HOST}:${AAS_AAS_ENV_EXT_PORT}/submodels"
+      CD_REPO_PATH: "http://${AAS_TRANSFORMER_HOST}:${AAS_AAS_DISCOVERY_EXT_PORT}/concept-descriptions"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${AAS_GUI_PORT}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   aas-broker:
     image: ghcr.io/fabos-ai/aas-transformer/aas-broker:2.0.15
@@ -130,7 +135,7 @@ services:
         max-file: ${LOGGING_MAX_FILE}
         max-size: ${LOGGING_MAX_SIZE}
     ports:
-      - 1883:1883
+      - ${AAS_BROKER_EXT_PORT}:${AAS_BROKER_PORT}
       - 9001:9001
     networks:
       default:
@@ -149,12 +154,12 @@ services:
     image: mongo:5.0.10
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: mongoAdmin
-      MONGO_INITDB_ROOT_PASSWORD: mongoPassword
+      MONGO_INITDB_ROOT_USERNAME: ${AAS_BACKEND_DB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${AAS_BACKEND_DB_ROOT_PASSWORD}
     networks:
       default:
         aliases:
-          - aas-database
+          - ${AAS_BACKEND_DB_HOSTNAME}
     volumes:
       - "aas_database:/data/db"
     healthcheck:
