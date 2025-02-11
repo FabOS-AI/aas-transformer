@@ -21,7 +21,7 @@ class Transformer (
     @JdbcTypeCode(SqlTypes.JSON)
     var transformerActions : MutableList<TransformerAction> = LinkedList(),
 
-    @Column(name = "sourceSubmodelRules", columnDefinition = "LONGTEXT")
+    @Column(name = "sourceSubmodelIdRules", columnDefinition = "LONGTEXT")
     @JdbcTypeCode(SqlTypes.JSON)
     var sourceSubmodelIdRules : MutableList<SourceSubmodelIdRule> = LinkedList()
 ) : AbstractTransformer() {
