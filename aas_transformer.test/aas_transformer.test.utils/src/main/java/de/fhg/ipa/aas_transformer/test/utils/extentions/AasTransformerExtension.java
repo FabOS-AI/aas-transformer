@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.Thread.sleep;
-
 public class AasTransformerExtension extends AbstractExtension implements BeforeAllCallback, AfterAllCallback {
     private boolean runManagement = true;
     private boolean runListener = true;
