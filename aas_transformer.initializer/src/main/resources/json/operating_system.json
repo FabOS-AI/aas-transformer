@@ -1,10 +1,14 @@
+
 {
   "id": "a885c6b1-f19b-4e6d-8e9d-9027dcdd5c2b",
-  "destination": {
-    "aasDestination": {
+  "destination":
+  {
+    "aasDestination":
+    {
       "id": "operating_system_aas"
     },
-    "submodelDestination": {
+    "submodelDestination":
+    {
       "idShort": "operating_system",
       "id": "operating_system"
     }
@@ -43,11 +47,14 @@
       "sourceSubmodelElement": "kernel_version"
     }
   ],
-  "sourceSubmodelRules": [{
-    "ruleOperator": "EQUALS",
-    "sourceSubmodelId": {
-      "type": "ID_SHORT",
-      "id": "ansible_facts"
+  "sourceSubmodelIdRules": [
+    {
+      "ruleOperator": "EQUALS",
+      "sourceSubmodelId":
+      {
+        "type": "ID_SHORT",
+        "id": "ansible_facts"
+      }
     }
-  }]
+  ]
 }
