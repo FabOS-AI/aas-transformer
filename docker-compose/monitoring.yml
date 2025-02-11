@@ -1,0 +1,77 @@
+services:
+  prometheus:
+    image: prom/prometheus:${PROMETHEUS_VERSION}
+    restart: unless-stopped
+    ports:
+      - ${PROMETHEUS_EXT_PORT}:${PROMETHEUS_PORT}
+    networks:
+      default:
+        aliases:
+          - ${PROMETHEUS_HOST}
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    healthcheck:
+      test: "wget --spider http://localhost:${PROMETHEUS_PORT}/status || exit 1"
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION}
+    restart: unless-stopped
+    ports:
+      - ${GRAFANA_EXT_PORT}:${GRAFANA_PORT}
+    networks:
+      default:
+        aliases:
+          - ${GRAFANA_HOST}
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_USERS_ALLOW_ORG_CREATE: false
+      GF_USERS_AUTO_ASSIGN_ORG: true
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
+    healthcheck:
+      test: "curl -f http://localhost:3000/api/health || exit 1"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION}
+    restart: unless-stopped
+    ports:
+      - ${CADVISOR_EXT_PORT}:${CADVISOR_PORT}
+    networks:
+      default:
+        aliases:
+          - ${CADVISOR_HOST}
+    volumes:
+      - /:/rootfs:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run:/var/run:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: "wget --spider http://localhost:${CADVISOR_PORT}/healthz || exit 1"
+
+  redis-exporter:
+    image: bitnami/redis-exporter:${REDIS_EXPORTER_VERSION}
+    restart: unless-stopped
+    ports:
+      - 9121:${REDIS_EXPORTER_PORT}
+    networks:
+      default:
+        aliases:
+          - ${REDIS_EXPORTER_HOST}
+    environment:
+      REDIS_ADDR: redis://${REDIS_HOST}:${REDIS_PORT}
+      REDIS_EXPORTER_CHECK_SINGLE_KEYS: jobs
+      REDIS_EXPORTER_COUNT_KEYS: proc_jobs*
+
+  mosquitto-exporter:
+    image: jryberg/mosquitto-exporter:${MOSQUITTO_EXPORTER_VERSION}
+    restart: unless-stopped
+    command: --endpoint tcp://${AAS_BROKER_HOST}:${AAS_BROKER_PORT}
+    ports:
+      - 9234:${MOSQUITTO_EXPORTER_PORT}
+    networks:
+      default:
+        aliases:
+          - ${MOSQUITTO_EXPORTER_HOST}
+      
