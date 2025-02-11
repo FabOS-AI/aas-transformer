@@ -22,6 +22,11 @@ services:
       default:
         aliases:
           - ${GRAFANA_HOST}
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: monitoring
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
@@ -47,6 +52,8 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /var/run:/var/run:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: monitoring
     healthcheck:
       test: "wget --spider http://localhost:${CADVISOR_PORT}/healthz || exit 1"
 
@@ -59,6 +66,8 @@ services:
       default:
         aliases:
           - ${REDIS_EXPORTER_HOST}
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: monitoring
     environment:
       REDIS_ADDR: redis://${REDIS_HOST}:${REDIS_PORT}
       REDIS_EXPORTER_CHECK_SINGLE_KEYS: jobs
@@ -68,6 +77,8 @@ services:
     image: jryberg/mosquitto-exporter:${MOSQUITTO_EXPORTER_VERSION}
     restart: unless-stopped
     command: --endpoint tcp://${AAS_BROKER_HOST}:${AAS_BROKER_PORT}
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: monitoring
     ports:
       - 9234:${MOSQUITTO_EXPORTER_PORT}
     networks:

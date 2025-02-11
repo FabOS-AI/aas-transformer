@@ -8,6 +8,8 @@ services:
       default:
         aliases:
           - ${AAS_AAS_DISCOVERY_HOST}
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: basyx
     environment:
       SERVER_PORT: ${AAS_AAS_DISCOVERY_PORT}
       SPRING_APPLICATION_NAME: AAS Discovery Service
@@ -35,6 +37,8 @@ services:
       default:
         aliases:
           - ${AAS_AAS_REGISTRY_HOST}
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: basyx
     environment:
       SERVER_PORT: ${AAS_AAS_REGISTRY_PORT}
       BASYX_CORS_ALLOWEDORIGINS: "*"
@@ -55,6 +59,8 @@ services:
       default:
         aliases:
           - ${AAS_SUBMODEL_REGISTRY_HOST}
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: basyx
     environment:
       SERVER_PORT: ${AAS_SUBMODEL_REGISTRY_PORT}
       BASYX_CORS_ALLOWEDORIGINS: "*"
@@ -71,6 +77,8 @@ services:
         max-size: ${LOGGING_MAX_SIZE}
     ports:
       - ${AAS_AAS_ENV_EXT_PORT}:${AAS_AAS_ENV_PORT}
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: basyx
     environment:
       SERVER_PORT: ${AAS_AAS_ENV_PORT}
       BASYX_BACKEND: MongoDB
@@ -113,6 +121,8 @@ services:
         max-size: ${LOGGING_MAX_SIZE}
     ports:
       - "3000:${AAS_GUI_PORT}"
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: basyx
     environment:
       AAS_REGISTRY_PATH: "http://${AAS_TRANSFORMER_HOST}:${AAS_AAS_REGISTRY_EXT_PORT}"
       SUBMODEL_REGISTRY_PATH: "http://${AAS_TRANSFORMER_HOST}:${AAS_SUBMODEL_REGISTRY_EXT_PORT}"
@@ -143,6 +153,8 @@ services:
           - aas-broker
     volumes:
       - "./mosquitto.conf:/mosquitto/config/mosquitto.conf"
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: basyx
     healthcheck:
       test: [ "CMD-SHELL", mosquitto_sub -p 1883 -t 'topic' -C 1 -E -i probe -W 3 ]
       interval: 5s
@@ -162,6 +174,8 @@ services:
           - ${AAS_BACKEND_DB_HOSTNAME}
     volumes:
       - "aas_database:/data/db"
+    labels:
+      de.fhg.ipa.aas-transformer.container-group: basyx
     healthcheck:
       test: mongo
       interval: 10s
