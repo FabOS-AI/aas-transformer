@@ -50,6 +50,7 @@ public abstract class MqttListener implements IMqttMessageListener {
                 .toString()
                 .replace("\n", "")
                 .replace("\r", "")
+                .replaceAll("\\s+", " ")
                 .substring(0, Math.min(100, message.toString().length())) + "...";
     }
 }
