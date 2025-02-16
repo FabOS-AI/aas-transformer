@@ -42,11 +42,14 @@ public abstract class MqttListener implements IMqttMessageListener {
 
     protected void printMsg(String topic, MqttMessage message) {
         LOG.info("TOPIC: " + topic);
-        LOG.info("AAS ID: " + getAASIdFromTopic(topic));
-        LOG.info("MESSAGE: " + message.toString());
+        LOG.info("MESSAGE: " + shortenMessage(message));
     }
 
-    protected String getAASIdFromTopic(String topic) {
-        return topic.split("/")[3];
+    protected String shortenMessage(MqttMessage message) {
+        return message
+                .toString()
+                .replace("\n", "")
+                .replace("\r", "")
+                .substring(0, Math.min(100, message.toString().length())) + "...";
     }
 }
