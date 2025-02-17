@@ -60,11 +60,17 @@ database:
   username: aas_transformer
   password: password
 
+### Scaling
+scaling:
+  max-replicas:
+    executor: 5
+    listener: 2
+
 ### AAS
 aas:
   broker:
     host: localhost
-    port: 1884
+    port: 1883
   aas-registry:
     host: localhost
     port: 8082
