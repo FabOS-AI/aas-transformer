@@ -19,7 +19,9 @@ ENV DATABASE_HOST="aas-transformer-database" \
     SPRING_DATA_REDIS_HOST="localhost" \
     SPRING_DATA_REDIS_PORT=6379 \
     SPRING_DATA_REDIS_USERNAME="default" \
-    SPRING_DATA_REDIS_PASSWORD="password"
+    SPRING_DATA_REDIS_PASSWORD="password" \
+    DOCKER_HOST="unix:///var/run/docker.sock" \
+    DOCKER_TLS_VERIFY="0"
 
 
 RUN apt update && \
