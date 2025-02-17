@@ -79,23 +79,23 @@ public class TestResult {
         double executionCountMin = executionCountMap.values().stream()
                 .mapToDouble(Long::doubleValue)
                 .min()
-                .getAsDouble();
+                .orElse(0.0);
 
         double executionCountMax = executionCountMap.values().stream()
                 .mapToDouble(Long::doubleValue)
                 .max()
-                .getAsDouble();
+                .orElse(0.0);
 
         double executionCountAvg = executionCountMap.values().stream()
                 .mapToDouble(Long::doubleValue)
                 .average()
-                .getAsDouble();
+                .orElse(0.0);
 
         double executionCountStdDev = executionCountMap.values().stream()
                 .mapToDouble(Long::doubleValue)
                 .map(executionCount -> Math.pow(executionCount - executionCountAvg, 2))
                 .average()
-                .getAsDouble();
+                .orElse(0.0);
 
         return new ExecutionCountStats(executionCountMin, executionCountMax, executionCountAvg, executionCountStdDev);
     }
