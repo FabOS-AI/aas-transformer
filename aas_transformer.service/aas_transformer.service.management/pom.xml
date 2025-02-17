@@ -69,6 +69,24 @@
             <version>1.14.3</version>
         </dependency>
 
+        <!-- DOCKER -->
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-core</artifactId>
+            <version>${docker.java.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-httpclient5</artifactId>
+            <version>${docker.java.version}</version>
+        </dependency>
+
         <!-- SPRING DOC -->
         <dependency>
             <groupId>org.springdoc</groupId>

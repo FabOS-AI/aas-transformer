@@ -44,6 +44,7 @@
         <basyx.version>2.0.0-milestone-04</basyx.version>
         <wiremock.version>3.10.0</wiremock.version>
         <aas4j.version>1.0.2</aas4j.version>
+        <docker.java.version>3.4.1</docker.java.version>
 
         <maven.plugin.apache.resources.version>3.2.0</maven.plugin.apache.resources.version>
         <maven.plugin.codehaus.exec.version>1.2.1</maven.plugin.codehaus.exec.version>
