@@ -10,26 +10,42 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/scaling")
 public class ScalingRestController {
     @Autowired
-    DockerHandler dockerHandler;
+    TransformerServiceHandler transformerServiceHandler;
 
-    @RequestMapping(path = "/executor/current-scale", method = RequestMethod.GET)
-    public long getExecutorCurrentScale() {
-        return dockerHandler.getReplicaCountOfExecutorService();
+    @RequestMapping(path = "/executor/current-desired-scale", method = RequestMethod.GET)
+    public long getExecutorCurrentDesiredScale() {
+        return transformerServiceHandler.getReplicaCountOfExecutorService();
+    }
+
+    @RequestMapping(path = "/executor/current-running-tasks", method = RequestMethod.GET)
+    public int getExecutorCurrentRunningTasks() {
+        return transformerServiceHandler.getRunningExecutorServiceTasks().size();
     }
 
     @RequestMapping(path = "/executor/scale", method = RequestMethod.POST)
-    public void scaleExecutorService(@RequestParam(name = "replicas") long replicas) {
-        dockerHandler.scaleExecutorService(replicas);
+    public void scaleExecutorService(
+            @RequestParam(name = "replicas") long replicas,
+            @RequestParam(name = "wait", defaultValue = "false") boolean wait
+    ) throws DockerHandler.WaitForScaleTimeoutException {
+        transformerServiceHandler.scaleExecutorService(replicas, wait);
     }
 
-    @RequestMapping(path = "/listener/current-scale", method = RequestMethod.GET)
-    public long getListenerCurrentScale() {
-        return dockerHandler.getReplicaCountOfListenerService();
+    @RequestMapping(path = "/listener/current-desired-scale", method = RequestMethod.GET)
+    public long getListenerCurrentDesiredScale() {
+        return transformerServiceHandler.getReplicaCountOfListenerService();
+    }
+
+    @RequestMapping(path = "/listener/current-running-tasks", method = RequestMethod.GET)
+    public long getListenerCurrentRunningTasks() {
+        return transformerServiceHandler.getRunningListenerServiceTasks().size();
     }
 
     @RequestMapping(path = "/listener/scale", method = RequestMethod.POST)
-    public void scaleListenerService(@RequestParam(name = "replicas") long replicas) {
-        dockerHandler.scaleListenerService(replicas);
+    public void scaleListenerService(
+            @RequestParam(name = "replicas") long replicas,
+            @RequestParam(name = "wait", defaultValue = "false") boolean wait
+    ) throws DockerHandler.WaitForScaleTimeoutException {
+        transformerServiceHandler.scaleListenerService(replicas, wait);
     }
 
 }
