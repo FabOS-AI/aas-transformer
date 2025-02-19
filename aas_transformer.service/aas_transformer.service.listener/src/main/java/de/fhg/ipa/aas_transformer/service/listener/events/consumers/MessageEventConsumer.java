@@ -47,6 +47,9 @@ public abstract class MessageEventConsumer implements Runnable {
                 submodelMessageEvent
         );
 
+        if(jobs.size()==0)
+            LOG.info("No transformer found for submodel message event: {}", submodelMessageEvent);
+
         jobs.forEach(job -> {
             try {
                 jobProducer.pushJob(job);
