@@ -1,10 +1,7 @@
 package de.fhg.ipa.aas_transformer.service.management;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Service;
-import com.github.dockerjava.api.model.ServiceModeConfig;
-import com.github.dockerjava.api.model.ServiceReplicatedModeOptions;
-import com.github.dockerjava.api.model.ServiceSpec;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -17,25 +14,20 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Component
-public class DockerHandler {
+import static java.lang.Thread.sleep;
+
+abstract class DockerHandler {
     private static final Logger LOG = LoggerFactory.getLogger(DockerHandler.class);
-    @Value("${scaling.max-replicas.executor: #{5}}")
-    public long MAX_REPLICAS_EXEUCTOR;
-    @Value("${scaling.max-replicas.listener: #{2}}")
-    public long MAX_REPLICAS_LISTENER;
-    private static String EXECUTOR_SERVICE_NAME = "aas-transformer-executor";
-    private static String LISTENER_SERVICE_NAME = "aas-transformer-listener";
 
-    DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-    DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).build();
-    DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
+    private DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+    private DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).build();
+    protected DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-    public DockerClient getDockerClient() {
+    protected DockerClient getDockerClient() {
         return dockerClient;
     }
 
-    private Service getServiceByName(String name) {
+    Service getServiceByName(String name) {
         List<Service> services = dockerClient.listServicesCmd().exec().stream()
                 .filter(service -> service.getSpec().getName().contains(name))
                 .toList();
@@ -48,11 +40,11 @@ public class DockerHandler {
         return services.get(0);
     }
 
-    private long getReplicasOfService(Service service) {
+    protected long getReplicasOfService(Service service) {
         return service.getSpec().getMode().getReplicated().getReplicas();
     }
 
-    public void scaleService(Service service, long replicas) {
+    protected void scaleService(Service service, long replicas) {
         if(replicas < 1) {
             LOG.warn("Desired replica count must be greater than 0. Scaling aborted.");
             return;
@@ -71,33 +63,42 @@ public class DockerHandler {
         LOG.info("Service '{}' scaled to {} replica(s).", service.getSpec().getName(), replicas);
     }
 
-    public void scaleExecutorService(long replicas) {
-        if(replicas<=MAX_REPLICAS_EXEUCTOR)
-            scaleService(getExecutorService(), replicas);
-        else
-            LOG.warn("Replica count must be less or equal {}. Scaling aborted.", MAX_REPLICAS_EXEUCTOR);
+    protected List<Task> getTasksOfService(Service service) {
+        return dockerClient.listTasksCmd().withServiceFilter(service.getId()).exec();
     }
 
-    public void scaleListenerService(long replicas) {
-        if(replicas<=MAX_REPLICAS_LISTENER)
-            scaleService(getListenerService(), replicas);
-        else
-            LOG.warn("Replica count must be less or equal {}. Scaling aborted.", MAX_REPLICAS_LISTENER);
+    protected List<Task> getTasksOfServiceFilteredByState(Service service, TaskState state) {
+        return dockerClient.listTasksCmd().withServiceFilter(service.getId()).exec().stream()
+                .filter(task -> task.getStatus().getState().equals(state))
+                .toList();
     }
 
-    public Service getExecutorService() {
-        return getServiceByName(EXECUTOR_SERVICE_NAME);
+    protected void waitScaleToFinish(Service service) throws WaitForScaleTimeoutException {
+        int tryCount = 0;
+        int maxCount = 1000;
+        long replicaCount;
+        int runningTasksCount;
+        do {
+            tryCount++;
+            if(tryCount > maxCount)
+                throw(new WaitForScaleTimeoutException("Scaling of service did not finish after " + maxCount + " tries."));
+
+            try {
+                sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            replicaCount = getReplicasOfService(service);
+            runningTasksCount = getTasksOfServiceFilteredByState(service, TaskState.RUNNING).size();
+        } while (replicaCount != runningTasksCount);
+
+        LOG.info("Scaling of service '{}' finished.", service.getSpec().getName());
     }
 
-    public Service getListenerService() {
-        return getServiceByName(LISTENER_SERVICE_NAME);
-    }
-
-    public long getReplicaCountOfExecutorService() {
-        return getReplicasOfService(getExecutorService());
-    }
-
-    public long getReplicaCountOfListenerService() {
-        return getReplicasOfService(getListenerService());
+    class WaitForScaleTimeoutException extends Exception {
+        public WaitForScaleTimeoutException(String message) {
+            super(message);
+        }
     }
 }
