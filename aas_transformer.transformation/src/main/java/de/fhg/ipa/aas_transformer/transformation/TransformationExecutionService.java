@@ -12,20 +12,20 @@ import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionService;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionServiceFactory;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
-import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
-import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonSerializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
 import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
+import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+
+import static java.lang.Thread.sleep;
 
 public class TransformationExecutionService {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationExecutionService.class);
@@ -227,7 +227,7 @@ public class TransformationExecutionService {
 
     private void addReferenceToNewSubmodelInOriginAAS(String sourceSubmodelId, Submodel destinationSubmodel) {
         String destinationSubmodelId = destinationSubmodel.getId();
-        var destinationSubmodelDescriptorOptional = this.submodelRegistry.findSubmodelDescriptor(destinationSubmodelId);
+        var destinationSubmodelDescriptorOptional = getSubmodelDescriptor(destinationSubmodelId);
         this.aasRepository.getAllAasContainingSubmodelBySubmodelId(sourceSubmodelId)
                 .stream()
                 .forEach(shell -> {
@@ -244,6 +244,27 @@ public class TransformationExecutionService {
                             this.submodelRepository.getSubmodel(destinationSubmodelId)
                     );
                 });
+    }
+
+    private Optional<SubmodelDescriptor> getSubmodelDescriptor(String submodelId) {
+        Optional<org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor> submodelDescriptor = Optional.empty();
+        int tryCount = 0;
+        int maxTries = 5;
+        do {
+            tryCount++;
+            if(tryCount > maxTries) {
+                LOG.warn("Could not find submodel descriptor for submodel with ID: {}", submodelId);
+                break;
+            }
+            try {
+                sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            submodelDescriptor = this.submodelRegistry.findSubmodelDescriptor(submodelId);
+        } while(submodelDescriptor.isEmpty());
+
+        return submodelDescriptor;
     }
 
     private void addReferenceToNewSubmodelInDestinationAas(
