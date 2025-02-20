@@ -43,9 +43,7 @@ public class SubmodelRegistry {
             submodelDescriptor = this.submodelRegistryApi.getSubmodelDescriptorById(submodelId);
             return Optional.of(submodelDescriptor);
         } catch (ApiException e) {
-            if (e.getCode() != 404) {
-                LOG.error(e.getMessage());
-            }
+            LOG.error(e.getMessage());
             return Optional.empty();
         }
     }
