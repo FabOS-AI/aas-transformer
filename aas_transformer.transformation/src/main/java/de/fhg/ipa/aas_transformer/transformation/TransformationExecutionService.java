@@ -256,8 +256,10 @@ public class TransformationExecutionService {
                 LOG.warn("Could not find submodel descriptor for submodel with ID: {}", submodelId);
                 break;
             }
+
             try {
-                sleep(500);
+                if(tryCount > 1)
+                    sleep(500);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
