@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.fhg.ipa.aas_transformer.test.utils.AasTestObjects;
+import de.fhg.ipa.aas_transformer.test.utils.GrafanaClient;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PrometheusExtension extends AbstractExtension implements BeforeAllCallback, AfterAllCallback {
+    private static GrafanaClient grafanaClient;
     private static WebClient GRAFANA_WEBCLIENT;
     private static String GRAFANA_BASE_URL;
     private static final String GRAFANA_USERNAME = "admin";
@@ -67,12 +69,16 @@ public class PrometheusExtension extends AbstractExtension implements BeforeAllC
         String prometheusUrl = "http://host.docker.internal:" + prometheusPort;
         String cadvisorUrl = "http://host.docker.internal:" + cadvisorPort;
         GRAFANA_BASE_URL = "http://host.docker.internal:" + grafanaPort;
+        grafanaClient = new GrafanaClient(GRAFANA_BASE_URL, GRAFANA_USERNAME, GRAFANA_PASSWORD);
 
         // Create Datasource and Dashboard in Grafana
-        String datasourceUid = createGrafanaDatasource(prometheusUrl);
+        String datasourceUid = grafanaClient.createGrafanaDatasource(
+                prometheusUrl,
+                "grafana_datasources.json"
+        );
         GRAFANA_DASHBOARD_FILES.forEach(fileName -> {
             try {
-                createGrafanaDashboard(fileName, datasourceUid);
+                grafanaClient.createGrafanaDashboard(fileName, datasourceUid);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -127,81 +133,7 @@ public class PrometheusExtension extends AbstractExtension implements BeforeAllC
     }
 
     public void createAnnotation(Instant start, Instant end, List<String> tags, String text) {
-        Map<String, Object> body = Map.of(
-                "time", start.toEpochMilli(),
-                "timeEnd", end.toEpochMilli(),
-                "tags", tags,
-                "text", text
-        );
-        JsonNode jsonNodeBody = objectMapper.valueToTree(body);
-
-        ClientResponse response = sendPostToGrafana(
-                "/api/annotations",
-                jsonNodeBody
-        );
-    }
-
-
-    private void createGrafanaDashboard(String fileName, String datasourceUid) throws IOException {
-        JsonNode grafanaDashboard = loadJsonFile(fileName);
-        String grafanaDashboardString = grafanaDashboard.toString();
-        grafanaDashboardString = grafanaDashboardString.replaceAll("<<datasource-uid>>", datasourceUid);
-        grafanaDashboard = new ObjectMapper().readTree(grafanaDashboardString);
-        ((ObjectNode)grafanaDashboard).remove("meta");
-        try {
-            ((ObjectNode) grafanaDashboard.get("dashboard")).remove("id");
-        } catch (NullPointerException e) {}
-
-        ClientResponse response = sendPostToGrafana("/api/dashboards/db", grafanaDashboard);
-        System.out.println("Response code for creating \"" + fileName + "\": "+response.statusCode());
-        return;
-    }
-
-    private String createGrafanaDatasource(
-            String prometheusUrl
-    ) throws IOException {
-        JsonNode grafanaDatasource = loadJsonFile("grafana_datasources.json");
-
-        // rewrite prometheus url
-        ((ObjectNode)grafanaDatasource).put("url", prometheusUrl);
-
-        // send datasource definition to grafana
-        ClientResponse response = sendPostToGrafana("/api/datasources", grafanaDatasource);
-        ObjectNode responseBody = response.bodyToMono(ObjectNode.class).block();
-        return responseBody.get("datasource").get("uid").asText();
-    }
-
-    private ClientResponse sendGetToGrafana(String grafanaPath) {
-        return getGrafanaWebclient().get().uri(grafanaPath)
-                .exchange()
-                .block();
-    }
-
-    private ClientResponse sendPostToGrafana(String grafanaPath, JsonNode body) {
-        return getGrafanaWebclient().post().uri(grafanaPath)
-                .bodyValue(body)
-                .exchange()
-                .block();
-    }
-
-    private WebClient getGrafanaWebclient() {
-        if(GRAFANA_WEBCLIENT == null) {
-            GRAFANA_WEBCLIENT = WebClient.builder()
-                    .baseUrl(GRAFANA_BASE_URL)
-                    .filter(ExchangeFilterFunctions.basicAuthentication(GRAFANA_USERNAME, GRAFANA_PASSWORD))
-                    .build();
-        }
-        return GRAFANA_WEBCLIENT;
-    }
-
-    private JsonNode loadJsonFile(String fileName) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        ClassLoader classLoader = AasTestObjects.class.getClassLoader();
-        URL resourceUrl = classLoader.getResource(fileName);
-        File file = new File(resourceUrl.getFile());
-
-        return objectMapper.readTree(file);
+        grafanaClient.createAnnotation(start, end, tags, text);
     }
 
     @Override
