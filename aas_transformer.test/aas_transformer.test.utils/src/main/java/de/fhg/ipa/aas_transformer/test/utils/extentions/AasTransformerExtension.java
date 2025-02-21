@@ -160,6 +160,10 @@ public class AasTransformerExtension extends AbstractExtension implements Before
             aasTransformerListener.start();
             runningContainers.add(aasTransformerListener);
             aasTransformerListenerPort = aasTransformerListener.getMappedPort(4020);
+            System.setProperty(
+                    "aas_transformer.services.listener.port",
+                    String.valueOf(aasTransformerListenerPort)
+            );
         }
         if(runExecutor) {
             aasTransformerExecutors.forEach(c -> c.start());
@@ -167,6 +171,10 @@ public class AasTransformerExtension extends AbstractExtension implements Before
             aasTransformerExecutors.forEach(c -> {
                 aasTransformerExecutorPorts.add(c.getMappedPort(4030));
             });
+            System.setProperty(
+                    "aas_transformer.services.executor.port",
+                    aasTransformerExecutorPorts.get(0).toString()
+            );
         }
     }
 
@@ -196,6 +204,23 @@ public class AasTransformerExtension extends AbstractExtension implements Before
         aasSubmodelRegistryPort = System.getProperty("aas.submodel-registry.port");
         aasSubmodelRepoPort = System.getProperty("aas.submodel-repository.port");
         aasSubmodelRepoPath = System.getProperty("aas.submodel-repository.path");
+    }
+
+    public void restartExecutorContainer() {
+        restartContainer(aasTransformerExecutors);
+    }
+
+    public void restartListenerContainer() {
+        restartContainer(List.of(aasTransformerListener));
+    }
+
+    public void restartManagementContainer() {
+        restartContainer(List.of(aasTransformerManagement));
+    }
+
+    private void restartContainer(List<GenericContainer> containers) {
+        containers.forEach(c -> c.stop());
+        containers.forEach(c -> c.start());
     }
 
     private GenericContainer getManagementContainer() {
