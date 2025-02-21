@@ -9,6 +9,8 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
+import de.fhg.ipa.aas_transformer.model.TransformerChangeEvent;
+import de.fhg.ipa.aas_transformer.model.TransformerChangeEventDTOListener;
 import de.fhg.ipa.aas_transformer.model.TransformerDTOListener;
 import de.fhg.ipa.aas_transformer.service.listener.events.consumers.SubmodelElementMessageEventConsumer;
 import de.fhg.ipa.aas_transformer.service.listener.events.consumers.SubmodelMessageEventConsumer;
@@ -37,6 +39,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -80,6 +83,11 @@ public class JobCreateTest {
 
         @PostConstruct
         public void initMock(){
+            Sinks.Many<TransformerChangeEvent> sinkChangeEvent = Sinks.many().unicast().onBackpressureBuffer();
+            Flux<TransformerChangeEvent> transformerChangeEventFlux = sinkChangeEvent.asFlux();
+            Sinks.Many<TransformerChangeEventDTOListener> sinkChangeEventDtoListener = Sinks.many().unicast().onBackpressureBuffer();
+            Flux<TransformerChangeEventDTOListener> transformerChangeEventDtoListenerFlux = sinkChangeEventDtoListener.asFlux();
+
             Mockito
                     .when(managementClient.getAllTransformer())
                     .thenReturn(Flux.empty());
@@ -88,10 +96,10 @@ public class JobCreateTest {
                     .thenReturn(Flux.just(ansibleFactsTransformer));
             Mockito
                     .when(managementClient.getTransformerChangeEventStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(transformerChangeEventFlux);
             Mockito
                     .when(managementClient.getTransformerChangeEventDTOListenerStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(transformerChangeEventDtoListenerFlux);
         }
     }
 
