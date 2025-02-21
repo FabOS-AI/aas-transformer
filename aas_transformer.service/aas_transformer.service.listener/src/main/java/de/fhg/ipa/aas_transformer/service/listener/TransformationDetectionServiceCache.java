@@ -48,7 +48,19 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
             })
             .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
             .doOnComplete(() -> {
-                this.transformerEventFlux.log().subscribe(this::handleTransformerEvent);
+                this.transformerEventFlux
+                        .log()
+                        .subscribe(
+                                this::handleTransformerEvent,
+                                e -> {
+                                    LOG.error("Error while handling transformer event: " + e.getMessage());
+                                    this.init();
+                                },
+                                () -> {
+                                    LOG.info("Connection to ManagementClient lost. Reconnecting...");
+                                    this.init();
+                                }
+                        );
             })
             .subscribe(this::addTransformationDetectionService);
     }

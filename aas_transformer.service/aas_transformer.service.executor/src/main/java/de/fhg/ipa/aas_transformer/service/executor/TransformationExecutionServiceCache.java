@@ -39,7 +39,17 @@ public class TransformationExecutionServiceCache extends TransformerCache {
             })
             .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
             .doOnComplete(() -> {
-                this.transformerEventFlux.log().subscribe(this::handleTransformerEvent);
+                this.transformerEventFlux.log().subscribe(
+                        this::handleTransformerEvent,
+                        e -> {
+                            LOG.error("Error while handling transformer event: " + e.getMessage());
+                            this.init();
+                        },
+                        () -> {
+                            LOG.info("Connection to ManagementClient lost. Reconnecting...");
+                            this.init();
+                        }
+                );
             })
             .subscribe(this::addTransformationExecutionService);
     }
@@ -49,6 +59,12 @@ public class TransformationExecutionServiceCache extends TransformerCache {
             .filter(t -> t.getTransformerId().equals(transformerId))
             .findFirst()
             .orElse(null);
+    }
+
+    public List<UUID> getTransformerIds() {
+        return this.transformationExecutionServices.stream()
+            .map(TransformationExecutionService::getTransformerId)
+            .toList();
     }
 
     private void addTransformationExecutionService(Transformer transformer) {
