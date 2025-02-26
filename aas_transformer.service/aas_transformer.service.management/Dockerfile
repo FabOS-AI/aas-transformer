@@ -21,7 +21,10 @@ ENV DATABASE_HOST="aas-transformer-database" \
     SPRING_DATA_REDIS_USERNAME="default" \
     SPRING_DATA_REDIS_PASSWORD="password" \
     DOCKER_HOST="unix:///var/run/docker.sock" \
-    DOCKER_TLS_VERIFY="0"
+    DOCKER_TLS_VERIFY="0" \
+    SCALING_MAX_REPLICAS_EXECUTOR=1 \
+    SCALING_MAX_REPLICAS_LISTENER=1 \
+    SCALING_MAX_QUEUE_JOB_COUNT=100
 
 
 RUN apt update && \
