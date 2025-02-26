@@ -1,17 +1,24 @@
 package de.fhg.ipa.aas_transformer.service.management;
 
 import de.fhg.ipa.aas_transformer.model.ScaleDirection;
+import de.fhg.ipa.aas_transformer.model.alertmanager.AlertMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/scaling")
 public class ScalingRestController {
     @Autowired
     TransformerServiceHandler transformerServiceHandler;
+
+    @RequestMapping(path = "/alert", method = RequestMethod.POST)
+    public String receiveAlert(@RequestBody AlertMessage alertMessage) throws DockerHandler.WaitForScaleTimeoutException {
+        // handle alert
+        transformerServiceHandler.handleScaleAlert(alertMessage);
+        return "";
+    }
 
     @RequestMapping(path = "/executor/current-desired-scale", method = RequestMethod.GET)
     public long getExecutorCurrentDesiredScale() {

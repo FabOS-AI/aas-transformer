@@ -4,6 +4,8 @@ import com.github.dockerjava.api.model.Service;
 import com.github.dockerjava.api.model.Task;
 import com.github.dockerjava.api.model.TaskState;
 import de.fhg.ipa.aas_transformer.model.ScaleDirection;
+import de.fhg.ipa.aas_transformer.model.alertmanager.Alert;
+import de.fhg.ipa.aas_transformer.model.alertmanager.AlertMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +23,25 @@ public class TransformerServiceHandler extends DockerHandler {
     public long MAX_REPLICAS_LISTENER;
     private static String EXECUTOR_SERVICE_NAME = "aas-transformer-executor";
     private static String LISTENER_SERVICE_NAME = "aas-transformer-listener";
+
+    public void handleScaleAlert(AlertMessage alertMessage) throws WaitForScaleTimeoutException {
+        if(alertMessage.getAlerts().size() > 0) {
+            Alert alert = alertMessage.getAlerts().get(0);
+            String action = alert.getLabels().get("action");
+            ScaleDirection scaleDirection;
+
+            if(action.equals("scale-down"))
+                scaleDirection = ScaleDirection.SCALE_DOWN;
+            else if(action.equals("scale-up"))
+                scaleDirection = ScaleDirection.SCALE_UP;
+            else {
+                LOG.warn("Unknown action: {}. Scaling aborted.", action);
+                return;
+            }
+
+            scaleExecutorServiceByOne(scaleDirection, false);
+        }
+    }
 
     public void scaleExecutorServiceByOne(ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
         if(scaleDirection == ScaleDirection.SCALE_UP)
