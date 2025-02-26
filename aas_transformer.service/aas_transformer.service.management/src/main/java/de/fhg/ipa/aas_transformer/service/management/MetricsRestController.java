@@ -5,6 +5,7 @@ import de.fhg.ipa.aas_transformer.persistence.api.TransformationLogJpaRepository
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -20,11 +21,17 @@ public class MetricsRestController {
     private final TransformationLogJpaRepository transformationLogJpaRepository;
 
     private final Counter counter;
+    private final Counter maxReplicaExecutorCounter;
+    private final Counter maxReplicaListenerCounter;
+    private final Counter maxQueueJobCountCounter;
 
     public MetricsRestController(
             MqttListener mqttListener,
             MeterRegistry meterRegistry,
-            TransformationLogJpaRepository transformationLogJpaRepository
+            TransformationLogJpaRepository transformationLogJpaRepository,
+            @Value("${scaling.max-replicas.executor: #{1}}") int maxReplicaExecutorCount,
+            @Value("${scaling.max-replicas.listener: #{2}}") int maxReplicaListenerCount,
+            @Value("${scaling.max-queue-job-count: #{100}}") int maxQueueJobCount
     ) {
         this.mqttListener = mqttListener;
         this.meterRegistry = meterRegistry;
@@ -34,6 +41,21 @@ public class MetricsRestController {
                 .description("a number of processed incoming submodel changes during runtime of this service")
                 .tag("name", "aas_processed_submodel_change_count")
                 .register(meterRegistry);
+        this.maxReplicaExecutorCounter = Counter.builder("max_replica_executor")
+                .description("a number of maximum executor replicas")
+                .tag("name", "max_replica_executor")
+                .register(meterRegistry);
+        this.maxReplicaExecutorCounter.increment(maxReplicaExecutorCount);
+        this.maxReplicaListenerCounter = Counter.builder("max_listener_executor")
+                .description("a number of maximum listener replicas")
+                .tag("name", "max_replica_listener")
+                .register(meterRegistry);
+        this.maxReplicaListenerCounter.increment(maxReplicaListenerCount);
+        this.maxQueueJobCountCounter = Counter.builder("max_queue_job_count")
+                .description("a number of maximum jobs in the queue")
+                .tag("name", "max_queue_job_count")
+                .register(meterRegistry);
+        this.maxQueueJobCountCounter.increment(maxQueueJobCount);
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/logs")

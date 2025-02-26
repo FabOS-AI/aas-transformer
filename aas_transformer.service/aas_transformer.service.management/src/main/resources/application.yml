@@ -65,6 +65,7 @@ scaling:
   max-replicas:
     executor: 5
     listener: 2
+  max-queue-job-count: 100
 
 ### AAS
 aas:
