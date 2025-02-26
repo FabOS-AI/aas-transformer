@@ -3,6 +3,7 @@ package de.fhg.ipa.aas_transformer.service.management;
 import com.github.dockerjava.api.model.Service;
 import com.github.dockerjava.api.model.Task;
 import com.github.dockerjava.api.model.TaskState;
+import de.fhg.ipa.aas_transformer.model.ScaleDirection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,13 @@ public class TransformerServiceHandler extends DockerHandler {
     private static String EXECUTOR_SERVICE_NAME = "aas-transformer-executor";
     private static String LISTENER_SERVICE_NAME = "aas-transformer-listener";
 
+    public void scaleExecutorServiceByOne(ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
+        if(scaleDirection == ScaleDirection.SCALE_UP)
+            scaleExecutorService(getReplicaCountOfExecutorService()+1, wait);
+        else
+            scaleExecutorService(getReplicaCountOfExecutorService()-1, wait);
+    }
+
     public void scaleExecutorService(long replicas, boolean wait) throws WaitForScaleTimeoutException {
         if(replicas<=MAX_REPLICAS_EXEUCTOR) {
             scaleService(getExecutorService(), replicas);
@@ -28,6 +36,13 @@ public class TransformerServiceHandler extends DockerHandler {
                 waitExecutorScaleToFinish();
         } else
             LOG.warn("Replica count must be less or equal {}. Scaling aborted.", MAX_REPLICAS_EXEUCTOR);
+    }
+
+    public void scaleListenerServiceByOne(ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
+        if(scaleDirection == ScaleDirection.SCALE_UP)
+            scaleListenerService(getReplicaCountOfListenerService()+1, wait);
+        else
+            scaleListenerService(getReplicaCountOfListenerService()-1, wait);
     }
 
     public void scaleListenerService(long replicas, boolean wait) throws WaitForScaleTimeoutException {

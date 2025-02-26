@@ -1,5 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.management;
 
+import de.fhg.ipa.aas_transformer.model.ScaleDirection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,6 +31,14 @@ public class ScalingRestController {
         transformerServiceHandler.scaleExecutorService(replicas, wait);
     }
 
+    @RequestMapping(path = "/executor/scale-by-one", method = RequestMethod.POST)
+    public void scaleExecutorServicePlusOne(
+            @RequestParam(name = "scaleDirection") ScaleDirection scaleDirection,
+            @RequestParam(name = "wait", defaultValue = "false") boolean wait
+    ) throws DockerHandler.WaitForScaleTimeoutException {
+        transformerServiceHandler.scaleExecutorServiceByOne(scaleDirection, wait);
+    }
+
     @RequestMapping(path = "/listener/current-desired-scale", method = RequestMethod.GET)
     public long getListenerCurrentDesiredScale() {
         return transformerServiceHandler.getReplicaCountOfListenerService();
@@ -46,6 +55,14 @@ public class ScalingRestController {
             @RequestParam(name = "wait", defaultValue = "false") boolean wait
     ) throws DockerHandler.WaitForScaleTimeoutException {
         transformerServiceHandler.scaleListenerService(replicas, wait);
+    }
+
+    @RequestMapping(path = "/listener/scale-plus-one", method = RequestMethod.POST)
+    public void scaleListenerServicePlusOne(
+            @RequestParam(name = "scaleDirection") ScaleDirection scaleDirection,
+            @RequestParam(name = "wait", defaultValue = "false") boolean wait
+    ) throws DockerHandler.WaitForScaleTimeoutException {
+        transformerServiceHandler.scaleListenerServiceByOne(scaleDirection, wait);
     }
 
 }
