@@ -14,7 +14,7 @@ public class ScalingRestController {
     TransformerServiceHandler transformerServiceHandler;
 
     @RequestMapping(path = "/alert", method = RequestMethod.POST)
-    public String receiveAlert(@RequestBody AlertMessage alertMessage) throws DockerHandler.WaitForScaleTimeoutException {
+    public void receiveAlert(@RequestBody AlertMessage alertMessage) throws DockerHandler.WaitForScaleTimeoutException {
         // handle alert
         transformerServiceHandler.handleScaleAlert(alertMessage);
     }
