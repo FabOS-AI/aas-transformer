@@ -3,6 +3,9 @@ global:
   evaluation_interval: %%EVALUATION_INTERVAL%% # Evaluate rules every 15 seconds. The default is every 1 minute.
   query_log_file: /prometheus/query.log
 
+rule_files:
+  - "/etc/prometheus/rules/transformer.yml"
+
 scrape_configs:
   - job_name: redis_exporter
     static_configs:
