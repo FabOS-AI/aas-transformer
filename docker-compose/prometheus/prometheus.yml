@@ -6,6 +6,12 @@ global:
 rule_files:
   - "/etc/prometheus/rules/transformer.yml"
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "%%ALERTMANAGER_HOST%%:%%ALERTMANAGER_PORT%%"
+
 scrape_configs:
   - job_name: redis_exporter
     static_configs:
