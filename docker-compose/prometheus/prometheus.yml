@@ -1,21 +1,21 @@
 global:
-  scrape_interval:     200ms # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-  evaluation_interval: 200ms # Evaluate rules every 15 seconds. The default is every 1 minute.
+  scrape_interval:     %%SCRAPE_INTERVAL%% # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: %%EVALUATION_INTERVAL%% # Evaluate rules every 15 seconds. The default is every 1 minute.
   query_log_file: /prometheus/query.log
 
 scrape_configs:
   - job_name: redis_exporter
     static_configs:
-      - targets: ['redis-exporter:9121']
+      - targets: ['%%REDIS_EXPORTER_HOST%%:%%REDIS_EXPORTER_PORT%%']
   - job_name: mosquitto_exporter
     static_configs:
-      - targets: ['mosquitto-exporter:9234']
+      - targets: ['%%MOSQUITTO_EXPORTER_HOST%%:%%MOSQUITTO_EXPORTER_PORT%%']
   - job_name: transformer_management
     static_configs:
-      - targets: ['aas-transformer-management:4010']
-    metrics_path: /actuator/prometheus
+      - targets: ['%%AAS_TRANSFORMER_MANAGEMENT_HOST%%:%%AAS_TRANSFORMER_MANAGEMENT_PORT%%']
+    metrics_path: %%AAS_TRANSFORMER_MANAGEMENT_PATH%%
   - job_name: cadvisor
-    scrape_interval: 3s
-    scrape_timeout: 3s
+    scrape_interval: %%CADVISOR_SCRAPE_INTERVAL%%
+    scrape_timeout: %%CADVISOR_SCRAPE_TIMEOUT%%
     static_configs:
-      - targets: ['cadvisor:8080']
+      - targets: ['%%CADVISOR_HOST%%:%%CADVISOR_PORT%%']
