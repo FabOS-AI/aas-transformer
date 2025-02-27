@@ -1,0 +1,29 @@
+groups:
+- name: scale-up
+  rules:
+  - alert: HighJobCount
+    expr: %%HIGH_JOB_COUNT_EXPR%%
+    for: %%HIGH_JOB_COUNT_FOR%%
+    keep_firing_for: %%HIGH_JOB_COUNT_KEEP_FIRING_FOR%%
+    labels:
+      action: %%HIGH_JOB_COUNT_ACTION_NAME%%
+    annotations:
+      summary: High job count in queue
+- name: scale-down
+  rules:
+    - alert: NoRunningTransformations
+      expr: %%NO_RUNNING_TRANSFORMATIONS_EXPR%%
+      for: %%NO_RUNNING_TRANSFORMATIONS_FOR%%
+      keep_firing_for: %%NO_RUNNING_TRANSFORMATIONS_KEEP_FIRING_FOR%%
+      labels:
+        action: %%NO_RUNNING_TRANSFORMATIONS_ACTION_NAME%%
+      annotations:
+        summary: In-Queue and In-Progress jobs are empty while more than one executor is running
+    - alert: ExecutorCountGreaterInProcessJobs
+      expr: %%EXECUTOR_COUNT_GREATER_IN_PROCESS_JOBS_EXPR%%
+      for: %%EXECUTOR_COUNT_GREATER_IN_PROCESS_JOBS_FOR%%
+      keep_firing_for: %%EXECUTOR_COUNT_GREATER_IN_PROCESS_JOBS_KEEP_FIRING_FOR%%
+      labels:
+        action: %%EXECUTOR_COUNT_GREATER_IN_PROCESS_JOBS_ACTION_NAME%%
+      annotations:
+        summary: Count of executors is greater than the number of jobs in progress
