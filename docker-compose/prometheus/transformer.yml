@@ -20,10 +20,10 @@ groups:
       annotations:
         summary: In-Queue and In-Progress jobs are empty while more than one executor is running
     - alert: ExecutorCountGreaterInProcessJobs
-      expr: %%EXECUTOR_COUNT_GREATER_IN_PROCESS_JOBS_EXPR%%
-      for: %%EXECUTOR_COUNT_GREATER_IN_PROCESS_JOBS_FOR%%
-      keep_firing_for: %%EXECUTOR_COUNT_GREATER_IN_PROCESS_JOBS_KEEP_FIRING_FOR%%
+      expr: %%EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_EXPR%%
+      for: %%EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_FOR%%
+      keep_firing_for: %%EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_KEEP_FIRING_FOR%%
       labels:
-        action: %%EXECUTOR_COUNT_GREATER_IN_PROCESS_JOBS_ACTION_NAME%%
+        action: %%EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_ACTION_NAME%%
       annotations:
         summary: Count of executors is greater than the number of jobs in progress
