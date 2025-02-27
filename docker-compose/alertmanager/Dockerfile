@@ -10,5 +10,10 @@ ENV AAS_TRANSFORMER_MANAGEMENT_PATH=/scaling/alert
 COPY config.yml /alertmanager/config.yml
 COPY startup.sh /alertmanager/startup.sh
 
+USER root
+RUN chmod +x /alertmanager/startup.sh
+RUN chown nobody:nobody /alertmanager/startup.sh
+USER nobody
+
 ENTRYPOINT ["/alertmanager/startup.sh"]
 CMD        [ "--config.file=/alertmanager/config.yml" ]
