@@ -1,0 +1,4 @@
+services:
+  alertmanager:
+    image: ghcr.io/fabos-ai/aas-transformer/alertmanager:v0.28.0
+    build: .

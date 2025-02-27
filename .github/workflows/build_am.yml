@@ -1,0 +1,35 @@
+name: Build AM
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - release/*
+      - feature/*
+      - fix/*
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build AM docker image
+        working-directory: ./docker-compose/alertmanager
+        run: docker compose build --no-cache alertmanager
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+      - name: Push docker image
+        working-directory: ./docker-compose/alertmanager
+        run: docker compose push alertmanager
