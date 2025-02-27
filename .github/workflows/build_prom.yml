@@ -1,4 +1,4 @@
-name: Build AM
+name: Build Prom
 
 on:
   push:
