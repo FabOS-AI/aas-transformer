@@ -17,6 +17,9 @@ import java.util.List;
 public class TransformerServiceHandler extends DockerHandler {
     private static final Logger LOG = LoggerFactory.getLogger(TransformerServiceHandler.class);
 
+    @Value("${scaling.alert-enabled}")
+    public boolean alertEnabled;
+
     @Value("${scaling.max-replicas.executor: #{5}}")
     public long MAX_REPLICAS_EXEUCTOR;
     @Value("${scaling.max-replicas.listener: #{2}}")
@@ -25,10 +28,20 @@ public class TransformerServiceHandler extends DockerHandler {
     private static String LISTENER_SERVICE_NAME = "aas-transformer-listener";
 
     public void handleScaleAlert(AlertMessage alertMessage) throws WaitForScaleTimeoutException {
+        if(!alertEnabled) {
+            LOG.warn("Scaling by alerts is disabled. Scaling aborted.");
+            return;
+        }
+
         if(alertMessage.getAlerts().size() > 0) {
             Alert alert = alertMessage.getAlerts().get(0);
             String action = alert.getLabels().get("action");
             ScaleDirection scaleDirection;
+
+            if(action.equals("scale-to-minimum")) {
+                scaleExecutorService(1,false);
+                return;
+            }
 
             if(action.equals("scale-down"))
                 scaleDirection = ScaleDirection.SCALE_DOWN;
