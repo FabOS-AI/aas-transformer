@@ -20,5 +20,8 @@ scrape_configs:
   - job_name: cadvisor
     scrape_interval: %%CADVISOR_SCRAPE_INTERVAL%%
     scrape_timeout: %%CADVISOR_SCRAPE_TIMEOUT%%
-    static_configs:
-      - targets: ['%%CADVISOR_HOST%%:%%CADVISOR_PORT%%']
+    dns_sd_configs:
+      - names:
+          - 'tasks.cadvisor_cadvisor'
+        type: 'A'
+        port: %%CADVISOR_PORT%%
