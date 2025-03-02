@@ -28,6 +28,8 @@ public class TransformerServiceHandler extends DockerHandler {
     private static String LISTENER_SERVICE_NAME = "aas-transformer-listener";
 
     public void handleScaleAlert(AlertMessage alertMessage) throws WaitForScaleTimeoutException {
+        LOG.info("Received alert message: {}", alertMessage);
+
         if(!alertEnabled) {
             LOG.warn("Scaling by alerts is disabled. Scaling aborted.");
             return;
