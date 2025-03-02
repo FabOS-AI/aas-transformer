@@ -2,10 +2,13 @@ package de.fhg.ipa.aas_transformer.aas;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
+import org.eclipse.digitaltwin.basyx.core.pagination.CursorResult;
+import org.eclipse.digitaltwin.basyx.core.pagination.PaginationInfo;
 import org.eclipse.digitaltwin.basyx.http.Base64UrlEncodedIdentifier;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.ApiException;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.api.SubmodelRegistryApi;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.Endpoint;
+import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.GetSubmodelDescriptorsResult;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.http.HttpClient;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -35,6 +39,26 @@ public class SubmodelRegistry {
         var submodelRegistryClient = new org.eclipse.digitaltwin.basyx.submodelregistry.client.ApiClient(HttpClient.newBuilder(), objectMapper, this.submodelRegistryUrl);
         this.submodelRegistryApi = new SubmodelRegistryApi(submodelRegistryClient);
         LOG.info("SubmodelRegistry initialized with URL: {}", submodelRegistryUrl);
+    }
+
+    public List<SubmodelDescriptor> getSubmodelDescriptors() {
+        int limit = 100;
+        String cursor = "";
+        List<SubmodelDescriptor> submodelDescriptors = new ArrayList<>();
+        do {
+            GetSubmodelDescriptorsResult resultSmds = null;
+            try {
+                resultSmds = this.submodelRegistryApi.getAllSubmodelDescriptors(
+                        limit, cursor
+                );
+            } catch (ApiException e) {
+                throw new RuntimeException(e);
+            }
+            submodelDescriptors.addAll(resultSmds.getResult());
+            cursor = resultSmds.getPagingMetadata().getCursor();
+        } while(cursor != null);
+
+        return  submodelDescriptors;
     }
 
     public Optional<SubmodelDescriptor> findSubmodelDescriptor(String submodelId) {
