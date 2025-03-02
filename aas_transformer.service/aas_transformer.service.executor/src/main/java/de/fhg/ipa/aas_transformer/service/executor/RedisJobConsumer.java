@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import javax.annotation.PreDestroy;
 import java.util.List;
 
 import static java.lang.Thread.sleep;
@@ -18,6 +19,7 @@ import static java.lang.Thread.sleep;
 @Component
 public class RedisJobConsumer extends RedisClient implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(RedisJobConsumer.class);
+    private boolean isShuttingDown = false;
 
 //    private Optional<RedisTransformationJob> optionalCurrentRedisJob = Optional.empty();
     private final Sinks.Many<TransformationJob> jobSink =
@@ -34,11 +36,16 @@ public class RedisJobConsumer extends RedisClient implements Runnable {
         return jobFlux;
     }
 
+    @PreDestroy
+    public void shutdown() {
+        isShuttingDown = true;
+    }
+
     @Override
     public void run() {
         LOG.info("RedisJobConsumer started");
         boolean isJobInProcessListEmitedToSink = false;
-        while(true) {
+        while(!isShuttingDown) {
             if(this.getProcJobCountInt() == 0) {
                 this.moveNextJobIntoProcessingList();
                 isJobInProcessListEmitedToSink = false;

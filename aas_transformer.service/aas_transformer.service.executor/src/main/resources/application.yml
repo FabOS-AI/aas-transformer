@@ -37,6 +37,8 @@ spring:
       - org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration
   codec:
     max-in-memory-size: 16MB
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 ### TRANSFORMER
 aas_transformer:
