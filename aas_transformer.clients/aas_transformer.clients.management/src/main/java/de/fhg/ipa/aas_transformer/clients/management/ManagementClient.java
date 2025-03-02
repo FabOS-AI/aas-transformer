@@ -30,11 +30,12 @@ public class ManagementClient extends TransformerRestControllerApi {
 
         // Create WebClient:
         ConnectionProvider provider = ConnectionProvider.builder("fixed")
-                .maxConnections(500)
-                .maxIdleTime(Duration.ofSeconds(20))
-                .maxLifeTime(Duration.ofSeconds(60))
-                .pendingAcquireTimeout(Duration.ofSeconds(60))
-                .evictInBackground(Duration.ofSeconds(120)).build();
+//                .maxConnections(500)
+//                .maxIdleTime(Duration.ofSeconds(20))
+//                .maxLifeTime(Duration.ofSeconds(60))
+//                .pendingAcquireTimeout(Duration.ofSeconds(60))
+//                .evictInBackground(Duration.ofSeconds(120))
+                .build();
 
         HttpClient httpClient = HttpClient.create(provider);
         httpClient.warmup().block();
