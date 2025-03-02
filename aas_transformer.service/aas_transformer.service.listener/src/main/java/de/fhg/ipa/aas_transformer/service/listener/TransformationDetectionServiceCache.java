@@ -50,6 +50,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
             .doOnComplete(() -> {
                 this.transformerEventFlux
                         .log()
+                        .retry()
                         .subscribe(
                                 this::handleTransformerEvent,
                                 e -> {

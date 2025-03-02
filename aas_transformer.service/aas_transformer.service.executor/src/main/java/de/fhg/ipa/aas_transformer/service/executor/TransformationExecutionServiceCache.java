@@ -39,7 +39,10 @@ public class TransformationExecutionServiceCache extends TransformerCache {
             })
             .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
             .doOnComplete(() -> {
-                this.transformerEventFlux.log().subscribe(
+                this.transformerEventFlux
+                        .log()
+                        .retry()
+                        .subscribe(
                         this::handleTransformerEvent,
                         e -> {
                             LOG.error("Error while handling transformer event: " + e.getMessage());
