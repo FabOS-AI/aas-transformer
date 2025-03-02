@@ -34,6 +34,7 @@ public class TransformationExecutionServiceCache extends TransformerCache {
     @PostConstruct
     public void init() {
         this.transformerFlux
+            .log()
             .doOnError(e -> {
                 LOG.warn("ManagementClient failed to connect: " + e.getMessage() + " - retrying in " + this.connectionRetryTimeoutInMs + " ms...");
             })
@@ -43,16 +44,16 @@ public class TransformationExecutionServiceCache extends TransformerCache {
                         .log()
                         .retry()
                         .subscribe(
-                        this::handleTransformerEvent,
-                        e -> {
-                            LOG.error("Error while handling transformer event: " + e.getMessage());
-                            this.init();
-                        },
-                        () -> {
-                            LOG.info("Connection to ManagementClient lost. Reconnecting...");
-                            this.init();
-                        }
-                );
+                            this::handleTransformerEvent,
+                            e -> {
+                                LOG.error("Error while handling transformer event: " + e.getMessage());
+                                this.init();
+                            },
+                            () -> {
+                                LOG.info("Connection to ManagementClient is complete. Reconnecting...");
+                                this.init();
+                            }
+                        );
             })
             .subscribe(this::addTransformationExecutionService);
     }
