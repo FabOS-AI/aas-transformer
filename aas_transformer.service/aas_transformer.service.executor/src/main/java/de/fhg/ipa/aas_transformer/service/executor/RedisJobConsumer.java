@@ -58,6 +58,8 @@ public class RedisJobConsumer extends RedisClient implements Runnable {
                 }
             }
         }
+
+        LOG.info("RedisJobConsumer stopped");
     }
 
     private void getAndEmitNextJobInProcessingList() {
