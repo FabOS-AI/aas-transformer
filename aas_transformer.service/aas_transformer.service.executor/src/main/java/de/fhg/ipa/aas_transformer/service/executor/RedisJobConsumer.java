@@ -6,6 +6,9 @@ import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -17,7 +20,7 @@ import java.util.List;
 import static java.lang.Thread.sleep;
 
 @Component
-public class RedisJobConsumer extends RedisClient implements Runnable {
+public class RedisJobConsumer extends RedisClient implements Runnable, ApplicationListener<ContextClosedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(RedisJobConsumer.class);
     private boolean isShuttingDown = false;
 
@@ -36,9 +39,16 @@ public class RedisJobConsumer extends RedisClient implements Runnable {
         return jobFlux;
     }
 
-    @PreDestroy
-    public void shutdown() {
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        LOG.info("ContextClosedEvent received");
         isShuttingDown = true;
+        try {
+            consumerThread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        redisConnectionFactory.getConnection().close();
     }
 
     @Override
