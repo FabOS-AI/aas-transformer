@@ -41,7 +41,7 @@ public class RedisJobConsumer extends RedisClient implements Runnable, Applicati
 
     @Override
     public void onApplicationEvent(ContextClosedEvent event) {
-        LOG.info("ContextClosedEvent received");
+        LOG.info("ContextClosedEvent received in RedisJobConsumer");
         isShuttingDown = true;
         try {
             consumerThread.join();

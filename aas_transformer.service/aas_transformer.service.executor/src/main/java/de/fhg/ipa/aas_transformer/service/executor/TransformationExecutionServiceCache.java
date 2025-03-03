@@ -8,7 +8,10 @@ import de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Component;
+import reactor.core.Disposable;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
@@ -17,10 +20,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-public class TransformationExecutionServiceCache extends TransformerCache {
+public class TransformationExecutionServiceCache extends TransformerCache implements ApplicationListener<ContextClosedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationExecutionServiceCache.class);
     private final TransformationServiceFactory transformationServiceFactory;
 
+    private Disposable transformerEventDisposable;
     public List<TransformationExecutionService> transformationExecutionServices = new ArrayList<>();
 
     public TransformationExecutionServiceCache(
@@ -29,6 +33,13 @@ public class TransformationExecutionServiceCache extends TransformerCache {
     ) {
         super(managementClient);
         this.transformationServiceFactory = transformationServiceFactory;
+    }
+
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        LOG.info("ContextClosedEvent received in TransformationExecutionServiceCache");
+        this.transformerEventDisposable.dispose();
+        LOG.info("Subscription to transformer events has been disposed");
     }
 
     @PostConstruct
@@ -40,7 +51,7 @@ public class TransformationExecutionServiceCache extends TransformerCache {
             })
             .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
             .doOnComplete(() -> {
-                this.transformerEventFlux
+                this.transformerEventDisposable = this.transformerEventFlux
                         .log()
                         .retry()
                         .subscribe(
