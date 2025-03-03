@@ -24,10 +24,12 @@ public class RedisClient {
     private final static UUID CONSUMER_ID = UUID.randomUUID();
     private final static String REDIS_PROC_JOBS_LIST_KEY = REDIS_PROC_JOBS_LIST_KEY_PREFIX + "_" + CONSUMER_ID;
 
+    protected final RedisConnectionFactory redisConnectionFactory;
     private final ListOperations<String, RedisTransformationJob> listOps;
     private final RedisTemplate<String, RedisTransformationJob> template = new RedisTemplate<>();
 
     public RedisClient(RedisConnectionFactory connectionFactory) {
+        this.redisConnectionFactory = connectionFactory;
         this.listOps = template.opsForList();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
