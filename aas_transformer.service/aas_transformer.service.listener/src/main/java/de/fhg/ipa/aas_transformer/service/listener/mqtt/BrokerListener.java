@@ -5,6 +5,8 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -13,9 +15,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-public class BrokerListener implements Runnable, MqttCallback {
+public class BrokerListener implements Runnable, MqttCallback, ApplicationListener<ContextClosedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(BrokerListener.class);
 
+    private boolean isShuttingDown = false;
+    Thread thread = new Thread(this);
     private static final MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
     private static final int MQTT_QOS = 2;
     private final MqttAsyncClient mqttClient;
@@ -44,13 +48,30 @@ public class BrokerListener implements Runnable, MqttCallback {
         this.listeners.add(submodelElementMqttListener);
     }
 
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        LOG.info("Received ContextClosedEvent in BrokerListener.");
+        isShuttingDown = true;
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        LOG.info("Listener thread has been shut down.");
+        try {
+            this.mqttClient.disconnect();
+        } catch (MqttException e) {
+            throw new RuntimeException(e);
+        }
+        LOG.info("MQTT client has been disconnected.");
+    }
+
     public boolean isConnected() {
         return this.mqttClient.isConnected();
     }
 
     @PostConstruct
     public void init() {
-        var thread = new Thread(this);
         thread.start();
     }
 
@@ -63,7 +84,7 @@ public class BrokerListener implements Runnable, MqttCallback {
         }
 
         // Subscribe to all topics; break while loop if successful:
-        while(true) {
+        while(!isShuttingDown) {
             try {
                 for (var listener : this.listeners) {
                     for (var topic : listener.getTopics()) {
@@ -86,6 +107,8 @@ public class BrokerListener implements Runnable, MqttCallback {
                 e.printStackTrace();
             }
         }
+
+        LOG.info("Shutting down Broker listener.");
     }
 
     @Override

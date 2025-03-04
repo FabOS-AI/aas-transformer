@@ -13,7 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Component;
+import reactor.core.Disposable;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
@@ -23,11 +26,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
-public class TransformationDetectionServiceCache extends TransformerDTOListenerCache {
+public class TransformationDetectionServiceCache extends TransformerDTOListenerCache implements ApplicationListener<ContextClosedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationDetectionServiceCache.class);
 
     private final SubmodelRepository submodelRepository;
     public List<TransformationDetectionService> transformationDetectionServices = new ArrayList<>();
+    private Disposable transformerEventDisposable;
 
     @Value("${aas_transformer.services.listener.strict-mode.enabled:false}")
     private boolean strictModeEnabled;
@@ -40,6 +44,13 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
         this.submodelRepository = submodelRepository;
     }
 
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        LOG.info("ContextClosedEvent received in TransformationDetectionServiceCache");
+        this.transformerEventDisposable.dispose();
+        LOG.info("Subscription to transformer events has been disposed");
+    }
+
     @PostConstruct
     public void init() {
         this.transformerFlux
@@ -48,7 +59,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
             })
             .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
             .doOnComplete(() -> {
-                this.transformerEventFlux
+                transformerEventDisposable = this.transformerEventFlux
                         .log()
                         .retry()
                         .subscribe(
