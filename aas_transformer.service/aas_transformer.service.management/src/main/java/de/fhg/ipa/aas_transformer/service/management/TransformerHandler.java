@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.*;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.DELETE;
@@ -336,12 +337,18 @@ public class TransformerHandler {
 
     public Flux<TransformerChangeEvent> getTransformerChangeEventFlux() {
         Flux<TransformerChangeEvent> flux = transformerChangeEventSink.asFlux();
-        return flux;
+        Flux<TransformerChangeEvent> keepAliveFlux = Flux.interval(Duration.ofSeconds(10)).map(tick ->
+                new TransformerChangeEvent(TransformerChangeEventType.KEEP_ALIVE, null)
+        );
+        return Flux.merge(flux, keepAliveFlux);
 
     }
 
     public Flux<TransformerChangeEventDTOListener> getTransformerChangeEventDTOListenerFlux() {
         Flux<TransformerChangeEventDTOListener> flux = transformerChangeEventDTOListenerSink.asFlux();
-        return flux;
+        Flux<TransformerChangeEventDTOListener> keepAliveFlux = Flux.interval(Duration.ofSeconds(10)).map(tick ->
+                new TransformerChangeEventDTOListener(TransformerChangeEventType.KEEP_ALIVE, null)
+        );
+        return Flux.merge(flux, keepAliveFlux);
     }
 }

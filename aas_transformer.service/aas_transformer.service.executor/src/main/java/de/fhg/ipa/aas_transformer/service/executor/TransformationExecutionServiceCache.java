@@ -105,6 +105,8 @@ public class TransformationExecutionServiceCache extends TransformerCache implem
             case DELETE:
                 deleteTransformationExecutionService(event.getTransformer());
                 break;
+            default:
+                break;
         }
     }
 }

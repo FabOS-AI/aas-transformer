@@ -157,6 +157,8 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
             case DELETE:
                 deleteTransformationDetectionService(event.getTransformer());
                 break;
+            default:
+                break;
         }
     }
 }
