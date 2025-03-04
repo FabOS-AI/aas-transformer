@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.annotation.DirtiesContext;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -119,11 +120,11 @@ public class TransformerRestControllerTest {
         );
 
         // Create Flux Objects for Stream Endpoints:
-        this.managementClient
+        Disposable changeEventDTOListenerDisposable = this.managementClient
                 .getTransformerChangeEventDTOListenerStream()
                 .log()
                 .subscribe(e -> assertEquals(e, expectedChangeEventDTOListener));
-        this.managementClient
+        Disposable changeEventDisposable = this.managementClient
                 .getTransformerChangeEventStream()
                 .log()
                 .subscribe(e -> assertEquals(e, expectedChangeEvent));
@@ -134,6 +135,8 @@ public class TransformerRestControllerTest {
                 .block();
 
         sleep(500);
+        changeEventDisposable.dispose();
+        changeEventDTOListenerDisposable.dispose();
     }
 
     @Test
