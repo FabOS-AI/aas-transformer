@@ -3,8 +3,10 @@ package de.fhg.ipa.aas_transformer.service.management;
 import de.fhg.ipa.aas_transformer.model.TransformationLog;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationLogJpaRepository;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +18,9 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/metrics")
 public class MetricsRestController {
+    @Autowired
+    TransformerServiceHandler transformerServiceHandler;
+
     private final MqttListener mqttListener;
     private final MeterRegistry meterRegistry;
     private final TransformationLogJpaRepository transformationLogJpaRepository;
@@ -24,6 +29,8 @@ public class MetricsRestController {
     private final Counter maxReplicaExecutorCounter;
     private final Counter maxReplicaListenerCounter;
     private final Counter maxQueueJobCountCounter;
+    private final Gauge isExecutorScalingGauge;
+    private final Gauge isListenerScalingGauge;
 
     public MetricsRestController(
             MqttListener mqttListener,
@@ -56,6 +63,20 @@ public class MetricsRestController {
                 .tag("name", "max_queue_job_count")
                 .register(meterRegistry);
         this.maxQueueJobCountCounter.increment(maxQueueJobCount);
+
+        this.isExecutorScalingGauge = Gauge.builder("is_executor_scaling", () -> {
+                    return transformerServiceHandler.isExecutorScaling() ? 1 : 0;
+                })
+                .description("a flag indicating if the executor service is currently scaling")
+                .tag("name", "is_executor_scaling")
+                .register(meterRegistry);
+
+        this.isListenerScalingGauge = Gauge.builder("is_listener_scaling", () -> {
+                    return transformerServiceHandler.isListenerScaling() ? 1 : 0;
+                })
+                .description("a flag indicating if the listener service is currently scaling")
+                .tag("name", "is_listener_scaling")
+                .register(meterRegistry);
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/logs")

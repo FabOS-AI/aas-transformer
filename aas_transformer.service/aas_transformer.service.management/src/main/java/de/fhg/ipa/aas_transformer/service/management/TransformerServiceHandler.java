@@ -91,6 +91,14 @@ public class TransformerServiceHandler extends DockerHandler {
             LOG.warn("Replica count must be less or equal {}. Scaling aborted.", MAX_REPLICAS_LISTENER);
     }
 
+    public boolean isExecutorScaling() {
+        return getReplicaCountOfExecutorService() != getRunningExecutorServiceTasks().size();
+    }
+
+    public boolean isListenerScaling() {
+        return getReplicaCountOfListenerService() != getRunningListenerServiceTasks().size();
+    }
+
     public List<Task> getRunningExecutorServiceTasks() {
         return getTasksOfServiceFilteredByState(getExecutorService(), TaskState.RUNNING);
     }
