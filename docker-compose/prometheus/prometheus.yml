@@ -31,3 +31,6 @@ scrape_configs:
           - 'tasks.cadvisor_cadvisor'
         type: 'A'
         port: %%CADVISOR_PORT%%
+  - job_name: alertmanager
+    static_configs:
+      - targets: ['%%ALERTMANAGER_HOST%%:%%ALERTMANAGER_PORT%%']
