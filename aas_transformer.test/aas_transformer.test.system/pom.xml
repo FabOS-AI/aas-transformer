@@ -41,6 +41,20 @@
         </dependency>
 
         <dependency>
+            <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.clients.prometheus</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.clients.alertmanager</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.version}</version>
