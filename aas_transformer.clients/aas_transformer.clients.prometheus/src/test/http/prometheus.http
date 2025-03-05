@@ -1,0 +1,2 @@
+### Alerts
+GET http://aas-transformer.local/prometheus/api/v1/alerts
