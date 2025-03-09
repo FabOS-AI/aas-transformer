@@ -55,6 +55,10 @@ public class SubmodelRepository {
         return true;
     }
 
+    public List<Submodel> getSubmodelsWithLimit(int limit) {
+        return this.connectedSubmodelRepository.getAllSubmodels(new PaginationInfo(limit, "")).getResult();
+    }
+
     public List<Submodel> getAllSubmodels() throws DeserializationException {
 
         int limit = 100;

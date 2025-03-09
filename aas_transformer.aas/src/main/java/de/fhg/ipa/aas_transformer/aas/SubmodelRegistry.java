@@ -2,8 +2,6 @@ package de.fhg.ipa.aas_transformer.aas;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
-import org.eclipse.digitaltwin.basyx.core.pagination.CursorResult;
-import org.eclipse.digitaltwin.basyx.core.pagination.PaginationInfo;
 import org.eclipse.digitaltwin.basyx.http.Base64UrlEncodedIdentifier;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.ApiException;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.api.SubmodelRegistryApi;
@@ -72,30 +70,55 @@ public class SubmodelRegistry {
         }
     }
 
+    public void registerSubmodelDescriptor(SubmodelDescriptor submodelDescriptor) {
+        try {
+            this.submodelRegistryApi.postSubmodelDescriptor(submodelDescriptor);
+        } catch (ApiException e) {
+            if (e.getCode() == 409) {
+                try {
+                    this.submodelRegistryApi.putSubmodelDescriptorById(submodelDescriptor.getId(), submodelDescriptor);
+                } catch (ApiException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            else {
+                LOG.error(e.getMessage());
+            }
+        }
+    }
+
     public void registerSubmodel(Submodel submodel) throws ApiException {
+        var submodelDescriptor = createSubmodelDescriptor(
+                submodel.getId(),
+                submodel.getIdShort(),
+                this.submodelRepositoryUrl
+        );
+
+       registerSubmodelDescriptor(submodelDescriptor);
+    }
+
+    public SubmodelDescriptor createSubmodelDescriptor(String submodelId, String submodelIdShort, String smRepoBaseUrl) {
         var endpoints = new ArrayList<Endpoint>();
         var endpoint = new Endpoint();
         endpoint.setInterface("SUBMODEL-3.0");
         var protocolInformation = new org.eclipse.digitaltwin.basyx.submodelregistry.client.model.ProtocolInformation();
         protocolInformation.setEndpointProtocol("http");
-        protocolInformation.setHref(this.submodelRepositoryUrl + "/submodels/" + Base64UrlEncodedIdentifier.encodeIdentifier(submodel.getId()));
+        protocolInformation.setHref(smRepoBaseUrl + "/submodels/" + Base64UrlEncodedIdentifier.encodeIdentifier(submodelId));
         endpoint.setProtocolInformation(protocolInformation);
         endpoints.add(endpoint);
 
         var submodelDescriptor = new SubmodelDescriptor();
-        submodelDescriptor.setId(submodel.getId());
-        submodelDescriptor.setIdShort(submodel.getIdShort());
+        submodelDescriptor.setId(submodelId);
+        submodelDescriptor.setIdShort(submodelIdShort);
         submodelDescriptor.setEndpoints(endpoints);
+        return submodelDescriptor;
+    }
 
+    public void deleteSubmodelDescriptor(String submodelId) {
         try {
-            this.submodelRegistryApi.postSubmodelDescriptor(submodelDescriptor);
+            this.submodelRegistryApi.deleteSubmodelDescriptorById(submodelId);
         } catch (ApiException e) {
-            if (e.getCode() == 409) {
-                this.submodelRegistryApi.putSubmodelDescriptorById(submodelDescriptor.getId(), submodelDescriptor);
-            }
-            else {
-                throw e;
-            }
+            LOG.error(e.getMessage());
         }
     }
 }

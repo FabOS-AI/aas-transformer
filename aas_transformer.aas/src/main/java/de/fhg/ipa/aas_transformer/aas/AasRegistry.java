@@ -40,6 +40,28 @@ public class AasRegistry {
         LOG.info("AasRegistry initialized with URL: {}", aasRegistryUrl);
     }
 
+    public List<AssetAdministrationShellDescriptor> getAllAasDescriptors() {
+        int limit = 100;
+        String cursor = "";
+        List<AssetAdministrationShellDescriptor> aasDescriptors = new ArrayList<>();
+        do {
+            try {
+                GetAssetAdministrationShellDescriptorsResult result = this.aasRegistryApi.getAllAssetAdministrationShellDescriptors(
+                        limit,
+                        cursor,
+                        null,
+                        null
+                );
+                aasDescriptors.addAll(result.getResult());
+                cursor = result.getPagingMetadata().getCursor();
+            } catch (ApiException e) {
+                throw new RuntimeException(e);
+            }
+        } while(cursor != null);
+
+        return aasDescriptors;
+    }
+
     public Optional<AssetAdministrationShellDescriptor> getAasDescriptor(String aasId) throws ApiException {
         try {
             var result = this.aasRegistryApi.getAssetAdministrationShellDescriptorByIdWithHttpInfo(aasId);
@@ -51,6 +73,18 @@ public class AasRegistry {
                 throw e;
             }
         }
+    }
+
+    public void deleteAllShellDescriptors() {
+        try {
+            this.aasRegistryApi.deleteAllShellDescriptors();
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void deleteShellDescriptor(String shellId) {
+
     }
 
     public void addSubmodelDescriptorToAas(String aasId, SubmodelDescriptor submodelDescriptor) throws ApiException {
