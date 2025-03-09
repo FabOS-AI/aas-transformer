@@ -2,12 +2,16 @@ package de.fhg.ipa.aas_transformer.service.management;
 
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.model.*;
+import de.fhg.ipa.aas_transformer.model.alertmanager.AlertMessage;
 import de.fhg.ipa.aas_transformer.service.management.converter.modelmapper.TransformerToTransformerDTOListenerConverter;
+import de.fhg.ipa.aas_transformer.service.management.exceptions.WaitForScaleTimeoutException;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.MariaDbExtension;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,6 +34,9 @@ public class TransformerScaleAlertControllerTest {
     @LocalServerPort
     private int transformerManagementPort;
 
+    @MockBean
+    TransformerServiceHandler transformerServiceHandler;
+
     private WebClient webclient;
 
     private String alertPaylod = """
@@ -44,7 +51,12 @@ public class TransformerScaleAlertControllerTest {
 
     @Test
     @Order(10)
-    public void getAllTransformerExpectNone() {
+    public void sendAlertToEndpointExpectNoException() throws WaitForScaleTimeoutException {
+        Mockito
+                .doNothing()
+                .when(transformerServiceHandler)
+                .handleScaleAlert(Mockito.any(AlertMessage.class));
+
         String response = webclient.post()
                 .uri("")
                 .header("Content-Type", "application/json")
