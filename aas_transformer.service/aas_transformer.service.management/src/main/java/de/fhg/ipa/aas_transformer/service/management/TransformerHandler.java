@@ -151,7 +151,7 @@ public class TransformerHandler {
                     try {
                         this.redisJobProducer.pushJob(new TransformationJob(
                                 DELETE,
-                                null,
+                                t.getId(),
                                 submodelId,
                                 null
                         ));
