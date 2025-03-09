@@ -7,6 +7,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+import de.fhg.ipa.aas_transformer.service.management.exceptions.WaitForScaleTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -94,11 +95,5 @@ abstract class DockerHandler {
         } while (replicaCount != runningTasksCount);
 
         LOG.info("Scaling of service '{}' finished.", service.getSpec().getName());
-    }
-
-    class WaitForScaleTimeoutException extends Exception {
-        public WaitForScaleTimeoutException(String message) {
-            super(message);
-        }
     }
 }
