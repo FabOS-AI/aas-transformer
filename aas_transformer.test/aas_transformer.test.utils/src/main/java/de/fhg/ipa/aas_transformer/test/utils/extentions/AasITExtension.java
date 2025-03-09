@@ -93,8 +93,10 @@ public class AasITExtension extends AbstractExtension implements BeforeAllCallba
         System.setProperty("aas.aas-registry.url", "http://" + HOSTNAME + ":" + aasRegistryPort);
         System.setProperty("aas.submodel-registry.url", "http://" + HOSTNAME + ":" + submodelRegistryPort);
         System.setProperty("aas.aas-repository.port", String.valueOf(aasEnvPort));
+        System.setProperty("aas.aas-repository.path", "");
         System.setProperty("aas.aas-repository.url", "http://" + HOSTNAME + ":" + String.valueOf(aasEnvPort));
         System.setProperty("aas.submodel-repository.port", String.valueOf(aasEnvPort));
+        System.setProperty("aas.submodel-repository.path", "");
         System.setProperty("aas.submodel-repository.url", "http://" + HOSTNAME + ":" + String.valueOf(aasEnvPort));
     }
 
