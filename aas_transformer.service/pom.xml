@@ -12,7 +12,6 @@
     <modules>
         <module>aas_transformer.service.listener</module>
         <module>aas_transformer.service.executor</module>
-        <module>aas_transformer.service.lock_management</module>
         <module>aas_transformer.service.management</module>
     </modules>
 
