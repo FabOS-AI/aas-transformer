@@ -40,6 +40,22 @@
             <artifactId>aas_transformer.open_api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.persistence.api</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.clients.redis</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- SPRING -->
         <dependency>
@@ -60,6 +76,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- MQTT -->
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.2.5</version>
         </dependency>
 
         <!-- PROMETHEUS -->
@@ -139,31 +162,7 @@
             <version>3.2.2</version>
         </dependency>
 
-        <!-- SHARED !-->
-        <dependency>
-            <groupId>de.fhg.ipa</groupId>
-            <artifactId>aas_transformer.model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>de.fhg.ipa</groupId>
-            <artifactId>aas_transformer.persistence.api</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.fhg.ipa</groupId>
-            <artifactId>aas_transformer.clients.redis</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- TESTING -->
-        <dependency>
-            <groupId>org.eclipse.paho</groupId>
-            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
-            <version>1.2.5</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>de.fhg.ipa</groupId>
             <artifactId>aas_transformer.clients.management</artifactId>
