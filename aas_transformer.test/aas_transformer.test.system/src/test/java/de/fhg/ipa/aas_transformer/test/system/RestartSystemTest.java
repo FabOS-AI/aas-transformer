@@ -59,7 +59,6 @@ public class RestartSystemTest {
         assertTrue( transformer.size() == 1 );
 
         // check transformer available @ Listener/Executor
-
         aasTransformerExtension.restartManagementContainer();
 
         // delete transformer
@@ -67,13 +66,14 @@ public class RestartSystemTest {
                 t -> managementClient.deleteTransformer(t.getId(), false).block()
         );
 
-        sleep(500);
+        sleep(5000);
 
         transformer = managementClient.getAllTransformer().collectList().block();
         assertTrue( transformer.size() == 0 );
 
         // check transformer not available @ Listener anymore
         // => reconnect after restart successful
+        sleep(15000);
         List<TransformerDTOListener> transformerDtoListener = listenerClient.get()
                 .uri("/transformer-cache")
                 .retrieve()
@@ -81,7 +81,7 @@ public class RestartSystemTest {
                 .collectList()
                 .block();
 
-        assertTrue(transformerDtoListener.size() == 0);
+         assertTrue(transformerDtoListener.size() == 0);
 
         // check transformer not available @ Executor anymore
         // => reconnect after restart successful

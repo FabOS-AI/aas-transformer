@@ -1,11 +1,5 @@
 package de.fhg.ipa.aas_transformer.test.system;
 
-import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.clients.management.JobsClient;
-import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.*;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
@@ -13,7 +7,6 @@ import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShe
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
 import java.time.Instant;
 import java.util.List;
@@ -29,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(RedisExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Disabled
-public class MonitoringSystemTest {
+public class MonitoringSystemTest extends AbstractSystemTest {
     @RegisterExtension
     static PrometheusExtension prometheusExtension = new PrometheusExtension();
 
@@ -41,20 +34,6 @@ public class MonitoringSystemTest {
     );
 
     // region Variables
-    // Service Addresses:
-    String transformerManagementPort = System.getProperty("aas_transformer.services.management.port");
-    String aasRepositoryPort = System.getProperty("aas.aas-repository.port");
-    String aasRepositoryPath = System.getProperty("aas.aas-repository.path");
-    String smRepositoryPort = System.getProperty("aas.submodel-repository.port");
-    String smRepositoryPath = System.getProperty("aas.submodel-repository.path");
-
-    // Clients:
-    ManagementClient managementClient;
-    MetricsClient metricsClient;
-    JobsClient jobsClient;
-    AasRepository aasRepository;
-    SubmodelRepository smRepository;
-    RedisJobReader redisJobReader;
 
     // Test Objects:
     DefaultAssetAdministrationShell shell = getSimpleShell("", "");
@@ -70,23 +49,10 @@ public class MonitoringSystemTest {
                 "{{ submodel:id(SOURCE_SUBMODEL) }}_avg")
             ),
             List.of(timeseriesTransformationAction),
-            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesIdShort)))
+            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesIdShort))),
+            false
     );
     // endregion
-
-    public MonitoringSystemTest() {
-        this.managementClient = new ManagementClient("http://localhost:" + transformerManagementPort);
-        this.metricsClient = new MetricsClient("http://localhost:" + transformerManagementPort);
-        this.jobsClient = new JobsClient("http://localhost:" + transformerManagementPort);
-        this.aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort+aasRepositoryPath);
-        this.smRepository = new SubmodelRepository("http://localhost:" + smRepositoryPort+smRepositoryPath);
-        LettuceConnectionFactory connFac = new LettuceConnectionFactory(
-                System.getProperty("spring.data.redis.host"),
-                Integer.parseInt(System.getProperty("spring.data.redis.port"))
-        );
-        connFac.start();
-        this.redisJobReader = new RedisJobReader(connFac);
-    }
 
     @Test
     @Order(10)
