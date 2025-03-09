@@ -3,7 +3,7 @@ package de.fhg.ipa.aas_transformer.model.alertmanager
 import java.time.OffsetDateTime
 
 data class Alert(
-    val status: AlertStatus = AlertStatus(),
+    val status: String = "",
     val labels: Map<String, String> = emptyMap(),
     val annotations: Map<String, String> = emptyMap(),
     val startsAt: OffsetDateTime? = null,
