@@ -6,6 +6,7 @@ import com.github.dockerjava.api.model.TaskState;
 import de.fhg.ipa.aas_transformer.model.ScaleDirection;
 import de.fhg.ipa.aas_transformer.model.alertmanager.Alert;
 import de.fhg.ipa.aas_transformer.model.alertmanager.AlertMessage;
+import de.fhg.ipa.aas_transformer.service.management.exceptions.WaitForScaleTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
