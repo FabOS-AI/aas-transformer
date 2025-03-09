@@ -43,7 +43,6 @@ public class TransformationLogRestControllerTest {
     // Clients:
     private static ManagementClient managementClient;
     private static MetricsClient metricsClient;
-
     // endregion
 
 

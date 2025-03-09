@@ -1,6 +1,7 @@
 package de.fhg.ipa.aas_transformer.service.management;
 
 import com.github.dockerjava.api.model.Service;
+import de.fhg.ipa.aas_transformer.service.management.exceptions.WaitForScaleTimeoutException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +25,7 @@ public class DockerClientTest {
 
     @Test
     @Order(20)
-    public void testScaleUpExecutorExpectTwo() throws DockerHandler.WaitForScaleTimeoutException {
+    public void testScaleUpExecutorExpectTwo() throws WaitForScaleTimeoutException {
         transformerServiceHandler.scaleExecutorService(2, false);
         assert(transformerServiceHandler.getReplicaCountOfExecutorService() == 2);
     }
@@ -39,7 +40,7 @@ public class DockerClientTest {
 
     @Test
     @Order(40)
-    public void testScaleUpExecutorAndWaitExpectNoException() throws DockerHandler.WaitForScaleTimeoutException {
+    public void testScaleUpExecutorAndWaitExpectNoException() throws WaitForScaleTimeoutException {
         assertDoesNotThrow(() -> {
             transformerServiceHandler.scaleExecutorService(3, true);
         });
@@ -48,14 +49,14 @@ public class DockerClientTest {
 
     @Test
     @Order(50)
-    public void testScaleDownExecutorExpectOne() throws DockerHandler.WaitForScaleTimeoutException {
+    public void testScaleDownExecutorExpectOne() throws WaitForScaleTimeoutException {
         transformerServiceHandler.scaleExecutorService(1, false);
         assert(transformerServiceHandler.getReplicaCountOfExecutorService() == 1);
     }
 
     @Test
     @Order(60)
-    public void testScaleDownToZeroExpectOne() throws DockerHandler.WaitForScaleTimeoutException {
+    public void testScaleDownToZeroExpectOne() throws WaitForScaleTimeoutException {
         transformerServiceHandler.scaleExecutorService(0, false);
         assert(transformerServiceHandler.getReplicaCountOfExecutorService() == 1);
     }
