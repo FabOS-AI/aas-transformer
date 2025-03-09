@@ -1,14 +1,14 @@
-package de.fhg.ipa.aas_transformer.service.management;
+package de.fhg.ipa.aas_transformer.service.management.controller;
 
 import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.model.TransformerChangeEvent;
 import de.fhg.ipa.aas_transformer.model.TransformerChangeEventDTOListener;
 import de.fhg.ipa.aas_transformer.model.TransformerDTOListener;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformerJpaRepository;
+import de.fhg.ipa.aas_transformer.service.management.TransformerHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;

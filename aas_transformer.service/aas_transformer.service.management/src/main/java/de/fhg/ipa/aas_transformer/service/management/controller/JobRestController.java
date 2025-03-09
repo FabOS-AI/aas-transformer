@@ -1,4 +1,4 @@
-package de.fhg.ipa.aas_transformer.service.management;
+package de.fhg.ipa.aas_transformer.service.management.controller;
 
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;

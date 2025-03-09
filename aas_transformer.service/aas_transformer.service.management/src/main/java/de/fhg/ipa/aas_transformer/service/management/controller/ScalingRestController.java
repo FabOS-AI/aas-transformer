@@ -1,11 +1,11 @@
-package de.fhg.ipa.aas_transformer.service.management;
+package de.fhg.ipa.aas_transformer.service.management.controller;
 
 import de.fhg.ipa.aas_transformer.model.ScaleDirection;
 import de.fhg.ipa.aas_transformer.model.alertmanager.AlertMessage;
+import de.fhg.ipa.aas_transformer.service.management.TransformerServiceHandler;
+import de.fhg.ipa.aas_transformer.service.management.exceptions.WaitForScaleTimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/scaling")
@@ -14,7 +14,7 @@ public class ScalingRestController {
     TransformerServiceHandler transformerServiceHandler;
 
     @RequestMapping(path = "/alert", method = RequestMethod.POST)
-    public void receiveAlert(@RequestBody AlertMessage alertMessage) throws DockerHandler.WaitForScaleTimeoutException {
+    public void receiveAlert(@RequestBody AlertMessage alertMessage) throws WaitForScaleTimeoutException {
         // handle alert
         transformerServiceHandler.handleScaleAlert(alertMessage);
     }
@@ -33,7 +33,7 @@ public class ScalingRestController {
     public void scaleExecutorService(
             @RequestParam(name = "replicas") long replicas,
             @RequestParam(name = "wait", defaultValue = "false") boolean wait
-    ) throws DockerHandler.WaitForScaleTimeoutException {
+    ) throws WaitForScaleTimeoutException {
         transformerServiceHandler.scaleExecutorService(replicas, wait);
     }
 
@@ -41,7 +41,7 @@ public class ScalingRestController {
     public void scaleExecutorServicePlusOne(
             @RequestParam(name = "scaleDirection") ScaleDirection scaleDirection,
             @RequestParam(name = "wait", defaultValue = "false") boolean wait
-    ) throws DockerHandler.WaitForScaleTimeoutException {
+    ) throws WaitForScaleTimeoutException {
         transformerServiceHandler.scaleExecutorServiceByOne(scaleDirection, wait);
     }
 
@@ -59,7 +59,7 @@ public class ScalingRestController {
     public void scaleListenerService(
             @RequestParam(name = "replicas") long replicas,
             @RequestParam(name = "wait", defaultValue = "false") boolean wait
-    ) throws DockerHandler.WaitForScaleTimeoutException {
+    ) throws WaitForScaleTimeoutException {
         transformerServiceHandler.scaleListenerService(replicas, wait);
     }
 
@@ -67,7 +67,7 @@ public class ScalingRestController {
     public void scaleListenerServicePlusOne(
             @RequestParam(name = "scaleDirection") ScaleDirection scaleDirection,
             @RequestParam(name = "wait", defaultValue = "false") boolean wait
-    ) throws DockerHandler.WaitForScaleTimeoutException {
+    ) throws WaitForScaleTimeoutException {
         transformerServiceHandler.scaleListenerServiceByOne(scaleDirection, wait);
     }
 
