@@ -85,10 +85,12 @@
                                 <apiPackage>de.fhg.ipa.aas_transformer.clients.management</apiPackage>
                             </configOptions>
                             <importMappings>
+                                <importMapping>AlertMessage=de.fhg.ipa.aas_transformer.model.alertmanager.AlertMessage</importMapping>
                                 <importMapping>DefaultSubmodel=org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel</importMapping>
                                 <importMapping>Destination=de.fhg.ipa.aas_transformer.model.Destination</importMapping>
                                 <importMapping>DestinationAAS=de.fhg.ipa.aas_transformer.model.DestinationAAS</importMapping>
                                 <importMapping>DestinationSubmodel=de.fhg.ipa.aas_transformer.model.DestinationSubmodel</importMapping>
+                                <importMapping>ScaleDirection=de.fhg.ipa.aas_transformer.model.ScaleDirection</importMapping>
                                 <importMapping>Submodel=org.eclipse.digitaltwin.aas4j.v3.model.Submodel</importMapping>
                                 <importMapping>SubmodelId=de.fhg.ipa.aas_transformer.model.SubmodelId</importMapping>
                                 <importMapping>TransformationJob=de.fhg.ipa.aas_transformer.model.TransformationJob</importMapping>
