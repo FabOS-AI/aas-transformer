@@ -74,6 +74,12 @@ public class TransformerTestObjects {
         );
     }
 
+    public static Transformer getAnsibleFactsTransformer(boolean transformOnRequest) {
+        Transformer transformer = getAnsibleFactsTransformer();
+        transformer.setTransformOnRequest(transformOnRequest);
+        return transformer;
+    }
+
     public static Transformer getTimeseriesTransformer(String sourceSubmodelIdShort) {
         return new Transformer(
                 UUID.randomUUID(),
@@ -85,7 +91,8 @@ public class TransformerTestObjects {
                         List.of("sensor0", "sensor1"),
                         5)
                 ),
-                List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS,  new SubmodelId(SubmodelIdType.ID_SHORT, sourceSubmodelIdShort)))
+                List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS,  new SubmodelId(SubmodelIdType.ID_SHORT, sourceSubmodelIdShort))),
+                false
         );
     }
 
