@@ -23,7 +23,10 @@ class Transformer (
 
     @Column(name = "sourceSubmodelIdRules", columnDefinition = "LONGTEXT")
     @JdbcTypeCode(SqlTypes.JSON)
-    var sourceSubmodelIdRules : MutableList<SourceSubmodelIdRule> = LinkedList()
+    var sourceSubmodelIdRules : MutableList<SourceSubmodelIdRule> = LinkedList(),
+
+    @Column(name = "transformOnRequest", columnDefinition = "BOOLEAN")
+    var transformOnRequest: Boolean = false
 ) : AbstractTransformer() {
     constructor(destination: Destination, transformerActions: MutableList<TransformerAction>, sourceSubmodelIdRules: MutableList<SourceSubmodelIdRule>)
             : this(UUID.randomUUID(), destination, transformerActions, sourceSubmodelIdRules) { }
