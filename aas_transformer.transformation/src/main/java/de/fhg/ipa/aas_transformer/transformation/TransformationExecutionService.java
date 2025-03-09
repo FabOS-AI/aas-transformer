@@ -5,10 +5,8 @@ import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
-import de.fhg.ipa.aas_transformer.model.DestinationAAS;
-import de.fhg.ipa.aas_transformer.model.TransformationJob;
-import de.fhg.ipa.aas_transformer.model.TransformationLog;
-import de.fhg.ipa.aas_transformer.model.Transformer;
+import de.fhg.ipa.aas_transformer.model.*;
+import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionService;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionServiceFactory;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
@@ -38,6 +36,8 @@ public class TransformationExecutionService {
     private final SubmodelRepository submodelRepository;
     private final TransformerActionServiceFactory transformerActionServiceFactory;
     private final MetricsClient metricsClient;
+    private final TransformationDescriptionJpaRepository transformationDescriptionJpaRepository;
+    private final String externalBaseUrl;
     private List<TransformerActionService> transformerActionServices = new ArrayList<>();
 
     public TransformationExecutionService(
@@ -48,7 +48,9 @@ public class TransformationExecutionService {
             SubmodelRegistry submodelRegistry,
             SubmodelRepository submodelRepository,
             TransformerActionServiceFactory transformerActionServiceFactory,
-            MetricsClient metricsClient
+            MetricsClient metricsClient,
+            TransformationDescriptionJpaRepository transformationDescriptionJpaRepository,
+            String externalBaseUrl
     ) {
         this.transformer = transformer;
         this.templateRenderer = templateRenderer;
@@ -58,6 +60,8 @@ public class TransformationExecutionService {
         this.submodelRepository = submodelRepository;
         this.transformerActionServiceFactory = transformerActionServiceFactory;
         this.metricsClient = metricsClient;
+        this.transformationDescriptionJpaRepository = transformationDescriptionJpaRepository;
+        this.externalBaseUrl = externalBaseUrl;
 
         for (var transformerAction : transformer.getTransformerActions()) {
             var transformerActionService = this.transformerActionServiceFactory.create(transformerAction);
@@ -68,6 +72,8 @@ public class TransformationExecutionService {
     public UUID getTransformerId() {
         return this.transformer.getId();
     }
+
+    public boolean getTransformOnRequest() {return this.transformer.getTransformOnRequest(); }
 
     public static List<AssetAdministrationShell> lookupDestinationShells(
             AasRepository aasRepository,
@@ -100,6 +106,109 @@ public class TransformationExecutionService {
         return destinationShellIds;
     }
 
+    private void executeOnRequestJob(String sourceSubmodelId, String destinationSubmodelId, String destinationSubmodelIdShort) {
+        transformationDescriptionJpaRepository.save(new TransformationDescription(
+                null,
+                this.transformer.getId(),
+                sourceSubmodelId,
+                destinationSubmodelId
+        )).block();
+
+        SubmodelDescriptor submodelDescriptor = submodelRegistry.createSubmodelDescriptor(
+                destinationSubmodelId,
+                destinationSubmodelIdShort,
+                externalBaseUrl
+        );
+        submodelRegistry.registerSubmodelDescriptor(submodelDescriptor);
+    }
+
+    private Submodel executeJob(
+            Submodel sourceSubmodel,
+            String destinationSubmodelId,
+            String destinationSubmodelIdShort,
+            Map<String, Object> context
+    ) {
+        try {
+            // Create or get destination submodel:
+            Submodel intermediateResult = createDestinationSubmodel(context);
+            boolean isFirstAction = true;
+            // Execute transformer actions
+            for (var transformerActionService : this.transformerActionServices) {
+                intermediateResult = transformerActionService.execute(
+                        sourceSubmodel,
+                        intermediateResult,
+                        context,
+                        isFirstAction
+                );
+                isFirstAction = false;
+            }
+            intermediateResult.setId(destinationSubmodelId);
+            intermediateResult.setIdShort(destinationSubmodelIdShort);
+
+            return intermediateResult;
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Submodel executeTransformationDescription(
+            TransformationDescription transformationDescription,
+            UUID executorId
+    ) {
+        String sourceSubmodelId = transformationDescription.getSourceSubmodelId();
+        Instant startLookupSource = Instant.now();
+        // Lookup Source Submodel by ID
+        Submodel sourceSubmodel = this.submodelRepository.getSubmodel(sourceSubmodelId);
+        Instant endLookupSource = Instant.now();
+
+        // Destination Shells:
+        List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
+                this.aasRepository,
+                sourceSubmodel.getId(),
+                transformer.getDestination().getAasDestination()
+        );
+
+        // Set context for template rendering
+        Map<String, Object> context = templateRenderer.getTemplateContext(
+                this.transformer.getId(),
+                destinationShells,
+                sourceSubmodel
+        );
+
+        // Set ID and IdShort for destination submodel:
+        var destinationSubmodelId = this.templateRenderer.render(
+                this.transformer.getDestination().getSubmodelDestination().getId(),
+                context
+        );
+        var destinationSubmodelIdShort = this.templateRenderer.render(
+                this.transformer.getDestination().getSubmodelDestination().getIdShort(),
+                context
+        );
+
+        Instant startTransformation = Instant.now();
+        Submodel destinationSubmodel = executeJob(
+                sourceSubmodel,
+                destinationSubmodelId,
+                destinationSubmodelIdShort,
+                context
+        );
+        Instant endTransformation = Instant.now();
+
+        logTransformation(
+                destinationShells.get(0).getId(),
+                destinationSubmodelId,
+                sourceSubmodel.getId(),
+                executorId,
+                Duration.between(startTransformation, endTransformation),
+                Duration.between(startLookupSource, endLookupSource),
+                Duration.ofMillis(0)
+        );
+
+        return destinationSubmodel;
+    }
+
     public void execute(TransformationJob job, UUID executorId) {
         Submodel sourceSubmodel;
         Instant startLookupSource = Instant.now();
@@ -125,41 +234,31 @@ public class TransformationExecutionService {
                 sourceSubmodel
         );
 
-        try {
-            // Create or get destination submodel:
-            Submodel intermediateResult = createDestinationSubmodel(context);
-            boolean isFirstAction = true;
+        // Set ID and IdShort for destination submodel:
+        var destinationSubmodelId = this.templateRenderer.render(
+                this.transformer.getDestination().getSubmodelDestination().getId(),
+                context
+        );
+        var destinationSubmodelIdShort = this.templateRenderer.render(
+                this.transformer.getDestination().getSubmodelDestination().getIdShort(),
+                context
+        );
 
+        if(!this.transformer.getTransformOnRequest()) {
             Instant startTransformation = Instant.now();
-            // Execute transformer actions
-            for (var transformerActionService : this.transformerActionServices) {
-                intermediateResult = transformerActionService.execute(
-                        sourceSubmodel,
-                        intermediateResult,
-                        context,
-                        isFirstAction
-                );
-                isFirstAction = false;
-            }
+            Submodel destinationSubmodel = executeJob(
+                    sourceSubmodel,
+                    destinationSubmodelId,
+                    destinationSubmodelIdShort,
+                    context
+            );
             Instant endTransformation = Instant.now();
-
-            // Set ID and IdShort for destination submodel:
-            var destinationSubmodelId = this.templateRenderer.render(
-                    this.transformer.getDestination().getSubmodelDestination().getId(),
-                    context
-            );
-            var destinationSubmodelIdShort = this.templateRenderer.render(
-                    this.transformer.getDestination().getSubmodelDestination().getIdShort(),
-                    context
-            );
-            intermediateResult.setId(destinationSubmodelId);
-            intermediateResult.setIdShort(destinationSubmodelIdShort);
 
             Instant startSaveDestination = Instant.now();
             // Write intermediate result to Submodel Repository
-            this.submodelRepository.createOrUpdateSubmodel(intermediateResult);
+            this.submodelRepository.createOrUpdateSubmodel(destinationSubmodel);
 
-            addSubmodelReferenceToShells(sourceSubmodel.getId(), intermediateResult, context);
+            addSubmodelReferenceToShells(sourceSubmodel.getId(), destinationSubmodel, context);
             Instant endSaveDestination = Instant.now();
 
             logTransformation(
@@ -171,9 +270,8 @@ public class TransformationExecutionService {
                     Duration.between(startLookupSource, endLookupSource),
                     Duration.between(startSaveDestination, endSaveDestination)
             );
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-            e.printStackTrace();
+        } else {
+            executeOnRequestJob(sourceSubmodel.getId(), destinationSubmodelId, destinationSubmodelIdShort);
         }
     }
 
