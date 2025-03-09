@@ -4,6 +4,7 @@ create table if not exists transformer
     destination                 longtext   null,
     transformer_actions         longtext   null,
     source_submodel_id_rules    longtext   null,
+    transform_on_request        bool       default false,
     optlock                     int        null,
     version                     int        null
 );
