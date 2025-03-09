@@ -4,10 +4,9 @@ import com.hubspot.jinjava.lib.fn.ELFunctionDefinition;
 import com.hubspot.jinjava.lib.fn.InjectedContextFunctionProxy;
 import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import org.eclipse.basyx.aas.metamodel.map.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
+import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -57,7 +56,7 @@ public class DestinationShellsFunctions extends AbstractTemplateFunctions {
                             AssetAdministrationShell[].class
                     )
             );
-            String id = destinationShells.get(shellListIndex).get("id").toString();
+            String id = destinationShells.get(shellListIndex).getId();
             return id;
         } catch (DeserializationException e) {
             LOG.error("Could not deserialize destination shells", e);

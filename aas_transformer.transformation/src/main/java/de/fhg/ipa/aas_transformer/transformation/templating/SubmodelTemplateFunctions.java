@@ -3,9 +3,6 @@ package de.fhg.ipa.aas_transformer.transformation.templating;
 import com.hubspot.jinjava.lib.fn.InjectedContextFunctionProxy;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import org.eclipse.basyx.submodel.metamodel.api.ISubmodel;
-import org.eclipse.basyx.submodel.metamodel.api.identifier.IdentifierType;
-import org.eclipse.basyx.submodel.metamodel.map.identifier.Identifier;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Property;
@@ -166,76 +163,4 @@ public class SubmodelTemplateFunctions extends AbstractTemplateFunctions {
 
         return Optional.empty();
     }
-
-    public String resolveToSubmodelElementValue(String aasId, String smId, String smeId) {
-        var aasIdentifier = new Identifier(IdentifierType.CUSTOM, aasId);
-        var smIdentifier = new Identifier(IdentifierType.CUSTOM, smId);
-
-//        try {
-//
-//            var aas = submodelRepository.retrieveAAS(aasIdentifier);
-//            var submodel = aas.getSubmodel(smIdentifier);
-//            var submodelElement = submodel.getSubmodelElement(smeId);
-//            var submodelElementLocalCopy = submodelElement.getLocalCopy();
-//            var value = submodelElementLocalCopy.getValue();
-//
-//            return value.toString();
-//        }
-//        catch (Exception e) {
-//            LOG.error(e.getMessage());
-//            throw e;
-//        }
-        return "";
-
-    }
-
-    public String resolveToSubmodelElementValueBySemanticId(String aasId, String smSemanticId, String smeId) {
-        var aasIdentifier = new Identifier(IdentifierType.CUSTOM, aasId);
-
-//        var aas = submodelRepository.retrieveAAS(aasIdentifier);
-//        var submodels = aas.getSubmodels();
-//        for (var submodel : submodels.values()) {
-//            if (submodel.getSemanticId() != null) {
-//                if (submodel.getSemanticId().getKeys() != null) {
-//                    if (submodel.getSemanticId().getKeys().size() > 0) {
-//                        submodel.getSemanticId().getKeys().get(0).getValue().equals(smSemanticId);
-//                        var submodelElement = submodel.getSubmodelElement(smeId);
-//                        var submodelElementLocalCopy = submodelElement.getLocalCopy();
-//                        var value = submodelElementLocalCopy.getValue();
-//
-//                        return value.toString();
-//                    }
-//                }
-//            }
-//        }
-
-        return "not found";
-    }
-
-    public String findSubmodelByPropertyValue(String propertyId, String propertyValue) {
-        var foundSubmodels = new ArrayList<ISubmodel>();
-
-//        var allAAS = submodelRepository.retrieveAASAll();
-//        for (var aas : allAAS) {
-//            var submodels = aas.getSubmodels();
-//            for (var submodel : submodels.values()) {
-//                var submodelElements = submodel.getSubmodelElements();
-//                for (var submodelElement : submodelElements.values()) {
-//                    if (submodelElement.getIdShort().equals(propertyId)) {
-//                        if (submodelElement.getValue().equals(propertyValue)) {
-//                            foundSubmodels.add(submodel);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
-        if (foundSubmodels.size() > 0) {
-            return foundSubmodels.get(0).getIdentification().getId();
-        }
-        else {
-            return "Not found";
-        }
-    }
-
 }
