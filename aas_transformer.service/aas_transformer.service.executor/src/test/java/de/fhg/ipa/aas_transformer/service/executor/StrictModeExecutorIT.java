@@ -28,6 +28,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.util.List;
 import java.util.UUID;
@@ -45,22 +46,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class StrictModeExecutorIT {
+public class StrictModeExecutorIT extends AbstractIT {
 
     // region Test vars
-    // Service Ports:
-    String aasRegistryPort = System.getProperty("aas.aas-registry.port");
-    String aasRepositoryPort = System.getProperty("aas.aas-repository.port");
-    String smRegistryPort = System.getProperty("aas.submodel-registry.port");
-    String smRepositoryPort = System.getProperty("aas.submodel-repository.port");
-    String redisPort = System.getProperty("spring.data.redis.port");
-
-    // AAS Service Clients:
-    AasRegistry aasRegistry;
-    AasRepository aasRepository;
-    SubmodelRegistry smRegistry;
-    SubmodelRepository smRepository;
-
     // Test Transformer/AAS Objects:
     static boolean isInitialAasSetupDone = false;
     static AssetAdministrationShell testAas = getSimpleShell("", "");
@@ -68,26 +56,17 @@ public class StrictModeExecutorIT {
     static List<Submodel> testSubmodels = List.of(ansibleFactsSubmodel);
     static Transformer factsTransformerCopy = getAnsibleFactsTransformer();
     static List<Transformer> testTransformers = List.of(factsTransformerCopy);
-
-    @Autowired
-    RedisJobReader redisJobReader;
-
-    RedisClient redisClient;
     // endregion
-
-    @PostConstruct
-    public void init() {
-        // Setup Redis Client:
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", Integer.parseInt(redisPort));
-        connectionFactory.start();
-        redisClient = new RedisClient(connectionFactory);
-    }
 
     // Mocks ManagementClient; Client return testTransformer
     @TestConfiguration
     public static class TestConfig {
         @MockBean
         ManagementClient managementClient;
+        static Sinks.Many<TransformerChangeEvent> changeEventSink =
+                Sinks.many().unicast().onBackpressureBuffer();
+        static Sinks.Many<TransformerChangeEventDTOListener> changeEventDtoListenerSink =
+                Sinks.many().unicast().onBackpressureBuffer();
 
         @PostConstruct
         public void initMock() {
@@ -99,18 +78,11 @@ public class StrictModeExecutorIT {
                     .thenReturn(Flux.empty());
             Mockito
                     .when(managementClient.getTransformerChangeEventStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(changeEventSink.asFlux());
             Mockito
                     .when(managementClient.getTransformerChangeEventDTOListenerStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(changeEventDtoListenerSink.asFlux());
         }
-    }
-
-    public StrictModeExecutorIT() {
-        this.aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort);
-        this.aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort);
-        this.smRegistry = new SubmodelRegistry("http://localhost:" + smRegistryPort, "http://localhost:" + smRepositoryPort);
-        this.smRepository = new SubmodelRepository("http://localhost:" + smRepositoryPort);
     }
 
     private static Stream<Arguments> getTestTransformers() {

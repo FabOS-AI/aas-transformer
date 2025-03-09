@@ -33,6 +33,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.util.List;
 import java.util.UUID;
@@ -48,37 +49,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
-@ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class ChainTransformationExecutorIT {
+public class ChainTransformationExecutorIT extends AbstractIT {
     // region Test vars
-    // Service Ports:
-    String aasRegistryPort = System.getProperty("aas.aas-registry.port");
-    String aasRepositoryPort = System.getProperty("aas.aas-repository.port");
-    String smRegistryPort = System.getProperty("aas.submodel-registry.port");
-    String smRepositoryPort = System.getProperty("aas.submodel-repository.port");
-    String redisPort = System.getProperty("spring.data.redis.port");
-
-    // AAS Service Clients:
-    AasRegistry aasRegistry;
-    AasRepository aasRepository;
-    SubmodelRegistry smRegistry;
-    SubmodelRepository smRepository;
-
     // Test Transformer/AAS Objects:
     static AssetAdministrationShell testAas = getSimpleShell("", "");
     static Submodel timeseriesSubmodel = getRandomTimeseriesSubmodel(5, 50);
     static SubmodelId timeseriesSubmodelId = new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort());
     static TransformerActionTsAvg transformerActionTsAvg = new TransformerActionTsAvg(
-//            timeseriesSubmodelId,
             List.of("sensor0", "sensor1"),
             5
     );
-    static TransformerActionTsReduceTakeEvery transformerActionTsReduceTakeEvery = new TransformerActionTsReduceTakeEvery(
-//            new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort()+"_avg"),
-            10
-    );
+    static TransformerActionTsReduceTakeEvery transformerActionTsReduceTakeEvery =
+            new TransformerActionTsReduceTakeEvery(10);
     static Transformer oneStepTransformerAvg = new Transformer(
             UUID.randomUUID(),
             new Destination(new DestinationSubmodel(
@@ -86,7 +70,8 @@ public class ChainTransformationExecutorIT {
                     "{{ submodel:id(SOURCE_SUBMODEL) }}_avg")
             ),
             List.of(transformerActionTsAvg),
-            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, timeseriesSubmodelId))
+            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, timeseriesSubmodelId)),
+            false
     );
     static Transformer oneStepTransformerTakeEvery = new Transformer(
             UUID.randomUUID(),
@@ -95,7 +80,8 @@ public class ChainTransformationExecutorIT {
                     timeseriesSubmodel.getId()+"_take-every")
             ),
             List.of(transformerActionTsReduceTakeEvery),
-            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort()+"_avg")))
+            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort()+"_avg"))),
+            false
     );
     static Transformer twoStepTransformer = new Transformer(
             UUID.randomUUID(),
@@ -105,16 +91,15 @@ public class ChainTransformationExecutorIT {
             ),
             List.of(
                     new TransformerActionTsAvg(
-//                            timeseriesSubmodelId,
                             List.of("sensor0", "sensor1"),
                             5
                     ),
                     new TransformerActionTsReduceTakeEvery(
-//                            timeseriesSubmodelId,
                             10
                     )
             ),
-            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, timeseriesSubmodelId))
+            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, timeseriesSubmodelId)),
+            false
     );
     static List<TransformationJob> jobs = List.of(
             new TransformationJob(
@@ -136,26 +121,17 @@ public class ChainTransformationExecutorIT {
                     null
             )
     );
-
-    @Autowired
-    RedisJobReader redisJobReader;
-
-    RedisClient redisClient;
     // endregion
-
-    @PostConstruct
-    public void init() {
-        // Setup Redis Client:
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", Integer.parseInt(redisPort));
-        connectionFactory.start();
-        redisClient = new RedisClient(connectionFactory);
-    }
 
     // Mocks ManagementClient; Client return testTransformer
     @TestConfiguration
     public static class TestConfig {
         @MockBean
         ManagementClient managementClient;
+        static Sinks.Many<TransformerChangeEvent> changeEventSink =
+                Sinks.many().unicast().onBackpressureBuffer();
+        static Sinks.Many<TransformerChangeEventDTOListener> changeEventDtoListenerSink =
+                Sinks.many().unicast().onBackpressureBuffer();
 
         @PostConstruct
         public void initMock() {
@@ -167,18 +143,11 @@ public class ChainTransformationExecutorIT {
                     .thenReturn(Flux.empty());
             Mockito
                     .when(managementClient.getTransformerChangeEventStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(changeEventSink.asFlux());
             Mockito
                     .when(managementClient.getTransformerChangeEventDTOListenerStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(changeEventDtoListenerSink.asFlux());
         }
-    }
-
-    public ChainTransformationExecutorIT() {
-        this.aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort);
-        this.aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort);
-        this.smRegistry = new SubmodelRegistry("http://localhost:" + smRegistryPort, "http://localhost:" + smRepositoryPort);
-        this.smRepository = new SubmodelRepository("http://localhost:" + smRepositoryPort);
     }
 
     @Test

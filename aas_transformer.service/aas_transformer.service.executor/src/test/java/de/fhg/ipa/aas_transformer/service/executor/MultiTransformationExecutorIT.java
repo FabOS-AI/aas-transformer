@@ -10,6 +10,8 @@ import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import de.fhg.ipa.aas_transformer.model.Transformer;
+import de.fhg.ipa.aas_transformer.model.TransformerChangeEvent;
+import de.fhg.ipa.aas_transformer.model.TransformerChangeEventDTOListener;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
 import jakarta.annotation.PostConstruct;
@@ -27,6 +29,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.util.List;
 
@@ -38,22 +41,9 @@ import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpec
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class MultiTransformationExecutorIT {
+public class MultiTransformationExecutorIT extends AbstractIT {
 
     // region Test vars
-    // Service Ports:
-    String aasRegistryPort = System.getProperty("aas.aas-registry.port");
-    String aasRepositoryPort = System.getProperty("aas.aas-repository.port");
-    String smRegistryPort = System.getProperty("aas.submodel-registry.port");
-    String smRepositoryPort = System.getProperty("aas.submodel-repository.port");
-    String redisPort = System.getProperty("spring.data.redis.port");
-
-    // AAS Service Clients:
-    AasRegistry aasRegistry;
-    AasRepository aasRepository;
-    SubmodelRegistry smRegistry;
-    SubmodelRepository smRepository;
-
     // Test triples:
     static List<List<Object>> triples;
 
@@ -64,28 +54,18 @@ public class MultiTransformationExecutorIT {
             throw new RuntimeException(e);
         }
     }
-
     static Transformer testTransformer = (Transformer)triples.get(0).get(2);
-
-    @Autowired
-    RedisJobReader redisJobReader;
-
-    RedisClient redisClient;
     // endregion
-
-    @PostConstruct
-    public void init() {
-        // Setup Redis Client:
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", Integer.parseInt(redisPort));
-        connectionFactory.start();
-        redisClient = new RedisClient(connectionFactory);
-    }
 
     // Mocks ManagementClient; Client return factsTransformer
     @TestConfiguration
     public static class TestConfig {
         @MockBean
         ManagementClient managementClient;
+        static Sinks.Many<TransformerChangeEvent> changeEventSink =
+                Sinks.many().unicast().onBackpressureBuffer();
+        static Sinks.Many<TransformerChangeEventDTOListener> changeEventDtoListenerSink =
+                Sinks.many().unicast().onBackpressureBuffer();
 
         @PostConstruct
         public void initMock() {
@@ -97,18 +77,11 @@ public class MultiTransformationExecutorIT {
                     .thenReturn(Flux.empty());
             Mockito
                     .when(managementClient.getTransformerChangeEventStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(changeEventSink.asFlux());
             Mockito
                     .when(managementClient.getTransformerChangeEventDTOListenerStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(changeEventDtoListenerSink.asFlux());
         }
-    }
-
-    public MultiTransformationExecutorIT() {
-        this.aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort);
-        this.aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort);
-        this.smRegistry = new SubmodelRegistry("http://localhost:" + smRegistryPort, "http://localhost:" + smRepositoryPort);
-        this.smRepository = new SubmodelRepository("http://localhost:" + smRepositoryPort);
     }
 
     @Test

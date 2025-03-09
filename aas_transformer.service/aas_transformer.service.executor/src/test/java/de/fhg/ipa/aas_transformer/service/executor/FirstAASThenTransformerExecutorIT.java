@@ -35,8 +35,8 @@ import reactor.core.publisher.Sinks;
 import java.io.FileNotFoundException;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
-import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.getAnsibleFactsSubmodel;
-import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.getSimpleShell;
+import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
+import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getDestinationSubmodelIdOfAnsibleFactsTransformer;
 import static java.lang.Thread.sleep;
@@ -46,23 +46,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class FirstAASThenTransformerExecutorIT {
-    // Service Ports:
-    static String aasRegistryPort = System.getProperty("aas.aas-registry.port");
-    static String aasRepositoryPort = System.getProperty("aas.aas-repository.port");
-    static String smRegistryPort = System.getProperty("aas.submodel-registry.port");
-    static String smRepositoryPort = System.getProperty("aas.submodel-repository.port");
-    String redisPort = System.getProperty("spring.data.redis.port");
-
-    // AAS Service Clients:
-    static AasRegistry aasRegistry;
-    static AasRepository aasRepository;
-    static SubmodelRegistry smRegistry;
-    static SubmodelRepository smRepository;
-
+public class FirstAASThenTransformerExecutorIT extends AbstractIT {
+    // Test Objects:
     static Submodel factsSubmodel = getAnsibleFactsSubmodel();
     static Transformer factsTransformer = getAnsibleFactsTransformer();
-
     static DefaultAssetAdministrationShell shell = getSimpleShell("", "");
 
     // Mocks ManagementClient; Client return factsTransformer
@@ -94,24 +81,9 @@ public class FirstAASThenTransformerExecutorIT {
         }
     }
 
-    @Autowired
-    TransformationExecutionServiceCache transformationExecutionServiceCache;
-
-    @Autowired
-    RedisJobReader redisJobReader;
-
-    RedisClient redisClient;
-
     @BeforeAll
     static void beforeAll() throws ApiException {
-        // Init AAS Clients:
-        aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort);
-        aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort);
-        smRegistry = new SubmodelRegistry("http://localhost:" + smRegistryPort, "http://localhost:" + smRepositoryPort);
-        smRepository = new SubmodelRepository("http://localhost:" + smRepositoryPort);
-
         // Create AAS and Facts Submodel
-
         aasRepository.createOrUpdateAas(shell);
         aasRepository.addSubmodelReferenceToAas(shell.getId(), factsSubmodel);
         smRepository.createOrUpdateSubmodel(factsSubmodel);
@@ -120,54 +92,6 @@ public class FirstAASThenTransformerExecutorIT {
                 smRegistry.findSubmodelDescriptor(factsSubmodel.getId()).get()
         );
     }
-
-    @PostConstruct
-    public void init() {
-        // Setup Redis Client:
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", Integer.parseInt(redisPort));
-        connectionFactory.start();
-        redisClient = new RedisClient(connectionFactory);
-    }
-
-    private void assertExpectedJobCount(int expectedJobCount) throws InterruptedException {
-        int tryCount = 0;
-        int maxTries = 1000;
-        int sleepInMs = 100;
-
-        while(tryCount <= maxTries && this.redisJobReader.getTotalJobCount() != expectedJobCount) {
-            sleep(sleepInMs);
-            tryCount++;
-        }
-
-        assertEquals(
-                expectedJobCount,
-                this.redisJobReader.getTotalJobCount()
-        );
-    }
-
-    private void assertExpectedSubmodelCount(int expectedSubmodelCount) throws DeserializationException, InterruptedException, ApiException {
-        int tryCount = 0;
-        int maxTries = 1000;
-        int sleepInMs = 100;
-
-        while(tryCount <= maxTries && this.smRepository.getAllSubmodels().size() != expectedSubmodelCount) {
-            sleep(sleepInMs);
-            tryCount++;
-        }
-
-        assertEquals(
-                expectedSubmodelCount,
-                this.smRepository.getAllSubmodels().size()
-        );
-
-        // Assert Submodel References/Descriptors In Shell(descriptor):
-        AssetAdministrationShell testShell = aasRepository.getAas(shell.getId());
-        assertEquals(expectedSubmodelCount, testShell.getSubmodels().size());
-
-        AssetAdministrationShellDescriptor testShellDescriptor = aasRegistry.getAasDescriptor(shell.getId()).get();
-        assertEquals(expectedSubmodelCount, testShellDescriptor.getSubmodelDescriptors().size());
-    }
-
 
     @Test
     @Order(10)
@@ -200,12 +124,12 @@ public class FirstAASThenTransformerExecutorIT {
                 null
         );
 
-        assertExpectedSubmodelCount(1);
+        assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
 
         redisClient.leftPushJob(new RedisTransformationJob(createdJob));
 
-        assertExpectedJobCount(0);
-        assertExpectedSubmodelCount(2);
+        assertExpectedJobCount(redisJobReader, 0);
+        assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 2, 2);
     }
 
     @Test
@@ -230,7 +154,7 @@ public class FirstAASThenTransformerExecutorIT {
 
         redisClient.leftPushJob(new RedisTransformationJob(deleteJob));
 
-        assertExpectedJobCount(0);
-        assertExpectedSubmodelCount(1);
+        assertExpectedJobCount(redisJobReader, 0);
+        assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
     }
 }

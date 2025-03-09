@@ -43,22 +43,9 @@ import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAn
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class SingleTransformationExecutorIT {
+public class SingleTransformationExecutorIT extends AbstractIT {
 
     // region Test vars
-    // Service Ports:
-    String aasRegistryPort = System.getProperty("aas.aas-registry.port");
-    String aasRepositoryPort = System.getProperty("aas.aas-repository.port");
-    String smRegistryPort = System.getProperty("aas.submodel-registry.port");
-    String smRepositoryPort = System.getProperty("aas.submodel-repository.port");
-    String redisPort = System.getProperty("spring.data.redis.port");
-
-    // AAS Service Clients:
-    AasRegistry aasRegistry;
-    AasRepository aasRepository;
-    SubmodelRegistry smRegistry;
-    SubmodelRepository smRepository;
-
     // Test Transformer/AAS Objects:
     static boolean isInitialAasSetupDone = false;
     static AssetAdministrationShell testAas = getSimpleShell("", "");
@@ -76,7 +63,8 @@ public class SingleTransformationExecutorIT {
                             "{  \"modelType\": \"Submodel\",  \"kind\": \"Instance\",  \"id\": \"{{destinationShells:shell_id(DESTINATION_SHELLS, 0)}}/operating_system_sm_template\",  \"idShort\": \"operating_system_sm_template\",  \"submodelElements\": [    {      \"modelType\": \"Property\",      \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'distribution') }}\",      \"valueType\": \"xs:string\",      \"idShort\": \"distribution_new\"    },    {      \"modelType\": \"Property\",      \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'distribution_release') }}\",      \"valueType\": \"xs:string\",      \"idShort\": \"distribution_release_new\"    }  ]}"
                     )
             ),
-            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, "ansible_facts")))
+            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, "ansible_facts"))),
+            false
     );
     static Transformer factsTransformerSubmodelElementTemplate = new Transformer(
             UUID.randomUUID(),
@@ -89,7 +77,8 @@ public class SingleTransformationExecutorIT {
                     "{  \"modelType\": \"Property\",  \"value\": \"{{ submodel:sme_value(SOURCE_SUBMODEL, 'distribution') }}\",  \"valueType\": \"xs:string\",  \"idShort\": \"distribution_new\"}"
                     )
             ),
-            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, "ansible_facts")))
+            List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, "ansible_facts"))),
+            false
 
     );
     static List<Transformer> testTransformers = List.of(
@@ -111,7 +100,8 @@ public class SingleTransformationExecutorIT {
                         List.of("sensor0", "sensor1"),
                         5)
                 ),
-                List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS,  new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort())))
+                List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS,  new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort()))),
+                false
             ),
             // MDN:
             new Transformer(
@@ -125,7 +115,8 @@ public class SingleTransformationExecutorIT {
                             5
                             )
                     ),
-                    List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort())))
+                    List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort()))),
+                    false
             ),
             // TAKE-EVERY:
             new Transformer(
@@ -136,7 +127,8 @@ public class SingleTransformationExecutorIT {
                     ),
                     List.of(new TransformerActionTsReduceTakeEvery(5)
                     ),
-                    List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort())))
+                    List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort()))),
+                    false
             ),
             // DROP-EVERY:
             new Transformer(
@@ -146,23 +138,10 @@ public class SingleTransformationExecutorIT {
                             "{{ submodel:id(SOURCE_SUBMODEL) }}_drop_every")
                     ),
                     List.of(new TransformerActionTsReduceDropEvery(5)),
-                    List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort())))
+                    List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.ID_SHORT, timeseriesSubmodel.getIdShort()))),
+                    false
             )
     );
-
-    @Autowired
-    RedisJobReader redisJobReader;
-
-    RedisClient redisClient;
-    // endregion
-
-    @PostConstruct
-    public void init() {
-        // Setup Redis Client:
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", Integer.parseInt(redisPort));
-        connectionFactory.start();
-        redisClient = new RedisClient(connectionFactory);
-    }
 
     // Mocks ManagementClient; Client return testTransformer
     @TestConfiguration
@@ -185,13 +164,6 @@ public class SingleTransformationExecutorIT {
                     .when(managementClient.getTransformerChangeEventDTOListenerStream())
                     .thenReturn(Flux.empty());
         }
-    }
-
-    public SingleTransformationExecutorIT() {
-        this.aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort);
-        this.aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort);
-        this.smRegistry = new SubmodelRegistry("http://localhost:" + smRegistryPort, "http://localhost:" + smRepositoryPort);
-        this.smRepository = new SubmodelRepository("http://localhost:" + smRepositoryPort);
     }
 
     private static Stream<Arguments> getTestTransformers() {

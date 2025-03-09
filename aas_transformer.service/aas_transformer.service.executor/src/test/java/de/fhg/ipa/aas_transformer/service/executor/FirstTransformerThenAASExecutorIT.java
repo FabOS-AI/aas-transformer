@@ -8,9 +8,7 @@ import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
-import de.fhg.ipa.aas_transformer.model.TransformationJob;
-import de.fhg.ipa.aas_transformer.model.TransformationJobAction;
-import de.fhg.ipa.aas_transformer.model.Transformer;
+import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
 import de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService;
@@ -31,6 +29,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.util.List;
 
@@ -45,20 +44,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class FirstTransformerThenAASExecutorIT {
-    // Service Ports:
-    String aasRegistryPort = System.getProperty("aas.aas-registry.port");
-    String aasRepositoryPort = System.getProperty("aas.aas-repository.port");
-    String smRegistryPort = System.getProperty("aas.submodel-registry.port");
-    String smRepositoryPort = System.getProperty("aas.submodel-repository.port");
-    String redisPort = System.getProperty("spring.data.redis.port");
-
-    // AAS Service Clients:
-    AasRegistry aasRegistry;
-    AasRepository aasRepository;
-    SubmodelRegistry smRegistry;
-    SubmodelRepository smRepository;
-
+public class FirstTransformerThenAASExecutorIT extends AbstractIT {
+    // Test Objects:
     static Transformer factsTransformer = getAnsibleFactsTransformer();
     static DefaultAssetAdministrationShell shell = getSimpleShell("", "");
     static Submodel factsSubmodel = getAnsibleFactsSubmodel();
@@ -71,6 +58,10 @@ public class FirstTransformerThenAASExecutorIT {
 
         @PostConstruct
         public void initMock(){
+            Sinks.Many<TransformerChangeEvent> changeEventSink =
+                    Sinks.many().unicast().onBackpressureBuffer();
+            Sinks.Many<TransformerChangeEventDTOListener> changeEventDtoListenerSink =
+                    Sinks.many().unicast().onBackpressureBuffer();
             Mockito
                     .when(managementClient.getAllTransformer())
                     .thenReturn(Flux.just(factsTransformer));
@@ -79,39 +70,15 @@ public class FirstTransformerThenAASExecutorIT {
                     .thenReturn(Flux.empty());
             Mockito
                     .when(managementClient.getTransformerChangeEventStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(changeEventSink.asFlux());
             Mockito
                     .when(managementClient.getTransformerChangeEventDTOListenerStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(changeEventDtoListenerSink.asFlux());
         }
-    }
-
-    public FirstTransformerThenAASExecutorIT() {
-        this.aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort);
-        this.aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort);
-        this.smRegistry = new SubmodelRegistry("http://localhost:" + smRegistryPort, "http://localhost:" + smRepositoryPort);
-        this.smRepository = new SubmodelRepository("http://localhost:" + smRepositoryPort);
-    }
-
-    @Autowired
-    TransformationExecutionServiceCache transformationExecutionServiceCache;
-
-    RedisClient redisClient;
-
-    @Autowired
-    RedisJobReader redisJobReader;
-
-    @PostConstruct
-    public void init() {
-        // Setup Redis Client:
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", Integer.parseInt(redisPort));
-        connectionFactory.start();
-        redisClient = new RedisClient(connectionFactory);
     }
 
     @BeforeEach
     void setUp() throws ApiException {
-
         this.aasRepository.createOrUpdateAas(shell);
         this.aasRepository.addSubmodelReferenceToAas(shell.getId(), factsSubmodel);
         this.smRepository.createOrUpdateSubmodel(factsSubmodel);
