@@ -4,10 +4,12 @@ import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.TransformerCache;
 import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.model.TransformerChangeEvent;
+import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Component;
@@ -23,7 +25,6 @@ import java.util.UUID;
 public class TransformationExecutionServiceCache extends TransformerCache implements ApplicationListener<ContextClosedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationExecutionServiceCache.class);
     private final TransformationServiceFactory transformationServiceFactory;
-
     private Disposable transformerEventDisposable;
     public List<TransformationExecutionService> transformationExecutionServices = new ArrayList<>();
 

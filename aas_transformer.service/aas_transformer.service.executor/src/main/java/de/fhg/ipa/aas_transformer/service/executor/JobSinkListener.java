@@ -35,26 +35,3 @@ public class JobSinkListener {
         }
     }
 }
-
-//    @Override
-//    public void run() {
-//        LOG.info("JobQueueListener started");
-//        boolean isRunning = true;
-//        while(isRunning) {
-//            if(redisJobConsumer.getCurrentJob().isEmpty())
-//                continue;
-//            // Process the job:
-//            executor.execute(
-//                    redisJobConsumer.getCurrentJob().get()
-//            );
-//
-//            // Mark the job as processed:
-//            try {
-//                redisJobConsumer.markJobAsProcessed();
-//            } catch (SerializationException e) {
-//                LOG.error("Failed to mark job as processed", e.getMessage());
-//            }
-//        }
-//        LOG.info("JobQueueListener stopped");
-//    }
-//}
