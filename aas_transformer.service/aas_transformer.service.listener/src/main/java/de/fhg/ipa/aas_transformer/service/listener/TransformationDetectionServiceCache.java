@@ -116,7 +116,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
                         .stream()
                         .map(smId -> new TransformationJob(
                                 TransformationJobAction.DELETE,
-                                null,
+                                service.getTransformerDTOListener().getId(),
                                 smId,
                                 null
                         ))
@@ -125,13 +125,6 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
                 return null;
 
         }
-    }
-
-    public void getTransformationDetectionServiceByTransformerId(UUID id) {
-        transformationDetectionServices.stream()
-            .filter(t -> t.getTransformerDTOListener().getId().equals(id))
-            .findFirst()
-            .orElse(null);
     }
 
     private void addTransformationDetectionService(TransformerDTOListener transformerDTOListener) {
