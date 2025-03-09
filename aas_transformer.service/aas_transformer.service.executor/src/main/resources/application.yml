@@ -28,17 +28,25 @@ springdoc:
 spring:
   application:
     name: aas_transformer_executor
-  autoconfigure:
-    # Disable Spring Data auto-configuration
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
-      - org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration
+  jpa:
+    hibernate:
+      ddl-auto: update
+  r2dbc:
+    url: r2dbc:mariadb://${database.host}:${database.port}/${database.schema}?createDatabaseIfNotExist=true&serverTimezone=UTC
+    username: ${database.username}
+    password: ${database.password}
   codec:
     max-in-memory-size: 16MB
   lifecycle:
-    timeout-per-shutdown-phase: 30s
+    timeout-per-shutdown-phase: 1s
+
+### Database
+database:
+  host: localhost
+  port: 3307
+  schema: aas_transformer
+  username: aas_transformer
+  password: password
 
 ### TRANSFORMER
 aas_transformer:
@@ -48,6 +56,8 @@ aas_transformer:
       host: localhost
       port: 4010
       base-url: ${aas_transformer.services.management.schema}://${aas_transformer.services.management.host}:${aas_transformer.services.management.port}
+    executor:
+      external_base_url: http://localhost:4030
 
 ### AAS
 aas:
