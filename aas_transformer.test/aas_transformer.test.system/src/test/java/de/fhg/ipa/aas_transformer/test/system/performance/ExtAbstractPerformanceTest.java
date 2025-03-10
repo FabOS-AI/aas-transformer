@@ -1,14 +1,13 @@
 package de.fhg.ipa.aas_transformer.test.system.performance;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.alertmanager.AlertManagerClient;
-import de.fhg.ipa.aas_transformer.clients.management.JobsClient;
-import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
-import de.fhg.ipa.aas_transformer.clients.management.ScalingClient;
+import de.fhg.ipa.aas_transformer.clients.management.*;
 import de.fhg.ipa.aas_transformer.clients.prometheus.PrometheusClient;
 import de.fhg.ipa.aas_transformer.clients.prometheus.model.Alert;
 import de.fhg.ipa.aas_transformer.clients.prometheus.model.AlertState;
@@ -22,6 +21,11 @@ import org.eclipse.digitaltwin.aas4j.v3.model.Reference;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.junit.jupiter.api.AfterEach;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -42,10 +46,12 @@ public abstract class ExtAbstractPerformanceTest {
 
     // Subdomains
     String transformerManagementSubdomain = "management";
+    String transformerExecutorSubdomain = "executor";
     String grafanaSubdomain = "grafana";
 
     // Service Ports:
     String transformerManagementPort = "80";
+    String transformerExecutorPort = "80";
     String grafanaPort = "80";
     String aasRegistryPort = "80";
     String aasRegistryPath = "/shell-registry";
@@ -56,6 +62,11 @@ public abstract class ExtAbstractPerformanceTest {
     String smRepositoryPort = "80";
     String smRepositoryPath = "";
 
+    // Transformer Service Urls:
+    String transformerManagementUrl = "http://" + transformerManagementSubdomain + "." + host +":" + transformerManagementPort;
+    String transformerExecutorUrl = "http://" + transformerExecutorSubdomain + "." + host + ":" + transformerExecutorPort;
+    String grafanaUrl = "http://"+ grafanaSubdomain + "." + host +":" + grafanaPort;
+
     // AAS Service Urls:
     String aasRegistryUrl = "http://"+host+":"+aasRegistryPort+aasRegistryPath;
     String aasRepoUrl = "http://"+host+":"+aasRepositoryPort+aasRepositoryPath;
@@ -63,15 +74,16 @@ public abstract class ExtAbstractPerformanceTest {
     String smRepoUrl = "http://"+host+":"+smRepositoryPort+smRepositoryPath;
 
     // Service Clients:
-    static ManagementClient managementClient;
-    static MetricsClient metricsClient;
-    static JobsClient jobsClient;
-    static ScalingClient scalingClient;
-    static AasRegistry aasRegistry;
-    static AasRepository aasRepository;
-    static SubmodelRegistry smRegistry;
-    static SubmodelRepository smRepository;
-    static GrafanaClient grafanaClient;
+    protected static ManagementClient managementClient;
+    protected static WebClient executorWebclient;
+    protected static MetricsClient metricsClient;
+    protected static JobsClient jobsClient;
+    protected static ScalingClient scalingClient;
+    protected static AasRegistry aasRegistry;
+    protected static AasRepository aasRepository;
+    protected static SubmodelRegistry smRegistry;
+    protected static SubmodelRepository smRepository;
+    protected static GrafanaClient grafanaClient;
 
     // Credentials
     static String grafanaUsername = "admin";
@@ -84,19 +96,36 @@ public abstract class ExtAbstractPerformanceTest {
 
 
     public ExtAbstractPerformanceTest() {
-        String url = "http://"+ transformerManagementSubdomain + "." + host +":" + transformerManagementPort;
-        String grafanaUrl = "http://"+ grafanaSubdomain + "." + host +":" + grafanaPort;
-
-        managementClient = new ManagementClient(url);
-        metricsClient = new MetricsClient(url);
-        jobsClient = new JobsClient(url);
-        scalingClient = new ScalingClient(url);
+        managementClient = new ManagementClient(transformerManagementUrl);
+        executorWebclient = getExecutorWebclient(transformerExecutorUrl);
+        metricsClient = new MetricsClient(transformerManagementUrl);
+        jobsClient = new JobsClient(transformerManagementUrl);
+        scalingClient = new ScalingClient(transformerManagementUrl);
         grafanaClient = new GrafanaClient(grafanaUrl, grafanaUsername, grafanaPassword);
 
         aasRegistry = new AasRegistry(aasRegistryUrl, aasRepoUrl);
         aasRepository = new AasRepository(aasRepoUrl);
         smRegistry = new SubmodelRegistry(smRegistryUrl, smRepoUrl);
         smRepository = new SubmodelRepository(smRepoUrl);
+    }
+
+    private WebClient getExecutorWebclient(String baseUrl) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
+        objectMapper.registerModule(simpleModule);
+
+        ExchangeStrategies strategies = ExchangeStrategies
+                .builder()
+                .codecs(clientDefaultCodecsConfigurer -> {
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper, MediaType.APPLICATION_JSON));
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(objectMapper, MediaType.APPLICATION_JSON));
+                }).build();
+
+        return WebClient.builder()
+                .baseUrl(baseUrl)
+                .exchangeStrategies(strategies)
+                .build();
     }
 
     @AfterEach
