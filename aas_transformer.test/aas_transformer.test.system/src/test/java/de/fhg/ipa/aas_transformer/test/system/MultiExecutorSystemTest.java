@@ -58,7 +58,7 @@ public class MultiExecutorSystemTest {
 
     @BeforeAll
     static void beforeAll() throws Exception {
-        triples = getRandomAnsibleFactsTriples(1000);
+        triples = getRandomAnsibleFactsTriples(1000, false);
     }
 
     @BeforeEach

@@ -32,7 +32,7 @@ import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpec
 public class MultiTransformationSystemTest extends AbstractSystemTest {
 
     // Test triples:
-    static List<List<Object>> triples = getRandomAnsibleFactsTriples(5);
+    static List<List<Object>> triples = getRandomAnsibleFactsTriples(5, false);
 
     @Test
     @Order(10)

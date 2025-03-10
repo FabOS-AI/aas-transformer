@@ -66,7 +66,7 @@ public class FirstAASThenTransformerSystemTest extends AbstractSystemTest {
     @Order(20)
     public void createTransformerExecuteTrueExpectTwoSubmodels() throws DeserializationException, InterruptedException, ApiException {
         managementClient.createTransformer(
-                getAnsibleFactsTransformer(),
+                getAnsibleFactsTransformer(false),
                 true
         ).block();
 

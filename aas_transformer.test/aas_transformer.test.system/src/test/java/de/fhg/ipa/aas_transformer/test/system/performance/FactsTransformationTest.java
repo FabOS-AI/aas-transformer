@@ -39,7 +39,7 @@ public class FactsTransformationTest extends AbstractPerformanceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        triples = getRandomAnsibleFactsTriples(SOURCE_SUBMODEL_COUNT);
+        triples = getRandomAnsibleFactsTriples(SOURCE_SUBMODEL_COUNT, false);
         managementClient.createTransformer(
                 (Transformer) triples.get(0).get(2),
                 true

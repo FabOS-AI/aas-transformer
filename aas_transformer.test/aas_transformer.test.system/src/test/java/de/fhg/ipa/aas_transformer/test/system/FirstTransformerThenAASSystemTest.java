@@ -56,7 +56,7 @@ public class FirstTransformerThenAASSystemTest extends AbstractSystemTest {
     @Order(20)
     public void createAnsibleFactsTransformerExpectOne() throws InterruptedException {
         managementClient.createTransformer(
-                getAnsibleFactsTransformer(),
+                getAnsibleFactsTransformer(false),
                 false
         ).block();
 
