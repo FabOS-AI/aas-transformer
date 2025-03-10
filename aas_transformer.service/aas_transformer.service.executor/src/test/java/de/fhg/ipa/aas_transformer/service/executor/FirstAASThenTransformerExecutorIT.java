@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class FirstAASThenTransformerExecutorIT extends AbstractIT {
     // Test Objects:
     static Submodel factsSubmodel = getAnsibleFactsSubmodel();
-    static Transformer factsTransformer = getAnsibleFactsTransformer();
+    static Transformer factsTransformer = getAnsibleFactsTransformer(false);
     static DefaultAssetAdministrationShell shell = getSimpleShell("", "");
 
     // Mocks ManagementClient; Client return factsTransformer

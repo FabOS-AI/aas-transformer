@@ -159,7 +159,7 @@ public class JobCreateTest {
                         Mockito.any(UUID.class), Mockito.any(Submodel.class)
                 ))
                 .thenReturn(Mono.just(
-                        List.of(getAnsibleFactsTransformer().getDestination().getSubmodelDestination().getId())
+                        List.of(getAnsibleFactsTransformer(false).getDestination().getSubmodelDestination().getId())
                 ));
 
         submodelRepository.deleteSubmodel(ansibleFactsSubmodel.getId());

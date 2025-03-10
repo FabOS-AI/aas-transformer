@@ -65,7 +65,7 @@ public class TransformerRestControllerOrphanTest {
     private SubmodelRepository submodelRepository;
 
     // Objects used inside Tests:
-    private final static Transformer factsTransformer = getAnsibleFactsTransformer();
+    private final static Transformer factsTransformer = getAnsibleFactsTransformer(false);
     private final static AssetAdministrationShell shell = getSimpleShell("", "");
     private final static Submodel factsSubmodel = getAnsibleFactsSubmodel();
     private final static Submodel operatingSystemSubmodel;

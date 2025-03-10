@@ -54,7 +54,7 @@ public class StrictModeExecutorIT extends AbstractIT {
     static AssetAdministrationShell testAas = getSimpleShell("", "");
     static Submodel ansibleFactsSubmodel = getAnsibleFactsSubmodel();
     static List<Submodel> testSubmodels = List.of(ansibleFactsSubmodel);
-    static Transformer factsTransformerCopy = getAnsibleFactsTransformer();
+    static Transformer factsTransformerCopy = getAnsibleFactsTransformer(false);
     static List<Transformer> testTransformers = List.of(factsTransformerCopy);
     // endregion
 

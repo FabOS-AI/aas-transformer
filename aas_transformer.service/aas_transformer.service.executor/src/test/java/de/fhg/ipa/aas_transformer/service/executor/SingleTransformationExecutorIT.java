@@ -52,7 +52,7 @@ public class SingleTransformationExecutorIT extends AbstractIT {
     static Submodel timeseriesSubmodel = getRandomTimeseriesSubmodel(5, 50);
     static Submodel ansibleFactsSubmodel = getAnsibleFactsSubmodel();
     static List<Submodel> testSubmodels = List.of(timeseriesSubmodel, ansibleFactsSubmodel);
-    static Transformer factsTransformerCopy = getAnsibleFactsTransformer();
+    static Transformer factsTransformerCopy = getAnsibleFactsTransformer(false);
     static Transformer factsTransformerSubmodelTemplate =  new Transformer(
             UUID.randomUUID(),
             new Destination(new DestinationSubmodel(

@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FirstTransformerThenAASExecutorIT extends AbstractIT {
     // Test Objects:
-    static Transformer factsTransformer = getAnsibleFactsTransformer();
+    static Transformer factsTransformer = getAnsibleFactsTransformer(false);
     static DefaultAssetAdministrationShell shell = getSimpleShell("", "");
     static Submodel factsSubmodel = getAnsibleFactsSubmodel();
 

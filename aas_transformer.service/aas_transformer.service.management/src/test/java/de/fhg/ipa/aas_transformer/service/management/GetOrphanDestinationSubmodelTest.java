@@ -47,7 +47,7 @@ public class GetOrphanDestinationSubmodelTest {
     private  int transformerManagementPort;
 
     // Objects used inside Tests:
-    private static Transformer factsTransformer = getAnsibleFactsTransformer();
+    private static Transformer factsTransformer = getAnsibleFactsTransformer(false);
     private static AssetAdministrationShell shell = getSimpleShell("","");
     private static Submodel factsSubmodel = getAnsibleFactsSubmodel();
     private static Submodel destinationSubmodel;
