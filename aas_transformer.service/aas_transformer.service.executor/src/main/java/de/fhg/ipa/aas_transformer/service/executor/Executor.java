@@ -91,7 +91,7 @@ public class Executor {
 
     public Submodel executeOnRequest(String submodelId) {
         TransformationDescription transformationDescription =
-                transformationDescriptionJpaRepository.findByTargetSubmodelId(submodelId).block();
+                transformationDescriptionJpaRepository.findTopByTargetSubmodelIdOrderByIdDesc(submodelId).block();
         if(transformationDescription == null)
             return null;
         UUID transformerId = transformationDescription.getTransformerId();
