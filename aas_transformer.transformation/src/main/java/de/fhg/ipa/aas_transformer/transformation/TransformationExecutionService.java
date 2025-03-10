@@ -260,20 +260,18 @@ public class TransformationExecutionService {
 
             addSubmodelReferenceToShells(sourceSubmodel.getId(), destinationSubmodel, context);
             Instant endSaveDestination = Instant.now();
-
-            try {
-                logTransformation(
-                        destinationShells.get(0).getId(),
-                        destinationSubmodelId,
-                        sourceSubmodel.getId(),
-                        executorId,
-                        Duration.between(startTransformation, endTransformation),
-                        Duration.between(startLookupSource, endLookupSource),
-                        Duration.between(startSaveDestination, endSaveDestination)
-                );
-            } catch (Exception e) {
-                LOG.error("Could not log transformation | {}", e.getMessage());
-            }
+            String destinationShellId = "";
+            if(destinationShells.size()!=0)
+                destinationShellId = destinationShells.get(0).getId();
+            logTransformation(
+                    destinationShellId,
+                    destinationSubmodelId,
+                    sourceSubmodel.getId(),
+                    executorId,
+                    Duration.between(startTransformation, endTransformation),
+                    Duration.between(startLookupSource, endLookupSource),
+                    Duration.between(startSaveDestination, endSaveDestination)
+            );
         } else {
             executeOnRequestJob(sourceSubmodel.getId(), destinationSubmodelId, destinationSubmodelIdShort);
         }
