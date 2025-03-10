@@ -44,7 +44,7 @@ public class TransformerTestObjects {
         );
     }
 
-    public static Transformer getAnsibleFactsTransformer() {
+    public static Transformer getAnsibleFactsTransformer(boolean staticDestination) {
         // Create Actions:
         List<TransformerAction> actions = new ArrayList<>();
         actions.add(new TransformerActionCopy(
@@ -56,10 +56,14 @@ public class TransformerTestObjects {
                 "distribution_release_new"
         ));
 
+        String destinationSubmodelId = "{{destinationShells:shell_id(DESTINATION_SHELLS, 0)}}/operating_system_copy";
+        if(staticDestination)
+            destinationSubmodelId = "shell_id/operating_system_copy";
+
         // Create Destination Submodel
         DestinationSubmodel destinationSubmodel = new DestinationSubmodel(
                 "operating_system_copy",
-                "{{destinationShells:shell_id(DESTINATION_SHELLS, 0)}}/operating_system_copy"
+                destinationSubmodelId
         );
         Destination destination  = new Destination(destinationSubmodel);
 
@@ -74,8 +78,8 @@ public class TransformerTestObjects {
         );
     }
 
-    public static Transformer getAnsibleFactsTransformer(boolean transformOnRequest) {
-        Transformer transformer = getAnsibleFactsTransformer();
+    public static Transformer getAnsibleFactsTransformer(boolean transformOnRequest, boolean staticDestination) {
+        Transformer transformer = getAnsibleFactsTransformer(staticDestination);
         transformer.setTransformOnRequest(transformOnRequest);
         return transformer;
     }
@@ -107,7 +111,7 @@ public class TransformerTestObjects {
     }
 
     public static TransformerDTOListener getAnsibleFactsTransformerDTOListener() {
-        Transformer factsTransformer = getAnsibleFactsTransformer();
+        Transformer factsTransformer = getAnsibleFactsTransformer(false);
 
         return  new TransformerDTOListener(
             factsTransformer.getId(),
@@ -116,11 +120,11 @@ public class TransformerTestObjects {
     }
 
     public static List<Transformer> getAnsibleFactsTransformersAsList() {
-        return List.of(getAnsibleFactsTransformer());
+        return List.of(getAnsibleFactsTransformer(false));
     }
 
     public static String getAnsibleFactsTransformerAsJsonString() {
-        Transformer transformer = getAnsibleFactsTransformer();
+        Transformer transformer = getAnsibleFactsTransformer(false);
         try {
             return objectMapper.writeValueAsString(transformer);
         } catch (Exception e) {

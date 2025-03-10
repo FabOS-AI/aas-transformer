@@ -100,14 +100,14 @@ public class AasTestObjects {
         return submodel;
     }
 
-    public static List<List<Object>> getRandomAnsibleFactsTriples(int length) {
+    public static List<List<Object>> getRandomAnsibleFactsTriples(int length, boolean staticDestination) {
         List<List<Object>> triples = new ArrayList<>();
 
         for(int i = 0; i < length; i++) {
             List<Object> triple = new ArrayList<>();
             triple.add(getSimpleShell("", ""));
             triple.add(getRandomAnsibleFactsSubmodel());
-            triple.add(getAnsibleFactsTransformer());
+            triple.add(getAnsibleFactsTransformer(staticDestination));
             try {
                 triple.add(getDestinationSubmodel((Submodel) triple.get(1), (Transformer)triple.get(2)));
             } catch (Exception e) {
@@ -224,7 +224,7 @@ public class AasTestObjects {
 
     public static Submodel getOperatingSystemSubmodel() {
         DefaultSubmodel submodel = new DefaultSubmodel();
-        Transformer ansibleFactsTransformer = getAnsibleFactsTransformer();
+        Transformer ansibleFactsTransformer = getAnsibleFactsTransformer(false);
         DestinationSubmodel destinationSubmodel = ansibleFactsTransformer.getDestination().getSubmodelDestination();
 
         submodel.setId(destinationSubmodel.getId());
