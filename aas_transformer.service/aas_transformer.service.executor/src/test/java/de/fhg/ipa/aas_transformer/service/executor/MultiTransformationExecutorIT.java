@@ -49,7 +49,7 @@ public class MultiTransformationExecutorIT extends AbstractIT {
 
     static {
         try {
-            triples = getRandomAnsibleFactsTriples(5);
+            triples = getRandomAnsibleFactsTriples(5, false);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
