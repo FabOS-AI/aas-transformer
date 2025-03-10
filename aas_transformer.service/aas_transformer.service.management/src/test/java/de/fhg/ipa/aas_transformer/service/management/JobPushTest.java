@@ -46,7 +46,7 @@ public class JobPushTest {
     @Autowired
     private RedisJobReader redisJobReader;
 
-    private static List<List<Object>> triple = getRandomAnsibleFactsTriples(1);
+    private static List<List<Object>> triple = getRandomAnsibleFactsTriples(1, false);
 
     @Autowired
     private TransformerHandler transformerHandler;
@@ -85,7 +85,7 @@ public class JobPushTest {
     @Order(10)
     public void createTransformerExpectJobPush() throws InterruptedException {
         transformerHandler
-                .createOrUpdateTransformer(getAnsibleFactsTransformer(), true)
+                .createOrUpdateTransformer(getAnsibleFactsTransformer(false), true)
                 .block();
 
         assertEquals(1, redisJobReader.getWaitingJobCount());
