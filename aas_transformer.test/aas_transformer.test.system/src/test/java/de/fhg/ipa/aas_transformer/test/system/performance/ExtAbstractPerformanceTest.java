@@ -20,7 +20,6 @@ import de.fhg.ipa.aas_transformer.test.utils.GrafanaClient;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.model.Reference;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
-import org.eclipse.digitaltwin.basyx.aasregistry.client.model.AssetAdministrationShellDescriptor;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.junit.jupiter.api.AfterEach;
 
@@ -302,7 +301,7 @@ public abstract class ExtAbstractPerformanceTest {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                List<de.fhg.ipa.aas_transformer.model.alertmanager.Alert> alerts = alertManagerClient.getAlerts();
+                List<de.fhg.ipa.aas_transformer.clients.alertmanager.model.Alert> alerts = alertManagerClient.getAlerts();
                 alerts.forEach(alert -> {
                     if(addAlertToList(alert))
                         createGrafanaAnnotation(alert);
@@ -310,7 +309,7 @@ public abstract class ExtAbstractPerformanceTest {
             }
         }
 
-        private void createGrafanaAnnotation(de.fhg.ipa.aas_transformer.model.alertmanager.Alert alert) {
+        private void createGrafanaAnnotation(de.fhg.ipa.aas_transformer.clients.alertmanager.model.Alert alert) {
             grafanaClient.createAnnotation(
                     alert.getStartsAt().toInstant(),
                     alert.getStartsAt().toInstant(),
@@ -319,7 +318,7 @@ public abstract class ExtAbstractPerformanceTest {
             );
         }
 
-        private boolean addAlertToList(de.fhg.ipa.aas_transformer.model.alertmanager.Alert alert) {
+        private boolean addAlertToList(de.fhg.ipa.aas_transformer.clients.alertmanager.model.Alert alert) {
             String alertName = alert.getAlertname();
             OffsetDateTime currentAlertDate = latestFiredAlerts.get(alertName);
             OffsetDateTime newAlertDate = alert.getStartsAt();
