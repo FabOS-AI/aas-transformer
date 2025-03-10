@@ -20,13 +20,13 @@ public class SubmodelRepositoryRestController {
     @Autowired
     Executor executor;
 
-    @RequestMapping(path = "", method = RequestMethod.GET)
+    @RequestMapping(path = "", method = RequestMethod.GET, produces = "application/json")
     public List<Submodel> getSubmodels() {
         LOG.info("Received request for all submodels.");
         return executor.executeBatchOnRequest();
     }
 
-    @RequestMapping(path = "/{submodelIdentifier}", method = RequestMethod.GET)
+    @RequestMapping(path = "/{submodelIdentifier}", method = RequestMethod.GET, produces = "application/json")
     public Submodel getSubmodel(
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier
     ) {
@@ -35,7 +35,7 @@ public class SubmodelRepositoryRestController {
         return executor.executeOnRequest(decodedSubmodelId);
     }
 
-    @RequestMapping(path = "/{submodelIdentifier}/submodel-elements/{submodelElementIdentifier}", method = RequestMethod.GET)
+    @RequestMapping(path = "/{submodelIdentifier}/submodel-elements/{submodelElementIdentifier}", method = RequestMethod.GET, produces = "application/json")
     public SubmodelElement getSubmodelElement(
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier,
             @PathVariable(name = "submodelElementIdentifier") String submodelElementIdentifier
