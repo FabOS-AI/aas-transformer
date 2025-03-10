@@ -12,7 +12,7 @@ import java.io.IOException;
 public class SubmodelSerializer extends StdSerializer<Submodel> {
     JsonSerializer jsonSerializer = new JsonSerializer();
 
-    protected SubmodelSerializer(Class<Submodel> t) {
+    public SubmodelSerializer(Class<Submodel> t) {
         super(t);
     }
 
