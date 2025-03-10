@@ -1,6 +1,6 @@
 package de.fhg.ipa.aas_transformer.clients.alertmanager;
 
-import de.fhg.ipa.aas_transformer.model.alertmanager.Alert;
+import de.fhg.ipa.aas_transformer.clients.alertmanager.model.Alert;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;

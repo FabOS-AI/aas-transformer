@@ -1,4 +1,4 @@
-package de.fhg.ipa.aas_transformer.model.alertmanager
+package de.fhg.ipa.aas_transformer.clients.alertmanager.model
 
 data class AlertStatus(
     val inhibitedBy: List<String> = emptyList(),
