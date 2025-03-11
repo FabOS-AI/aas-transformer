@@ -23,6 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.util.*;
@@ -95,7 +96,7 @@ public class TransformerHandler {
     public Mono<Transformer> createOrUpdateTransformer(Transformer transformer, Boolean execute) {
         return this.transformerJpaRepository
                 .save(transformer)
-                .retry()
+                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
                 .publishOn(Schedulers.boundedElastic())
                 .doOnSuccess(t -> {
                     emitToSink(new TransformerChangeEvent(TransformerChangeEventType.CREATE, t));
@@ -139,14 +140,14 @@ public class TransformerHandler {
     public void deleteTransformer(UUID transformerId, Boolean doCleanup) {
         this.transformerJpaRepository
             .findById(transformerId)
-            .retry()
+            .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
             .publishOn(Schedulers.boundedElastic())
             .subscribe(t -> {
                 if (doCleanup)
                     pushTransformationJobsAfterDelete(t);
                 this.transformerJpaRepository
                     .delete(t)
-                    .retry()
+                    .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
                     .publishOn(Schedulers.boundedElastic())
                     .doOnSuccess(v -> {
                         emitToSink(new TransformerChangeEvent(TransformerChangeEventType.DELETE, t));
@@ -155,7 +156,7 @@ public class TransformerHandler {
                 LOG.info("Deleted transformer with ID: {}", transformerId);
                 this.transformationDescriptionJpaRepository
                     .findByTransformerId(transformerId)
-                    .retry()
+                    .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
                     .subscribe(td -> {
                         this.submodelRegistry.deleteSubmodelDescriptor(td.getTargetSubmodelId());
                         LOG.info("Deleted submodel descriptor with ID: {}", td.getTargetSubmodelId());
@@ -209,7 +210,7 @@ public class TransformerHandler {
     }
 
     public List<Submodel> getOrphanDestinationSubmodelsTransformerId(UUID transformerId, Submodel sourceSubmodel) throws DeserializationException {
-        Transformer t = this.transformerJpaRepository.findById(transformerId).retry().block();
+        Transformer t = this.transformerJpaRepository.findById(transformerId).retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))).block();
         List<Submodel> orphanDestinationSubmodels = new ArrayList<>();
         String destinationShellId = null;
 
@@ -316,7 +317,7 @@ public class TransformerHandler {
 
     // requires source submodel to be present in submodel repository
     public List<String> getDestinationSubmodelIds(UUID transformerId) {
-        Transformer t = this.transformerJpaRepository.findById(transformerId).retry().block();
+        Transformer t = this.transformerJpaRepository.findById(transformerId).retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))).block();
         List<Submodel> sourceSubmodels = lookupSourceSubmodels(t, this.submodelRepository);
         List<String> destinationSubmodelIds = new ArrayList<>();
 
@@ -349,11 +350,11 @@ public class TransformerHandler {
     }
 
     public Flux<Transformer> getAllTransformer() {
-        return transformerJpaRepository.findAll().retry();
+        return transformerJpaRepository.findAll().retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)));
     }
     
     public Flux<TransformerDTOListener> getAllTransformerDTOListener() {
-        return transformerJpaRepository.findAll().retry().map(this::convertToTransformerDTOListener);
+        return transformerJpaRepository.findAll().retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))).map(this::convertToTransformerDTOListener);
     }
 
     public Flux<TransformerChangeEvent> getTransformerChangeEventFlux() {
