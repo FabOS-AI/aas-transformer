@@ -20,12 +20,18 @@ public class JobSinkListener {
 
     @PostConstruct
     public void postConstruct() {
-        redisJobConsumer.getJobFlux().subscribe(this::handleNextJob);
+        redisJobConsumer
+                .getJobFlux()
+                .subscribe(this::handleNextJob);
     }
 
     private void handleNextJob(TransformationJob job) {
         // Process the job:
-        executor.execute(job);
+        try {
+            executor.execute(job);
+        } catch (Exception e) {
+            LOG.error("Failed to execute job", e.getMessage());
+        }
 
         // Mark the job as processed:
         try {
