@@ -161,7 +161,14 @@ public class TransformationExecutionService {
         String sourceSubmodelId = transformationDescription.getSourceSubmodelId();
         Instant startLookupSource = Instant.now();
         // Lookup Source Submodel by ID
-        Submodel sourceSubmodel = this.submodelRepository.getSubmodel(sourceSubmodelId);
+        Submodel sourceSubmodel;
+        try {
+            sourceSubmodel = this.submodelRepository.getSubmodel(sourceSubmodelId);
+        } catch (ElementDoesNotExistException e) {
+            LOG.error("Source submodel with ID {} does not exist.", sourceSubmodelId);
+            LOG.info("Skip transformation.");
+            return null;
+        }
         Instant endLookupSource = Instant.now();
 
         // Destination Shells:
