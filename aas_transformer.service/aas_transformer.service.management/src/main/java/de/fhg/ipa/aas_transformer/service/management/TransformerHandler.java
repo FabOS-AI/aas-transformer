@@ -2,8 +2,10 @@ package de.fhg.ipa.aas_transformer.service.management;
 
 import com.hubspot.jinjava.interpret.InterpretException;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
+import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobProducer;
 import de.fhg.ipa.aas_transformer.model.*;
+import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformerJpaRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.service.management.converter.modelmapper.TransformerChangeEventToTransformerChangeEventDTOListenerConverter;
@@ -38,8 +40,10 @@ public class TransformerHandler {
     private static final Logger LOG = LoggerFactory.getLogger(TransformerHandler.class);
     private final ModelMapper modelMapper;
     private final AasRepository aasRepository;
+    private final SubmodelRegistry submodelRegistry;
     private final SubmodelRepository submodelRepository;
     private final TransformerJpaRepository transformerJpaRepository;
+    private final TransformationDescriptionJpaRepository transformationDescriptionJpaRepository;
     private final RedisJobProducer redisJobProducer;
     private final TemplateRenderer templateRenderer;
 
@@ -50,15 +54,19 @@ public class TransformerHandler {
 
     public TransformerHandler(
             AasRepository aasRepository,
+            SubmodelRegistry submodelRegistry,
             SubmodelRepository submodelRepository,
             TransformerJpaRepository transformerJpaRepository,
+            TransformationDescriptionJpaRepository transformationDescriptionJpaRepository,
             ModelMapper modelMapper,
             RedisJobProducer redisJobProducer,
             TemplateRenderer templateRenderer
     ) {
         this.aasRepository = aasRepository;
+        this.submodelRegistry = submodelRegistry;
         this.submodelRepository = submodelRepository;
         this.transformerJpaRepository = transformerJpaRepository;
+        this.transformationDescriptionJpaRepository = transformationDescriptionJpaRepository;
         this.modelMapper = modelMapper;
         this.redisJobProducer = redisJobProducer;
         this.templateRenderer = templateRenderer;
@@ -141,6 +149,15 @@ public class TransformerHandler {
                         emitToSink(new TransformerChangeEvent(TransformerChangeEventType.DELETE, t));
                     })
                     .subscribe();
+                LOG.info("Deleted transformer with ID: {}", transformerId);
+                this.transformationDescriptionJpaRepository
+                    .findByTransformerId(transformerId)
+                    .subscribe(td -> {
+                        this.submodelRegistry.deleteSubmodelDescriptor(td.getTargetSubmodelId());
+                        LOG.info("Deleted submodel descriptor with ID: {}", td.getTargetSubmodelId());
+                        this.transformationDescriptionJpaRepository.delete(td).subscribe();
+                        LOG.info("Deleted transformation description with ID: {}", td.getId());
+                    });
             });
     }
 
