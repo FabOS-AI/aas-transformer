@@ -86,6 +86,7 @@ public class Executor {
                 transformationDescriptionJpaRepository.findAll().collectList().block();
         return transformationDescriptions.stream()
                 .map(d -> executeOnRequest(d.getTargetSubmodelId()))
+                .filter(s -> s != null)
                 .toList();
     }
 
