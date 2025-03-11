@@ -15,6 +15,7 @@ import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
 import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
+import org.eclipse.digitaltwin.basyx.core.exceptions.ElementDoesNotExistException;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,7 +215,13 @@ public class TransformationExecutionService {
         Instant startLookupSource = Instant.now();
         if(job.getSubmodel() == null) {
             // Lookup Source Submodel by ID
-            sourceSubmodel = this.submodelRepository.getSubmodel(job.getSubmodelId());
+            try {
+                sourceSubmodel = this.submodelRepository.getSubmodel(job.getSubmodelId());
+            } catch(ElementDoesNotExistException e) {
+                LOG.error("Source submodel with ID {} does not exist.", job.getSubmodelId());
+                LOG.info("Skip transformation.");
+                return;
+            }
         } else {
             sourceSubmodel = job.getSubmodel();
         }
