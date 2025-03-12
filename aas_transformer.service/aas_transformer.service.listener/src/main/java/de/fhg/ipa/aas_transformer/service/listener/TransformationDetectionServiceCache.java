@@ -107,20 +107,28 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
                         sourceSubmodel
                 ));
             case DELETED:
-                return managementClient
-                        .getOrphanedDestinationSubmodels(
-                                service.getTransformerDTOListener().getId(),
-                                (DefaultSubmodel) event.getSubmodel()
-                        )
-                        .block()
-                        .stream()
-                        .map(smId -> new TransformationJob(
-                                TransformationJobAction.DELETE,
-                                service.getTransformerDTOListener().getId(),
-                                smId,
-                                null
-                        ))
-                        .collect(Collectors.toList());
+                if(service.getTransformerDTOListener().getTransformOnRequest())
+                    return List.of(new TransformationJob(
+                            TransformationJobAction.DELETE,
+                            service.getTransformerDTOListener().getId(),
+                            event.getSubmodel().getId(),
+                            null
+                    ));
+                else
+                    return managementClient
+                            .getOrphanedDestinationSubmodels(
+                                    service.getTransformerDTOListener().getId(),
+                                    (DefaultSubmodel) event.getSubmodel()
+                            )
+                            .block()
+                            .stream()
+                            .map(smId -> new TransformationJob(
+                                    TransformationJobAction.DELETE,
+                                    service.getTransformerDTOListener().getId(),
+                                    smId,
+                                    null
+                            ))
+                            .collect(Collectors.toList());
             default:
                 return null;
 
