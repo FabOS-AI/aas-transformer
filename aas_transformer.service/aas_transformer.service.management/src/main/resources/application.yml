@@ -36,9 +36,8 @@ spring:
     username: ${database.username}
     password: ${database.password}
     pool:
-      max-idle-time: -1
-      min-idle: 2
-  #    https://github.com/r2dbc/r2dbc-pool/issues/129
+      enabled: false
+#    https://github.com/r2dbc/r2dbc-pool/issues/129
 #    pool:
 #      max-life-time: -1
   data:

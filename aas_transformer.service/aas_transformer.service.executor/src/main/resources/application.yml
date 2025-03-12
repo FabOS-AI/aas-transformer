@@ -36,8 +36,7 @@ spring:
     username: ${database.username}
     password: ${database.password}
     pool:
-      max-idle-time: -1
-      min-idle: 2
+      enabled: false
   codec:
     max-in-memory-size: 16MB
   lifecycle:
