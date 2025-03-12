@@ -19,6 +19,7 @@ import org.eclipse.digitaltwin.basyx.core.exceptions.ElementDoesNotExistExceptio
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -108,12 +109,16 @@ public class TransformationExecutionService {
     }
 
     private void executeOnRequestJob(String sourceSubmodelId, String destinationSubmodelId, String destinationSubmodelIdShort) {
-        transformationDescriptionJpaRepository.save(new TransformationDescription(
-                null,
-                this.transformer.getId(),
-                sourceSubmodelId,
-                destinationSubmodelId
-        )).block();
+        try {
+            transformationDescriptionJpaRepository.save(new TransformationDescription(
+                    null,
+                    this.transformer.getId(),
+                    sourceSubmodelId,
+                    destinationSubmodelId
+            )).block();
+        } catch(DuplicateKeyException e) {
+            LOG.error("TransformationDescription already exists | {}", e.getMessage());
+        }
 
         SubmodelDescriptor submodelDescriptor = submodelRegistry.createSubmodelDescriptor(
                 destinationSubmodelId,
