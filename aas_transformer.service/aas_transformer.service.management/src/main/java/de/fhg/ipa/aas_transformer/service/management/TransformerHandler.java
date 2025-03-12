@@ -159,8 +159,9 @@ public class TransformerHandler {
                     .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
                     .subscribe(td -> {
                         this.submodelRegistry.deleteSubmodelDescriptor(td.getTargetSubmodelId());
-                        this.transformationDescriptionJpaRepository.delete(td).block();
-                        LOG.info("Deleted transformation description with ID: {}", td.getId());
+                        this.transformationDescriptionJpaRepository.delete(td).doOnSuccess(v ->
+                            LOG.info("Deleted transformation description with ID: {}", td.getId())
+                        );
                     });
             });
     }
