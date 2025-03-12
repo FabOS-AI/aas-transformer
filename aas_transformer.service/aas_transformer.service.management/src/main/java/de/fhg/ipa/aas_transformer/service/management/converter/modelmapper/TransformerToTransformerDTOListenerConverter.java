@@ -11,7 +11,8 @@ public class TransformerToTransformerDTOListenerConverter extends AbstractConver
     protected TransformerDTOListener convert(Transformer transformer) {
         return new TransformerDTOListener(
                 transformer.getId(),
-                transformer.getSourceSubmodelIdRules()
+                transformer.getSourceSubmodelIdRules(),
+                transformer.getTransformOnRequest()
         );
     }
 }
