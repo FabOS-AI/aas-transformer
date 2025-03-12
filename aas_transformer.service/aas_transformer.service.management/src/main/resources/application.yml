@@ -35,6 +35,12 @@ spring:
     url: r2dbc:mariadb://${database.host}:${database.port}/${database.schema}?createDatabaseIfNotExist=true&serverTimezone=UTC
     username: ${database.username}
     password: ${database.password}
+    pool:
+      max-idle-time: -1
+      min-idle: 2
+  #    https://github.com/r2dbc/r2dbc-pool/issues/129
+#    pool:
+#      max-life-time: -1
   data:
     redis:
       host: localhost
