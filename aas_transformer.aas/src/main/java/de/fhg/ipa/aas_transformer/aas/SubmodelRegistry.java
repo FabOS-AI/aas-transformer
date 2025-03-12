@@ -117,6 +117,7 @@ public class SubmodelRegistry {
     public void deleteSubmodelDescriptor(String submodelId) {
         try {
             this.submodelRegistryApi.deleteSubmodelDescriptorById(submodelId);
+            LOG.info("Deleted submodel descriptor with ID: {}", submodelId);
         } catch (ApiException e) {
             LOG.error("Failed to delete submodel descriptor with id: " + submodelId);
         }
