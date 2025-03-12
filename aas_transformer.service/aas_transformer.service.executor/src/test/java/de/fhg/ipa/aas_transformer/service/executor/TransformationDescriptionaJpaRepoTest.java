@@ -1,5 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
+import com.hubspot.jinjava.interpret.FatalTemplateErrorsException;
 import de.fhg.ipa.aas_transformer.model.TransformationDescription;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.MariaDbExtension;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.annotation.DirtiesContext;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MariaDbExtension.class)
 @SpringBootTest
@@ -47,6 +50,14 @@ public class TransformationDescriptionaJpaRepoTest {
     @Order(20)
     public void testCreateTransformationDescription() {
         transformationDescriptionJpaRepository.save(transformationDescription).block();
+    }
+
+    @Test
+    @Order(25)
+    public void testCreateTransformationDescriptionAgain() {
+        assertThrows(DuplicateKeyException.class, () -> {
+            transformationDescriptionJpaRepository.save(transformationDescription).block();
+        });
     }
 
     @Test
