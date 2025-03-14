@@ -23,6 +23,8 @@ public class SubmodelRepositoryRestController {
     private static final Logger LOG = LoggerFactory.getLogger(SubmodelRepositoryRestController.class);
     @Autowired
     Executor executor;
+    @Autowired
+    SubmodelHandler submodelHandler;
 
     @RequestMapping(path = "", method = RequestMethod.GET, produces = APPLICATION_JSON)
     public List<Submodel> getSubmodels() {
@@ -39,11 +41,20 @@ public class SubmodelRepositoryRestController {
         return executor.executeOnRequest(decodedSubmodelId);
     }
 
+    @RequestMapping(path = "/{submodelIdentifier}/submodel-elements", method = RequestMethod.GET, produces = APPLICATION_JSON)
+    public List<SubmodelElement> getSubmodelElements(
+            @PathVariable(name = "submodelIdentifier") String submodelIdentifier
+    ) {
+        String decodedSubmodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
+        LOG.info("Received request for submodel elements of submodel with id: " + decodedSubmodelId);
+        return executor.executeOnRequest(decodedSubmodelId).getSubmodelElements();
+    }
+
     @RequestMapping(path = "/{submodelIdentifier}/submodel-elements/{submodelElementIdentifier}", method = RequestMethod.GET, produces = APPLICATION_JSON)
     public SubmodelElement getSubmodelElement(
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier,
             @PathVariable(name = "submodelElementIdentifier") String submodelElementIdentifier
     ) {
-        return null;
+        return submodelHandler.getSubmodelElement(submodelIdentifier, submodelElementIdentifier);
     }
 }
