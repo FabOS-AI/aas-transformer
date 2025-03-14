@@ -22,32 +22,30 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 public class SubmodelRepositoryRestController {
     private static final Logger LOG = LoggerFactory.getLogger(SubmodelRepositoryRestController.class);
     @Autowired
-    Executor executor;
-    @Autowired
     SubmodelHandler submodelHandler;
 
     @RequestMapping(path = "", method = RequestMethod.GET, produces = APPLICATION_JSON)
     public List<Submodel> getSubmodels() {
         LOG.info("Received request for all submodels.");
-        return executor.executeBatchOnRequest();
+        return submodelHandler.getSubmodels();
     }
 
     @RequestMapping(path = "/{submodelIdentifier}", method = RequestMethod.GET, produces = APPLICATION_JSON)
     public Submodel getSubmodel(
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier
     ) {
-        String decodedSubmodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
-        LOG.info("Received request for submodel with id: " + decodedSubmodelId);
-        return executor.executeOnRequest(decodedSubmodelId);
+//        String decodedSubmodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
+        LOG.info("Received request for submodel with id: " + submodelIdentifier);
+        return submodelHandler.getSubmodel(submodelIdentifier);
     }
 
     @RequestMapping(path = "/{submodelIdentifier}/submodel-elements", method = RequestMethod.GET, produces = APPLICATION_JSON)
     public List<SubmodelElement> getSubmodelElements(
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier
     ) {
-        String decodedSubmodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
-        LOG.info("Received request for submodel elements of submodel with id: " + decodedSubmodelId);
-        return executor.executeOnRequest(decodedSubmodelId).getSubmodelElements();
+//        String decodedSubmodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
+        LOG.info("Received request for submodel elements of submodel with id: " + submodelIdentifier);
+        return submodelHandler.getSubmodelElements(submodelIdentifier);
     }
 
     @RequestMapping(path = "/{submodelIdentifier}/submodel-elements/{submodelElementIdentifier}", method = RequestMethod.GET, produces = APPLICATION_JSON)
