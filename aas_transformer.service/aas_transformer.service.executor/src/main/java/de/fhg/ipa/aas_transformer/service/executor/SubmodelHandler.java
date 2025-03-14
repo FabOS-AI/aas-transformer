@@ -6,7 +6,6 @@ import org.eclipse.digitaltwin.basyx.submodelservice.pathparsing.HierarchicalSub
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Base64;
 import java.util.List;
 
 @Component
@@ -19,7 +18,6 @@ public class SubmodelHandler {
     }
 
     public Submodel getSubmodel(String submodelIdentifier) {
-//        String submodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
         return executor.executeOnRequest(submodelIdentifier);
     }
 
@@ -31,8 +29,6 @@ public class SubmodelHandler {
             String submodelIdentifier,
             String submodelElementIdentifier
     ) {
-//        String submodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
-//        String submodelElementId = new String(Base64.getDecoder().decode(submodelElementIdentifier));
         Submodel submodel = getSubmodel(submodelIdentifier);
         HierarchicalSubmodelElementParser parser = new HierarchicalSubmodelElementParser(submodel);
         return parser.getSubmodelElementFromIdShortPath(submodelElementIdentifier);
