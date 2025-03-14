@@ -1,8 +1,12 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
+import de.fhg.ipa.aas_transformer.clients.management.SubmodelSerializer;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
+import de.fhg.ipa.aas_transformer.clients.redis.SubmodelDeserializer;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
@@ -16,6 +20,7 @@ import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
 import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
+import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodelRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -24,6 +29,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -49,8 +59,9 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
     @LocalServerPort
     private int transformerExecutorPort;
     private WebClient webclient;
+    private ConnectedSubmodelRepository submodelRepository;
     // Test Objects:
-    static Transformer factsTransformer = getAnsibleFactsTransformer(true);
+    static Transformer factsTransformer = getAnsibleFactsTransformer(true, true);
     static DefaultAssetAdministrationShell shell = getSimpleShell("", "");
     static Submodel factsSubmodel = getAnsibleFactsSubmodel();
     static SubmodelDescriptor operatingSystemSubmodelDescriptor;
@@ -90,8 +101,9 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
 
     @BeforeEach
     void setUp() throws ApiException {
-         webclient = WebClient.builder().baseUrl("http://localhost:"+transformerExecutorPort).build();
+         webclient = getExecutorWebclient("http://localhost:"+transformerExecutorPort);
 
+         // Create Shell and facts submodel:
         this.aasRepository.createOrUpdateAas(shell);
         this.aasRepository.addSubmodelReferenceToAas(shell.getId(), factsSubmodel);
         this.smRepository.createOrUpdateSubmodel(factsSubmodel);
@@ -99,6 +111,26 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
                 shell.getId(),
                 this.smRegistry.findSubmodelDescriptor(factsSubmodel.getId()).get()
         );
+    }
+
+    private WebClient getExecutorWebclient(String baseUrl) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
+        simpleModule.addDeserializer(Submodel.class, new SubmodelDeserializer());
+        objectMapper.registerModule(simpleModule);
+
+        ExchangeStrategies strategies = ExchangeStrategies
+                .builder()
+                .codecs(clientDefaultCodecsConfigurer -> {
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper));
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(objectMapper));
+                }).build();
+
+        return WebClient.builder()
+                .baseUrl(baseUrl)
+                .exchangeStrategies(strategies)
+                .build();
     }
 
     @Test
@@ -113,6 +145,10 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
     @Test
     @Order(20)
     public void testCreateTransformationJobExpectOneTransformationDescription() throws DeserializationException, SerializationException, InterruptedException, ApiException {
+        Mockito
+                .when(metricsClient.addTransformationLog(Mockito.any()))
+                .thenReturn(Mono.empty());
+
         TransformationJob createdJob = new TransformationJob(
                 TransformationJobAction.EXECUTE,
                 factsTransformer.getId(),
@@ -129,6 +165,7 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
 
         List<TransformationDescription> result = transformationDescriptionJpaRepository.findAll().collectList().block();
         List<SubmodelDescriptor> smDescriptors = smRegistry.getSubmodelDescriptors();
+
         assertTrue(result.size() == 1);
         assertTrue(smDescriptors.size() == 2);
 
@@ -145,11 +182,16 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
                 .when(metricsClient.addTransformationLog(Mockito.any()))
                 .thenReturn(Mono.empty());
 
-        String response = webclient
-                .get()
+        WebClient.ResponseSpec responseString = webclient
+                .get() // Adjust the base URL as needed
+                .uri("/submodels/" + b64Encode(operatingSystemSubmodelDescriptor.getId()))
+                .retrieve();
+
+        Submodel response = webclient
+                .get() // Adjust the base URL as needed
                 .uri("/submodels/" + b64Encode(operatingSystemSubmodelDescriptor.getId()))
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(Submodel.class)
                 .block();
 
         assertNotNull(response);
@@ -162,11 +204,12 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
                 .when(metricsClient.addTransformationLog(Mockito.any()))
                 .thenReturn(Mono.empty());
 
-        String response = webclient
+        List<Submodel> response = webclient
                 .get()
                 .uri("/submodels")
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(new ParameterizedTypeReference<List<Submodel>>() {
+                })
                 .block();
 
         assertNotNull(response);
