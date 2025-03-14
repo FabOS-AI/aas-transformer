@@ -60,7 +60,6 @@ public class SubmodelRepository {
     }
 
     public List<Submodel> getAllSubmodels() throws DeserializationException {
-
         int limit = 100;
         String cursor = "";
         List<Submodel> submodels = new ArrayList<>();
