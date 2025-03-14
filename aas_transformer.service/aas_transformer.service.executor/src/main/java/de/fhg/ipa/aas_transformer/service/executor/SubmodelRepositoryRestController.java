@@ -34,8 +34,7 @@ public class SubmodelRepositoryRestController {
     public Submodel getSubmodel(
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier
     ) {
-//        String decodedSubmodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
-        LOG.info("Received request for submodel with id: " + submodelIdentifier);
+        LOG.info("Received request for submodel with id: {}", submodelIdentifier);
         return submodelHandler.getSubmodel(submodelIdentifier);
     }
 
@@ -43,8 +42,7 @@ public class SubmodelRepositoryRestController {
     public List<SubmodelElement> getSubmodelElements(
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier
     ) {
-//        String decodedSubmodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
-        LOG.info("Received request for submodel elements of submodel with id: " + submodelIdentifier);
+        LOG.info("Received request for submodel elements of submodel with id: {}", submodelIdentifier);
         return submodelHandler.getSubmodelElements(submodelIdentifier);
     }
 
@@ -53,6 +51,7 @@ public class SubmodelRepositoryRestController {
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier,
             @PathVariable(name = "submodelElementIdentifier") String submodelElementIdentifier
     ) {
+        LOG.info("Received request for submodel element with id: {} of submodel with id: {}", submodelElementIdentifier, submodelIdentifier);
         return submodelHandler.getSubmodelElement(submodelIdentifier, submodelElementIdentifier);
     }
 }
