@@ -7,20 +7,34 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Base64;
+import java.util.List;
 
 @Component
 public class SubmodelHandler {
     @Autowired
     Executor executor;
 
+    public List<Submodel> getSubmodels() {
+        return executor.executeBatchOnRequest();
+    }
+
+    public Submodel getSubmodel(String submodelIdentifier) {
+//        String submodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
+        return executor.executeOnRequest(submodelIdentifier);
+    }
+
+    public List<SubmodelElement> getSubmodelElements(String submodelIdentifier) {
+        return getSubmodel(submodelIdentifier).getSubmodelElements();
+    }
+
     public SubmodelElement getSubmodelElement(
-            String b64SubmodelIdentifier,
-            String b64SubmodelElementIdentifier
+            String submodelIdentifier,
+            String submodelElementIdentifier
     ) {
-        String submodelId = new String(Base64.getDecoder().decode(b64SubmodelIdentifier));
-        String submodelElementId = new String(Base64.getDecoder().decode(b64SubmodelElementIdentifier));
-        Submodel submodel = executor.executeOnRequest(submodelId);
+//        String submodelId = new String(Base64.getDecoder().decode(submodelIdentifier));
+//        String submodelElementId = new String(Base64.getDecoder().decode(submodelElementIdentifier));
+        Submodel submodel = getSubmodel(submodelIdentifier);
         HierarchicalSubmodelElementParser parser = new HierarchicalSubmodelElementParser(submodel);
-        return parser.getSubmodelElementFromIdShortPath(submodelElementId);
+        return parser.getSubmodelElementFromIdShortPath(submodelElementIdentifier);
     }
 }
