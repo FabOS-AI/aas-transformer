@@ -11,7 +11,9 @@ import de.fhg.ipa.aas_transformer.clients.management.*;
 import de.fhg.ipa.aas_transformer.clients.prometheus.PrometheusClient;
 import de.fhg.ipa.aas_transformer.clients.prometheus.model.Alert;
 import de.fhg.ipa.aas_transformer.clients.prometheus.model.AlertState;
+import de.fhg.ipa.aas_transformer.clients.redis.SubmodelDeserializer;
 import de.fhg.ipa.aas_transformer.model.TransformationLog;
+import de.fhg.ipa.aas_transformer.test.system.AbstractExtSystemTest;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.AggregatedTestResult;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TestResult;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TransformationDurations;
@@ -37,96 +39,12 @@ import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.registerAasOb
 import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesTriples;
 import static java.lang.Thread.sleep;
 
-public abstract class ExtAbstractPerformanceTest {
+public abstract class ExtAbstractPerformanceTest extends AbstractExtSystemTest {
     protected static int TEST_RUN_NO = 1;
-
-    //region Test Vars
-    // IP addresses/hostnames:
-    String host = "aas-transformer.local";
-
-    // Subdomains
-    String transformerManagementSubdomain = "management";
-    String transformerExecutorSubdomain = "executor";
-    String grafanaSubdomain = "grafana";
-
-    // Service Ports:
-    String transformerManagementPort = "80";
-    String transformerExecutorPort = "80";
-    String grafanaPort = "80";
-    String aasRegistryPort = "80";
-    String aasRegistryPath = "/shell-registry";
-    String aasRepositoryPort = "80";
-    String aasRepositoryPath = "";
-    String smRegistryPort = "80";
-    String smRegistryPath = "/sm-registry";
-    String smRepositoryPort = "80";
-    String smRepositoryPath = "";
-
-    // Transformer Service Urls:
-    String transformerManagementUrl = "http://" + transformerManagementSubdomain + "." + host +":" + transformerManagementPort;
-    String transformerExecutorUrl = "http://" + transformerExecutorSubdomain + "." + host + ":" + transformerExecutorPort;
-    String grafanaUrl = "http://"+ grafanaSubdomain + "." + host +":" + grafanaPort;
-
-    // AAS Service Urls:
-    String aasRegistryUrl = "http://"+host+":"+aasRegistryPort+aasRegistryPath;
-    String aasRepoUrl = "http://"+host+":"+aasRepositoryPort+aasRepositoryPath;
-    String smRegistryUrl = "http://"+host+":"+smRegistryPort+smRegistryPath;
-    String smRepoUrl = "http://"+host+":"+smRepositoryPort+smRepositoryPath;
-
-    // Service Clients:
-    protected static ManagementClient managementClient;
-    protected static WebClient executorWebclient;
-    protected static MetricsClient metricsClient;
-    protected static JobsClient jobsClient;
-    protected static ScalingClient scalingClient;
-    protected static AasRegistry aasRegistry;
-    protected static AasRepository aasRepository;
-    protected static SubmodelRegistry smRegistry;
-    protected static SubmodelRepository smRepository;
-    protected static GrafanaClient grafanaClient;
-
-    // Credentials
-    static String grafanaUsername = "admin";
-    static String grafanaPassword = "admin";
 
     // Result vars:
     static List<TestResult> testResults = new ArrayList<>();
     static AggregatedTestResult aggregatedTestResult;
-    // endregion
-
-
-    public ExtAbstractPerformanceTest() {
-        managementClient = new ManagementClient(transformerManagementUrl);
-        executorWebclient = getExecutorWebclient(transformerExecutorUrl);
-        metricsClient = new MetricsClient(transformerManagementUrl);
-        jobsClient = new JobsClient(transformerManagementUrl);
-        scalingClient = new ScalingClient(transformerManagementUrl);
-        grafanaClient = new GrafanaClient(grafanaUrl, grafanaUsername, grafanaPassword);
-
-        aasRegistry = new AasRegistry(aasRegistryUrl, aasRepoUrl);
-        aasRepository = new AasRepository(aasRepoUrl);
-        smRegistry = new SubmodelRegistry(smRegistryUrl, smRepoUrl);
-        smRepository = new SubmodelRepository(smRepoUrl);
-    }
-
-    private WebClient getExecutorWebclient(String baseUrl) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        SimpleModule simpleModule = new SimpleModule();
-        simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
-        objectMapper.registerModule(simpleModule);
-
-        ExchangeStrategies strategies = ExchangeStrategies
-                .builder()
-                .codecs(clientDefaultCodecsConfigurer -> {
-                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper, MediaType.APPLICATION_JSON));
-                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(objectMapper, MediaType.APPLICATION_JSON));
-                }).build();
-
-        return WebClient.builder()
-                .baseUrl(baseUrl)
-                .exchangeStrategies(strategies)
-                .build();
-    }
 
     @AfterEach
     void tearDown() throws DeserializationException {
