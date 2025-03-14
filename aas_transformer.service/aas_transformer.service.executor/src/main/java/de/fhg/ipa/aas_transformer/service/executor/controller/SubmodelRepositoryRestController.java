@@ -1,5 +1,6 @@
-package de.fhg.ipa.aas_transformer.service.executor;
+package de.fhg.ipa.aas_transformer.service.executor.controller;
 
+import de.fhg.ipa.aas_transformer.service.executor.SubmodelHandler;
 import jakarta.ws.rs.Produces;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Base64;
 import java.util.List;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
