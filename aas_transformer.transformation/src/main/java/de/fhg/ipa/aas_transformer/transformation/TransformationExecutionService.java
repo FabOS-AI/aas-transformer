@@ -108,7 +108,11 @@ public class TransformationExecutionService {
         return destinationShellIds;
     }
 
-    private void executeOnRequestJob(String sourceSubmodelId, String destinationSubmodelId, String destinationSubmodelIdShort) {
+    private void executeOnRequestJob(
+            String sourceSubmodelId,
+            String destinationSubmodelId,
+            String destinationSubmodelIdShort
+    ) {
         try {
             transformationDescriptionJpaRepository.save(new TransformationDescription(
                     null,
@@ -276,8 +280,6 @@ public class TransformationExecutionService {
             Instant startSaveDestination = Instant.now();
             // Write intermediate result to Submodel Repository
             this.submodelRepository.createOrUpdateSubmodel(destinationSubmodel);
-
-            addSubmodelReferenceToShells(sourceSubmodel.getId(), destinationSubmodel, context);
             Instant endSaveDestination = Instant.now();
             String destinationShellId = "";
             if(destinationShells.size()!=0)
@@ -292,8 +294,18 @@ public class TransformationExecutionService {
                     Duration.between(startSaveDestination, endSaveDestination)
             );
         } else {
-            executeOnRequestJob(sourceSubmodel.getId(), destinationSubmodelId, destinationSubmodelIdShort);
+            executeOnRequestJob(
+                    sourceSubmodel.getId(),
+                    destinationSubmodelId,
+                    destinationSubmodelIdShort
+            );
         }
+
+        addSubmodelReferenceToShells(
+                sourceSubmodel.getId(),
+                destinationSubmodelId,
+                context
+        );
     }
 
     private void logTransformation(
@@ -322,14 +334,14 @@ public class TransformationExecutionService {
 
     private void addSubmodelReferenceToShells(
             String sourceSubmodelId,
-            Submodel intermediateResult,
+            String destinationSubmodelId,
             Map<String, Object> context
     ) {
         // Add reference to new submodel in destination AAS
         if (transformer.getDestination().getAasDestination() != null) {
             try {
                 addReferenceToNewSubmodelInDestinationAas(
-                        intermediateResult,
+                        destinationSubmodelId,
                         context
                 );
             } catch (ApiException e) {
@@ -339,13 +351,12 @@ public class TransformationExecutionService {
         } else {
             addReferenceToNewSubmodelInOriginAAS(
                     sourceSubmodelId,
-                    intermediateResult
+                    destinationSubmodelId
             );
         }
     }
 
-    private void addReferenceToNewSubmodelInOriginAAS(String sourceSubmodelId, Submodel destinationSubmodel) {
-        String destinationSubmodelId = destinationSubmodel.getId();
+    private void addReferenceToNewSubmodelInOriginAAS(String sourceSubmodelId, String destinationSubmodelId) {
         var destinationSubmodelDescriptorOptional = getSubmodelDescriptor(destinationSubmodelId);
         this.aasRepository.getAllAasContainingSubmodelBySubmodelId(sourceSubmodelId)
                 .stream()
@@ -389,7 +400,7 @@ public class TransformationExecutionService {
     }
 
     private void addReferenceToNewSubmodelInDestinationAas(
-            Submodel destinationSubmodel,
+            String destinationSubmodelId,
             Map<String, Object> context
     ) throws ApiException {
         var destinationAasId = this.templateRenderer.render(
@@ -410,7 +421,7 @@ public class TransformationExecutionService {
         // Add submodel descriptor to destination AAS
         var destinationAas = this.aasRepository.getAas(destinationAasId);
         var destinationSubmodelDescriptorOptional = this.submodelRegistry.findSubmodelDescriptor(
-                destinationSubmodel.getId()
+                destinationSubmodelId
         );
         this.aasRegistry.addSubmodelDescriptorToAas(
                 destinationAas.getId(),
@@ -418,7 +429,7 @@ public class TransformationExecutionService {
         );
         this.aasRepository.addSubmodelReferenceToAas(
                 destinationAas.getId(),
-                destinationSubmodel
+                destinationSubmodelId
         );
     }
 
