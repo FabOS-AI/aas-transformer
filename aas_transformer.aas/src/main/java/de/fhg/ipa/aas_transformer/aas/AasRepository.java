@@ -90,10 +90,14 @@ public class AasRepository {
     }
 
     public void addSubmodelReferenceToAas(String aasId, Submodel submodel) {
+        addSubmodelReferenceToAas(aasId, submodel.getId());
+    }
+
+    public void addSubmodelReferenceToAas(String aasId, String submodelId) {
         var submodelReference = new DefaultReference.Builder()
                 .keys(new DefaultKey.Builder()
                         .type(KeyTypes.SUBMODEL)
-                        .value(submodel.getId()).build())
+                        .value(submodelId).build())
                 .build();
         try {
             this.connectedAasRepository.addSubmodelReference(aasId, submodelReference);
