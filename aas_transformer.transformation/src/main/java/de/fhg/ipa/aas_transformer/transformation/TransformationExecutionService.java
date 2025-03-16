@@ -371,7 +371,7 @@ public class TransformationExecutionService {
                     }
                     this.aasRepository.addSubmodelReferenceToAas(
                             shell.getId(),
-                            this.submodelRepository.getSubmodel(destinationSubmodelId)
+                            destinationSubmodelId
                     );
                 });
     }
