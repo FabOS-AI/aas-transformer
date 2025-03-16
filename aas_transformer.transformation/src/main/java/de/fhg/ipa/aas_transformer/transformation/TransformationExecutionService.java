@@ -114,12 +114,13 @@ public class TransformationExecutionService {
             String destinationSubmodelIdShort
     ) {
         try {
+
             transformationDescriptionJpaRepository.save(new TransformationDescription(
                     null,
                     this.transformer.getId(),
                     sourceSubmodelId,
                     destinationSubmodelId
-            )).block();
+            )).log().block();
         } catch(DuplicateKeyException e) {
             LOG.error("TransformationDescription already exists | {}", e.getMessage());
         }
@@ -130,6 +131,7 @@ public class TransformationExecutionService {
                 externalBaseUrl
         );
         submodelRegistry.registerSubmodelDescriptor(submodelDescriptor);
+        LOG.info("Created SubmodelDescriptor for submodel with ID: {}", destinationSubmodelId);
     }
 
     private Submodel executeJob(
