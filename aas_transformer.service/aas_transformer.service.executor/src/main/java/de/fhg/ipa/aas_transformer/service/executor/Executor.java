@@ -137,10 +137,13 @@ public class Executor {
                     sourceSubmodelId
             ).collectList().block();
             descriptions.forEach(d -> {
+                String targetSubmodelId = d.getTargetSubmodelId();
                 // Delete Target Submodel Descriptor:
-                this.submodelRegistry.deleteSubmodelDescriptor(d.getTargetSubmodelId());
+                this.submodelRegistry.deleteSubmodelDescriptor(targetSubmodelId);
                 // Delete Transformation Description:
                 transformationDescriptionJpaRepository.delete(d).block();
+                this.aasRegistry.removeSubmodelDescriptorFromAllAas(targetSubmodelId);
+                this.aasRepository.removeSubmodelReferenceFromAllAas(targetSubmodelId);
             });
         } else {
             this.submodelRepository.deleteSubmodel(sourceSubmodelId);
