@@ -124,6 +124,14 @@ public class Executor {
         TransformationExecutionService executionService = this.transformationExecutionServiceCache
                 .getTransformationExecutionServiceByTransformerId(job.getTransformerId());
 
+        if (executionService == null) {
+            LOG.error("No TransformationExecutionService found for {} job with transformerId {}",
+                    job.getTransformationJobAction(),
+                    job.getTransformerId()
+            );
+            return;
+        }
+
         if(executionService.getTransformOnRequest()) {
             List<TransformationDescription> descriptions = transformationDescriptionJpaRepository.findBySourceSubmodelId(
                     sourceSubmodelId
