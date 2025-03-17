@@ -21,8 +21,14 @@ public class SubmodelRegistryRestController {
     SubmodelDescriptorHandler submodelDescriptorHandler;
 
     @RequestMapping(path = "", method = RequestMethod.GET, produces = APPLICATION_JSON)
-    public List<SubmodelDescriptor> getSubmodels() {
+    public List<SubmodelDescriptor> getSubmodelDescriptors() {
         LOG.info("Received request for all submodels descriptors.");
         return submodelDescriptorHandler.getSubmodelDescriptors();
+    }
+
+    @RequestMapping(path = "/{submodelIdentifier}", method = RequestMethod.GET, produces = APPLICATION_JSON)
+    public SubmodelDescriptor getSubmodelDescriptor(@PathVariable String submodelIdentifier) {
+        LOG.info("Received request for submodels descriptor with id = {}.", submodelIdentifier);
+        return submodelDescriptorHandler.getSubmodelDescriptor(submodelIdentifier);
     }
 }

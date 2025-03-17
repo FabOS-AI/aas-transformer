@@ -37,6 +37,14 @@ public class SubmodelDescriptorHandler {
     @Value("${aas_transformer.services.executor.external_base_url}")
     public String externalBaseUrl;
 
+    public SubmodelDescriptor getSubmodelDescriptor(String submodelIdentifier) {
+        TransformationDescription description = transformationDescriptionJpaRepository
+                .findByTargetSubmodelId(submodelIdentifier)
+                .block();
+
+        return getSubmodelDescriptor(description);
+    }
+
     public List<SubmodelDescriptor> getSubmodelDescriptors() {
         List<SubmodelDescriptor> submodelDescriptors = new ArrayList<>();
         List<TransformationDescription> descriptions = transformationDescriptionJpaRepository
@@ -44,44 +52,46 @@ public class SubmodelDescriptorHandler {
                 .collectList()
                 .block();
 
-        descriptions.forEach(description -> {
-            String sourceSubmodelId = description.getSourceSubmodelId();
-            UUID transformerId = description.getTransformerId();
-            TransformationExecutionService execService = this.transformationExecutionServiceCache
-                    .getTransformationExecutionServiceByTransformerId(transformerId);
-
-            List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
-                    this.aasRepository,
-                    sourceSubmodelId,
-                    execService.getTransformer().getDestination().getAasDestination()
-            );
-
-            // Set context for template rendering
-            Map<String, Object> context = templateRenderer.getTemplateContext(
-                    transformerId,
-                    destinationShells,
-                    submodelRepository.getSubmodel(sourceSubmodelId)
-            );
-
-            // Set ID and IdShort for destination submodel:
-            var destinationSubmodelId = this.templateRenderer.render(
-                    execService.getTransformer().getDestination().getSubmodelDestination().getId(),
-                    context
-            );
-            var destinationSubmodelIdShort = this.templateRenderer.render(
-                    execService.getTransformer().getDestination().getSubmodelDestination().getIdShort(),
-                    context
-            );
-
-            submodelDescriptors.add(
-                submodelRegistry.createSubmodelDescriptor(
-                    destinationSubmodelId,
-                    destinationSubmodelIdShort,
-                    externalBaseUrl
-                )
-            );
-        });
+        descriptions.forEach(description ->
+            submodelDescriptors.add(getSubmodelDescriptor(description))
+        );
 
         return submodelDescriptors;
+    }
+
+    private SubmodelDescriptor getSubmodelDescriptor(TransformationDescription description) {
+        String sourceSubmodelId = description.getSourceSubmodelId();
+        UUID transformerId = description.getTransformerId();
+        TransformationExecutionService execService = this.transformationExecutionServiceCache
+                .getTransformationExecutionServiceByTransformerId(transformerId);
+
+        List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
+                this.aasRepository,
+                sourceSubmodelId,
+                execService.getTransformer().getDestination().getAasDestination()
+        );
+
+        // Set context for template rendering
+        Map<String, Object> context = templateRenderer.getTemplateContext(
+                transformerId,
+                destinationShells,
+                submodelRepository.getSubmodel(sourceSubmodelId)
+        );
+
+        // Set ID and IdShort for destination submodel:
+        var destinationSubmodelId = this.templateRenderer.render(
+                execService.getTransformer().getDestination().getSubmodelDestination().getId(),
+                context
+        );
+        var destinationSubmodelIdShort = this.templateRenderer.render(
+                execService.getTransformer().getDestination().getSubmodelDestination().getIdShort(),
+                context
+        );
+
+        return submodelRegistry.createSubmodelDescriptor(
+                destinationSubmodelId,
+                destinationSubmodelIdShort,
+                externalBaseUrl
+        );
     }
 }
