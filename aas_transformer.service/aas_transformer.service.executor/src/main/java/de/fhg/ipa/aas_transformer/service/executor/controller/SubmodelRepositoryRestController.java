@@ -4,12 +4,12 @@ import de.fhg.ipa.aas_transformer.service.executor.SubmodelHandler;
 import jakarta.ws.rs.Produces;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
+import org.eclipse.digitaltwin.basyx.pagination.GetSubmodelElementsResult;
+import org.eclipse.digitaltwin.basyx.submodelrepository.http.pagination.GetSubmodelsResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -23,9 +23,12 @@ public class SubmodelRepositoryRestController {
     SubmodelHandler submodelHandler;
 
     @RequestMapping(path = "", method = RequestMethod.GET, produces = APPLICATION_JSON)
-    public List<Submodel> getSubmodels() {
+    public GetSubmodelsResult getSubmodels() {
         LOG.info("Received request for all submodels.");
-        return submodelHandler.getSubmodels();
+
+        GetSubmodelsResult paginatedSubmodel = new GetSubmodelsResult();
+        paginatedSubmodel.result(submodelHandler.getSubmodels());
+        return paginatedSubmodel;
     }
 
     @RequestMapping(path = "/{submodelIdentifier}", method = RequestMethod.GET, produces = APPLICATION_JSON)
@@ -37,11 +40,13 @@ public class SubmodelRepositoryRestController {
     }
 
     @RequestMapping(path = "/{submodelIdentifier}/submodel-elements", method = RequestMethod.GET, produces = APPLICATION_JSON)
-    public List<SubmodelElement> getSubmodelElements(
+    public GetSubmodelElementsResult getSubmodelElements(
             @PathVariable(name = "submodelIdentifier") String submodelIdentifier
     ) {
         LOG.info("Received request for submodel elements of submodel with id: {}", submodelIdentifier);
-        return submodelHandler.getSubmodelElements(submodelIdentifier);
+        GetSubmodelElementsResult paginatedSubmodelElement = new GetSubmodelElementsResult();
+        paginatedSubmodelElement.result(submodelHandler.getSubmodelElements(submodelIdentifier));
+        return paginatedSubmodelElement;
     }
 
     @RequestMapping(path = "/{submodelIdentifier}/submodel-elements/{submodelElementIdentifier}", method = RequestMethod.GET, produces = APPLICATION_JSON)
