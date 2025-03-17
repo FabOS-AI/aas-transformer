@@ -7,12 +7,14 @@ import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.*;
+import de.fhg.ipa.aas_transformer.clients.redis.SubmodelDescriptorDeserializer;
 import de.fhg.ipa.aas_transformer.clients.redis.SubmodelDeserializer;
 import de.fhg.ipa.aas_transformer.clients.redis.SubmodelElementDeserializer;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.AggregatedTestResult;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TestResult;
 import de.fhg.ipa.aas_transformer.test.utils.GrafanaClient;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
+import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelDescriptor;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
@@ -99,6 +101,9 @@ public class AbstractExtSystemTest {
     private WebClient getWebclient(String baseUrl) {
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule simpleModule = new SimpleModule();
+        // SubmodelDescriptors:
+        simpleModule.addSerializer(new SubmodelDescriptorSerializer(SubmodelDescriptor.class));
+        simpleModule.addDeserializer(SubmodelDescriptor.class, new SubmodelDescriptorDeserializer());
         // Submodels:
         simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
         simpleModule.addDeserializer(Submodel.class, new SubmodelDeserializer());
