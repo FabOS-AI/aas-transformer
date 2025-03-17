@@ -75,6 +75,8 @@ public class TransformationExecutionService {
         return this.transformer.getId();
     }
 
+    public Transformer getTransformer() { return this.transformer; }
+
     public boolean getTransformOnRequest() {return this.transformer.getTransformOnRequest(); }
 
     public static List<AssetAdministrationShell> lookupDestinationShells(
@@ -114,7 +116,6 @@ public class TransformationExecutionService {
             String destinationSubmodelIdShort
     ) {
         try {
-
             transformationDescriptionJpaRepository.save(new TransformationDescription(
                     null,
                     this.transformer.getId(),
