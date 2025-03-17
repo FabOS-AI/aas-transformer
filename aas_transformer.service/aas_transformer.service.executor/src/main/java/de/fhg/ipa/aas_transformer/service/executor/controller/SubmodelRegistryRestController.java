@@ -27,7 +27,7 @@ public class SubmodelRegistryRestController {
     }
 
     @RequestMapping(path = "/{submodelIdentifier}", method = RequestMethod.GET, produces = APPLICATION_JSON)
-    public SubmodelDescriptor getSubmodelDescriptor(@PathVariable String submodelIdentifier) {
+    public SubmodelDescriptor getSubmodelDescriptor(@PathVariable(name = "submodelIdentifier") String submodelIdentifier) {
         LOG.info("Received request for submodels descriptor with id = {}.", submodelIdentifier);
         return submodelDescriptorHandler.getSubmodelDescriptor(submodelIdentifier);
     }
