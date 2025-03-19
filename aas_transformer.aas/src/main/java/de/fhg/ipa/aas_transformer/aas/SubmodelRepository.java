@@ -9,6 +9,7 @@ import org.eclipse.digitaltwin.basyx.core.exceptions.CollidingIdentifierExceptio
 import org.eclipse.digitaltwin.basyx.core.exceptions.ElementDoesNotExistException;
 import org.eclipse.digitaltwin.basyx.core.pagination.CursorResult;
 import org.eclipse.digitaltwin.basyx.core.pagination.PaginationInfo;
+import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodelRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +79,31 @@ public class SubmodelRepository {
     public Submodel getSubmodel(String submodelId) {
         var submodel = this.connectedSubmodelRepository.getSubmodel(submodelId);
         return submodel;
+    }
+
+    public static Submodel getExtSubmodel(
+            SubmodelRegistry submodelRegistry,
+            String submodelId
+    ) {
+        SubmodelDescriptor descriptor = submodelRegistry.findSubmodelDescriptor(submodelId).get();
+        String endpoint = descriptor.getEndpoints().get(0).getProtocolInformation().getHref();
+        String baseUrl = getSubmodelRepositoryBaseUrl(endpoint);
+        return getExtSubmodel(baseUrl, submodelId);
+    }
+
+    public static Submodel getExtSubmodel(String endpoint, String submodelId) {
+        ConnectedSubmodelRepository connectedSubmodelRepository = new ConnectedSubmodelRepository(
+                getSubmodelRepositoryBaseUrl(endpoint)
+        );
+        return connectedSubmodelRepository.getSubmodel(submodelId);
+    }
+
+    private static String getSubmodelRepositoryBaseUrl(String endpoint) {
+        String delimiter = "/submodels";
+        int index = endpoint.indexOf(delimiter);
+        if(index == -1)
+            return endpoint;
+        return endpoint.substring(0, index);
     }
 
     public void createOrUpdateSubmodel(Submodel submodel) {

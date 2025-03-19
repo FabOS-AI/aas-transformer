@@ -235,7 +235,8 @@ public class TransformationExecutionService {
         if(job.getSubmodel() == null) {
             // Lookup Source Submodel by ID
             try {
-                sourceSubmodel = this.submodelRepository.getSubmodel(job.getSubmodelId());
+//                sourceSubmodel = this.submodelRepository.getSubmodel(job.getSubmodelId());
+                sourceSubmodel = SubmodelRepository.getExtSubmodel(submodelRegistry, job.getSubmodelId());
             } catch(ElementDoesNotExistException e) {
                 LOG.error("Source submodel with ID {} does not exist.", job.getSubmodelId());
                 LOG.info("Skip transformation.");
