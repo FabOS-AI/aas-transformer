@@ -77,6 +77,7 @@ public class TemplateRenderer {
             combinedRenderContext.putAll(renderContext);
 
             var result = this.jinjava.render(template, combinedRenderContext);
+            LOG.info("Rendered {} to {}", template, result);
             return result;
         } catch (FatalTemplateErrorsException e) {
 

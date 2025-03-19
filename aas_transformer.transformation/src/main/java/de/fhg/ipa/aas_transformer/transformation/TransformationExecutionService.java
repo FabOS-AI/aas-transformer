@@ -19,6 +19,7 @@ import org.eclipse.digitaltwin.basyx.core.exceptions.ElementDoesNotExistExceptio
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 
 import java.time.Duration;
@@ -30,8 +31,8 @@ import static java.lang.Thread.sleep;
 public class TransformationExecutionService {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationExecutionService.class);
 
+    private static TemplateRenderer templateRenderer = null;
     private final Transformer transformer;
-    private final TemplateRenderer templateRenderer;
     private final AasRegistry aasRegistry;
     private final AasRepository aasRepository;
     private final SubmodelRegistry submodelRegistry;
@@ -55,7 +56,6 @@ public class TransformationExecutionService {
             String externalBaseUrl
     ) {
         this.transformer = transformer;
-        this.templateRenderer = templateRenderer;
         this.aasRegistry = aasRegistry;
         this.aasRepository = aasRepository;
         this.submodelRegistry = submodelRegistry;
@@ -64,6 +64,8 @@ public class TransformationExecutionService {
         this.metricsClient = metricsClient;
         this.transformationDescriptionJpaRepository = transformationDescriptionJpaRepository;
         this.externalBaseUrl = externalBaseUrl;
+        if(this.templateRenderer == null)
+            this.templateRenderer = templateRenderer;
 
         for (var transformerAction : transformer.getTransformerActions()) {
             var transformerActionService = this.transformerActionServiceFactory.create(transformerAction);
@@ -82,9 +84,15 @@ public class TransformationExecutionService {
     public static List<AssetAdministrationShell> lookupDestinationShells(
             AasRepository aasRepository,
             String sourceSubmodelId,
-            DestinationAAS destinationAas
+            DestinationAAS destinationAas,
+            Map<String, Object> templateContext
     ) {
-        List<String> destinationShellIds = lookupDestinationShellIds(aasRepository, sourceSubmodelId, destinationAas);
+        List<String> destinationShellIds = lookupDestinationShellIds(
+                aasRepository,
+                sourceSubmodelId,
+                destinationAas,
+                templateContext
+        );
         List<AssetAdministrationShell> destinationShells = new ArrayList<>();
         for(String shellId: destinationShellIds) {
             destinationShells.add(aasRepository.getAas(shellId));
@@ -95,11 +103,17 @@ public class TransformationExecutionService {
     public static List<String> lookupDestinationShellIds(
             AasRepository aasRepository,
             String sourceSubmodelId,
-            DestinationAAS destinationAas
+            DestinationAAS destinationAas,
+            Map<String, Object> templateContext
     ) {
         List<String> destinationShellIds;
         if(destinationAas != null) {
-            destinationShellIds = List.of(destinationAas.getId());
+            String destinationShellId = templateRenderer.render(
+                    destinationAas.getId(),
+                    templateContext
+            );
+
+            destinationShellIds = List.of(destinationShellId);
         } else {
             destinationShellIds =  aasRepository
                     .getAllAasContainingSubmodelBySubmodelId(sourceSubmodelId)
@@ -187,7 +201,8 @@ public class TransformationExecutionService {
         List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
                 this.aasRepository,
                 sourceSubmodel.getId(),
-                transformer.getDestination().getAasDestination()
+                transformer.getDestination().getAasDestination(),
+                templateRenderer.getTemplateContext(this.transformer.getId(), List.of(), sourceSubmodel)
         );
 
         // Set context for template rendering
@@ -235,7 +250,6 @@ public class TransformationExecutionService {
         if(job.getSubmodel() == null) {
             // Lookup Source Submodel by ID
             try {
-//                sourceSubmodel = this.submodelRepository.getSubmodel(job.getSubmodelId());
                 sourceSubmodel = SubmodelRepository.getExtSubmodel(submodelRegistry, job.getSubmodelId());
             } catch(ElementDoesNotExistException e) {
                 LOG.error("Source submodel with ID {} does not exist.", job.getSubmodelId());
@@ -251,7 +265,8 @@ public class TransformationExecutionService {
         List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
                 this.aasRepository,
                 sourceSubmodel.getId(),
-                transformer.getDestination().getAasDestination()
+                transformer.getDestination().getAasDestination(),
+                templateRenderer.getTemplateContext(this.transformer.getId(),List.of(), sourceSubmodel)
         );
 
         // Set context for template rendering

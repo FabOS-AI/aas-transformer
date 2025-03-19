@@ -328,7 +328,12 @@ public class TransformerHandler {
             List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
                     aasRepository,
                     sourceSubmodel.getId(),
-                    t.getDestination().getAasDestination()
+                    t.getDestination().getAasDestination(),
+                    templateRenderer.getTemplateContext(
+                            t.getId(),
+                            List.of(),
+                            sourceSubmodel
+                    )
             );
 
             Map<String, Object> templateContext = this.templateRenderer.getTemplateContext(

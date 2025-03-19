@@ -68,14 +68,19 @@ public class SubmodelDescriptorHandler {
         List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
                 this.aasRepository,
                 sourceSubmodelId,
-                execService.getTransformer().getDestination().getAasDestination()
+                execService.getTransformer().getDestination().getAasDestination(),
+                templateRenderer.getTemplateContext(
+                        transformerId,
+                        List.of(),
+                        submodelRepository.getExtSubmodel(submodelRegistry, sourceSubmodelId)
+                )
         );
 
         // Set context for template rendering
         Map<String, Object> context = templateRenderer.getTemplateContext(
                 transformerId,
                 destinationShells,
-                submodelRepository.getSubmodel(sourceSubmodelId)
+                submodelRepository.getExtSubmodel(submodelRegistry, sourceSubmodelId)
         );
 
         // Set ID and IdShort for destination submodel:
