@@ -247,7 +247,7 @@ public class TransformationExecutionService {
     }
 
     public void execute(TransformationJob job, UUID executorId) {
-        Submodel sourceSubmodel;
+        Submodel sourceSubmodel = null;
         Instant startLookupSource = Instant.now();
         if(job.getSubmodel() == null) {
             // Lookup Source Submodel by ID
@@ -262,6 +262,11 @@ public class TransformationExecutionService {
             sourceSubmodel = job.getSubmodel();
         }
         Instant endLookupSource = Instant.now();
+
+        if(sourceSubmodel == null) {
+            LOG.error("Source submodel with ID {} does not exist. Skip transformation.", job.getSubmodelId());
+            return;
+        }
 
         // Destination Shells:
         List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
