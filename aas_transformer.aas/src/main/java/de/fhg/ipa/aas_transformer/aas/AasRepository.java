@@ -39,6 +39,7 @@ public class AasRepository {
     public void createAasOrDoNothing(AssetAdministrationShell aas) {
         try {
             this.connectedAasRepository.createAas(aas);
+            LOG.info("Created AAS with ID {}", aas.getId());
         }
         catch (CollidingIdentifierException e) {}
         catch (RuntimeException e) {
