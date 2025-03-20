@@ -103,7 +103,7 @@ public class TransformationExecutionService {
                         .id(shellId)
                         .build()
                 );
-                destinationShell = aasRepository.getExtAas(aasRegistry, shellId);
+                destinationShell = aasRepository.getAas(shellId);
             }
 
             destinationShells.add(destinationShell);
