@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Component
@@ -95,6 +96,9 @@ public class AasRepository {
             String baseUrl = getAasRepositoryBaseUrl(endpoint);
             return getExtAas(baseUrl, aasId);
         } catch (ApiException e) {
+            LOG.error("AAS with ID {} not found in AAS registry", aasId);
+            return null;
+        } catch (NoSuchElementException e) {
             LOG.error("AAS with ID {} not found in AAS registry", aasId);
             return null;
         }
