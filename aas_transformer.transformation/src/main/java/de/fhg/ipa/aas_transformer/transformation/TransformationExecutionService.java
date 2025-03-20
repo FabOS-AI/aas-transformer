@@ -82,6 +82,7 @@ public class TransformationExecutionService {
     public boolean getTransformOnRequest() {return this.transformer.getTransformOnRequest(); }
 
     public static List<AssetAdministrationShell> lookupDestinationShells(
+            AasRegistry aasRegistry,
             AasRepository aasRepository,
             String sourceSubmodelId,
             DestinationAAS destinationAas,
@@ -95,7 +96,7 @@ public class TransformationExecutionService {
         );
         List<AssetAdministrationShell> destinationShells = new ArrayList<>();
         for(String shellId: destinationShellIds) {
-            destinationShells.add(aasRepository.getAas(shellId));
+            destinationShells.add(aasRepository.getExtAas(aasRegistry, shellId));
         }
         return destinationShells;
     }
@@ -115,7 +116,7 @@ public class TransformationExecutionService {
 
             destinationShellIds = List.of(destinationShellId);
         } else {
-            destinationShellIds =  aasRepository
+            destinationShellIds = aasRepository
                     .getAllAasContainingSubmodelBySubmodelId(sourceSubmodelId)
                     .stream()
                     .map(shell -> shell.getId())
@@ -199,6 +200,7 @@ public class TransformationExecutionService {
 
         // Destination Shells:
         List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
+                this.aasRegistry,
                 this.aasRepository,
                 sourceSubmodel.getId(),
                 transformer.getDestination().getAasDestination(),
@@ -263,6 +265,7 @@ public class TransformationExecutionService {
 
         // Destination Shells:
         List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
+                this.aasRegistry,
                 this.aasRepository,
                 sourceSubmodel.getId(),
                 transformer.getDestination().getAasDestination(),

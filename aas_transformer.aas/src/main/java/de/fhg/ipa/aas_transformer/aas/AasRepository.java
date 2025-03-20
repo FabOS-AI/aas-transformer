@@ -5,6 +5,8 @@ import org.eclipse.digitaltwin.aas4j.v3.model.KeyTypes;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultKey;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultReference;
+import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
+import org.eclipse.digitaltwin.basyx.aasregistry.client.model.AssetAdministrationShellDescriptor;
 import org.eclipse.digitaltwin.basyx.aasrepository.client.ConnectedAasRepository;
 import org.eclipse.digitaltwin.basyx.core.exceptions.CollidingIdentifierException;
 import org.eclipse.digitaltwin.basyx.core.exceptions.CollidingSubmodelReferenceException;
@@ -81,6 +83,36 @@ public class AasRepository {
                         .isPresent()
                 )
                 .collect(Collectors.toList());
+    }
+
+    public static AssetAdministrationShell getExtAas(
+            AasRegistry aasRegistry,
+            String aasId
+    ) {
+        try {
+            AssetAdministrationShellDescriptor descriptor = aasRegistry.getAasDescriptor(aasId).get();
+            String endpoint = descriptor.getEndpoints().get(0).getProtocolInformation().getHref();
+            String baseUrl = getAasRepositoryBaseUrl(endpoint);
+            return getExtAas(baseUrl, aasId);
+        } catch (ApiException e) {
+            LOG.error("AAS with ID {} not found in AAS registry", aasId);
+            return null;
+        }
+    }
+
+    public static AssetAdministrationShell getExtAas(String endpoint, String aasId) {
+        ConnectedAasRepository connectedAasRepository = new ConnectedAasRepository(
+                getAasRepositoryBaseUrl(endpoint)
+        );
+        return connectedAasRepository.getAas(aasId);
+    }
+
+    private static String getAasRepositoryBaseUrl(String endpoint) {
+        String delimiter = "/shells";
+        int index = endpoint.indexOf(delimiter);
+        if(index == -1)
+            return endpoint;
+        return endpoint.substring(0, index);
     }
 
     public AssetAdministrationShell getAas(String aasId) {

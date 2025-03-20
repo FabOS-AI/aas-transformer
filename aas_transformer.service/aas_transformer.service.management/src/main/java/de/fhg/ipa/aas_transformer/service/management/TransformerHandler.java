@@ -1,6 +1,7 @@
 package de.fhg.ipa.aas_transformer.service.management;
 
 import com.hubspot.jinjava.interpret.InterpretException;
+import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobProducer;
@@ -40,6 +41,7 @@ import static java.util.stream.Collectors.toList;
 public class TransformerHandler {
     private static final Logger LOG = LoggerFactory.getLogger(TransformerHandler.class);
     private final ModelMapper modelMapper;
+    private final AasRegistry aasRegistry;
     private final AasRepository aasRepository;
     private final SubmodelRegistry submodelRegistry;
     private final SubmodelRepository submodelRepository;
@@ -54,6 +56,7 @@ public class TransformerHandler {
             Sinks.many().multicast().onBackpressureBuffer();
 
     public TransformerHandler(
+            AasRegistry aasRegistry,
             AasRepository aasRepository,
             SubmodelRegistry submodelRegistry,
             SubmodelRepository submodelRepository,
@@ -63,6 +66,7 @@ public class TransformerHandler {
             RedisJobProducer redisJobProducer,
             TemplateRenderer templateRenderer
     ) {
+        this.aasRegistry = aasRegistry;
         this.aasRepository = aasRepository;
         this.submodelRegistry = submodelRegistry;
         this.submodelRepository = submodelRepository;
@@ -326,6 +330,7 @@ public class TransformerHandler {
 
         for(Submodel sourceSubmodel : sourceSubmodels) {
             List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
+                    aasRegistry,
                     aasRepository,
                     sourceSubmodel.getId(),
                     t.getDestination().getAasDestination(),

@@ -1,5 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
+import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
@@ -28,6 +29,8 @@ public class SubmodelDescriptorHandler {
     private TemplateRenderer templateRenderer;
     @Autowired
     private TransformationExecutionServiceCache transformationExecutionServiceCache;
+    @Autowired
+    private AasRegistry aasRegistry;
     @Autowired
     private AasRepository aasRepository;
     @Autowired
@@ -66,6 +69,7 @@ public class SubmodelDescriptorHandler {
                 .getTransformationExecutionServiceByTransformerId(transformerId);
 
         List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
+                this.aasRegistry,
                 this.aasRepository,
                 sourceSubmodelId,
                 execService.getTransformer().getDestination().getAasDestination(),
