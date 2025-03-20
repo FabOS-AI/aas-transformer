@@ -96,7 +96,17 @@ public class TransformationExecutionService {
         );
         List<AssetAdministrationShell> destinationShells = new ArrayList<>();
         for(String shellId: destinationShellIds) {
-            destinationShells.add(aasRepository.getExtAas(aasRegistry, shellId));
+            AssetAdministrationShell destinationShell = aasRepository.getExtAas(aasRegistry, shellId);
+            if(destinationShell == null) {
+                aasRepository.createAasOrDoNothing(
+                    new DefaultAssetAdministrationShell.Builder()
+                        .id(shellId)
+                        .build()
+                );
+                destinationShell = aasRepository.getExtAas(aasRegistry, shellId);
+            }
+
+            destinationShells.add(destinationShell);
         }
         return destinationShells;
     }
