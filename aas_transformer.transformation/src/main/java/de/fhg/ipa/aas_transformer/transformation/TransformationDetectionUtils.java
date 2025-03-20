@@ -68,7 +68,12 @@ public class TransformationDetectionUtils {
                 sourceSubmodelId = submodel.getIdShort();
             }
             case SEMANTIC_ID -> {
-                sourceSubmodelId = submodel.getSemanticId().getKeys().get(0).getValue();
+                try {
+                    sourceSubmodelId = submodel.getSemanticId().getKeys().get(0).getValue();
+                } catch (NullPointerException e) {
+                    LOG.warn("No semantic id found for submodel: {}. Submodel is not source of transformation.");
+                    return false;
+                }
             }
             default -> {
                 LOG.warn("Unknown submodel id type: " + rule.getSourceSubmodelId().getType());
