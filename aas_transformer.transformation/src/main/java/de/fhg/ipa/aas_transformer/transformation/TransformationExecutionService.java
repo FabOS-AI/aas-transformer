@@ -304,7 +304,7 @@ public class TransformationExecutionService {
             this.submodelRepository.createOrUpdateSubmodel(destinationSubmodel);
             Instant endSaveDestination = Instant.now();
             String destinationShellId = "";
-            if(destinationShells.size()!=0)
+            if(destinationShells.size()!=0 && destinationShells.get(0) != null)
                 destinationShellId = destinationShells.get(0).getId();
             logTransformation(
                     destinationShellId,
