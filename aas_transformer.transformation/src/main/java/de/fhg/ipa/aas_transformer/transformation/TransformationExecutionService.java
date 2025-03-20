@@ -445,14 +445,16 @@ public class TransformationExecutionService {
         var destinationSubmodelDescriptorOptional = this.submodelRegistry.findSubmodelDescriptor(
                 destinationSubmodelId
         );
-        this.aasRegistry.addSubmodelDescriptorToAas(
-                destinationAas.getId(),
-                destinationSubmodelDescriptorOptional.get()
-        );
-        this.aasRepository.addSubmodelReferenceToAas(
-                destinationAas.getId(),
-                destinationSubmodelId
-        );
+        if(destinationSubmodelDescriptorOptional.isPresent() && destinationAas != null) {
+            this.aasRegistry.addSubmodelDescriptorToAas(
+                    destinationAas.getId(),
+                    destinationSubmodelDescriptorOptional.get()
+            );
+            this.aasRepository.addSubmodelReferenceToAas(
+                    destinationAas.getId(),
+                    destinationSubmodelId
+            );
+        }
     }
 
     private Submodel createDestinationSubmodel(Map<String, Object> context) {
