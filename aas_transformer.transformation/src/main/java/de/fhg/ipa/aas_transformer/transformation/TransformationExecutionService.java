@@ -441,7 +441,7 @@ public class TransformationExecutionService {
         }
 
         // Add submodel descriptor to destination AAS
-        var destinationAas = this.aasRepository.getAas(destinationAasId);
+        var destinationAas = this.aasRepository.getExtAas(aasRegistry, destinationAasId);
         var destinationSubmodelDescriptorOptional = this.submodelRegistry.findSubmodelDescriptor(
                 destinationSubmodelId
         );
