@@ -73,7 +73,6 @@ public class SubmodelRepository {
             cursor = resultSms.getCursor();
         } while(cursor != null);
 
-
         return submodels;
     }
 
@@ -99,9 +98,9 @@ public class SubmodelRepository {
     }
 
     public static Submodel getExtSubmodel(String endpoint, String submodelId) {
-        ConnectedSubmodelRepository connectedSubmodelRepository = new ConnectedSubmodelRepository(
-                getSubmodelRepositoryBaseUrl(endpoint)
-        );
+        String baseUrl = getSubmodelRepositoryBaseUrl(endpoint);
+        ConnectedSubmodelRepository connectedSubmodelRepository = new ConnectedSubmodelRepository(baseUrl);
+        LOG.info("Getting submodel with id: {} from {}", submodelId, baseUrl);
         return connectedSubmodelRepository.getSubmodel(submodelId);
     }
 
