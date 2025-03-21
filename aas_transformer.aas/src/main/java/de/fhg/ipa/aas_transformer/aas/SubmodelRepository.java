@@ -23,6 +23,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Component
 public class SubmodelRepository {
@@ -85,7 +86,13 @@ public class SubmodelRepository {
             SubmodelRegistry submodelRegistry,
             String submodelId
     ) {
-        SubmodelDescriptor descriptor = submodelRegistry.findSubmodelDescriptor(submodelId).get();
+        SubmodelDescriptor descriptor;
+        try {
+            descriptor = submodelRegistry.findSubmodelDescriptor(submodelId).orElseThrow();
+        } catch(NoSuchElementException e) {
+            LOG.error("Submodel with id {} not found in registry", submodelId);
+            return null;
+        }
         String endpoint = descriptor.getEndpoints().get(0).getProtocolInformation().getHref();
         String baseUrl = getSubmodelRepositoryBaseUrl(endpoint);
         return getExtSubmodel(baseUrl, submodelId);
