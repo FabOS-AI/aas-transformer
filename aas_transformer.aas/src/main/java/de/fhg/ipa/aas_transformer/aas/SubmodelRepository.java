@@ -94,6 +94,7 @@ public class SubmodelRepository {
         }
         String endpoint = descriptor.getEndpoints().get(0).getProtocolInformation().getHref();
         String baseUrl = getSubmodelRepositoryBaseUrl(endpoint);
+        LOG.info("Extract base url | endpoint: {} | base url: {}", endpoint, baseUrl);
         return getExtSubmodel(baseUrl, submodelId);
     }
 
