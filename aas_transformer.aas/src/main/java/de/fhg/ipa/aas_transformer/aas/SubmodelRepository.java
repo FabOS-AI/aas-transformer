@@ -1,8 +1,10 @@
 package de.fhg.ipa.aas_transformer.aas;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import de.fhg.ipa.aas_transformer.aas.deserializer.SubmodelDeserializer;
+import de.fhg.ipa.aas_transformer.aas.serializer.SubmodelSerializer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
-import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
 import org.eclipse.digitaltwin.basyx.core.exceptions.CollidingIdentifierException;
@@ -14,8 +16,9 @@ import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodel
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -31,6 +34,13 @@ public class SubmodelRepository {
     private static final Logger LOG = LoggerFactory.getLogger(SubmodelRepository.class);
 
     private final static int DEFAULT_IN_MEMORY_SIZE = 16 * 1024 * 1024;
+    private final static ObjectMapper objectMapper = new ObjectMapper();
+    private final static SimpleModule simpleModule = new SimpleModule();
+    static {
+        simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
+        simpleModule.addDeserializer(Submodel.class, new SubmodelDeserializer());
+        objectMapper.registerModule(simpleModule);
+    }
     private final String submodelRepositoryUrl;
     private WebClient webClient;
 
@@ -88,14 +98,13 @@ public class SubmodelRepository {
         SubmodelDescriptor descriptor;
         try {
             descriptor = submodelRegistry.findSubmodelDescriptor(submodelId).orElseThrow();
+            LOG.info("SubmodelDescriptor found by SubmodelId = {}", submodelId);
         } catch(NoSuchElementException e) {
             LOG.error("Submodel with id {} not found in registry", submodelId);
             return null;
         }
         String endpoint = descriptor.getEndpoints().get(0).getProtocolInformation().getHref();
-        String baseUrl = getSubmodelRepositoryBaseUrl(endpoint);
-        LOG.info("Extract base url | endpoint: {} | base url: {}", endpoint, baseUrl);
-        return getExtSubmodel(baseUrl, submodelId);
+        return getExtSubmodel(endpoint);
     }
 
     public static Submodel getExtSubmodel(String endpoint, String submodelId) {
@@ -103,6 +112,24 @@ public class SubmodelRepository {
         ConnectedSubmodelRepository connectedSubmodelRepository = new ConnectedSubmodelRepository(baseUrl);
         LOG.info("Getting submodel with id: {} from {}", submodelId, baseUrl);
         return connectedSubmodelRepository.getSubmodel(submodelId);
+    }
+
+    public static Submodel getExtSubmodel(String endpoint) {
+        LOG.info("Getting submodel from {}", endpoint);
+        return getWebClient(endpoint).get().retrieve().bodyToMono(Submodel.class).block();
+    }
+
+    private static WebClient getWebClient(String baseUrl) {
+        return WebClient.builder()
+                .baseUrl(baseUrl)
+                .codecs(clientDefaultCodecsConfigurer -> {
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper, MediaType.APPLICATION_JSON));
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(objectMapper, MediaType.APPLICATION_JSON));
+                })
+                .exchangeStrategies(ExchangeStrategies.builder()
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_IN_MEMORY_SIZE))
+                        .build())
+                .build();
     }
 
     private static String getSubmodelRepositoryBaseUrl(String endpoint) {
