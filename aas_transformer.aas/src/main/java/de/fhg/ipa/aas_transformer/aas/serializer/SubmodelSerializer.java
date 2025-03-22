@@ -1,4 +1,4 @@
-package de.fhg.ipa.aas_transformer.clients.management;
+package de.fhg.ipa.aas_transformer.aas.serializer;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
