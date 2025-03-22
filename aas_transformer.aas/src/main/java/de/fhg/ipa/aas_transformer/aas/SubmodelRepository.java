@@ -118,12 +118,17 @@ public class SubmodelRepository {
 
     public static Submodel getExtSubmodel(String endpoint) {
         LOG.info("Getting submodel from {}", endpoint);
-        return getWebClient(endpoint)
-                .get()
-                .retrieve()
-                .bodyToMono(Submodel.class)
-                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
-                .block();
+        try {
+            return getWebClient(endpoint)
+                    .get()
+                    .retrieve()
+                    .bodyToMono(Submodel.class)
+                    .retryWhen(Retry.fixedDelay(10, Duration.ofSeconds(1)))
+                    .block();
+        } catch (Exception e) {
+            LOG.error("Failed to get submodel from {}", endpoint);
+            return null;
+        }
     }
 
     private static WebClient getWebClient(String baseUrl) {
