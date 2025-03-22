@@ -6,7 +6,7 @@
     },
     "submodelDestination": {
       "idShort": "TypeProductDefinition",
-      "id": "TypeProductDefinition"
+      "id": "TypeProductDefinition_{{ submodel:sme_value(SOURCE_SUBMODEL, 'id') }}"
     }
   },
   "transformerActions": [
