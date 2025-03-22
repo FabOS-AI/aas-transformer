@@ -23,7 +23,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -116,7 +118,12 @@ public class SubmodelRepository {
 
     public static Submodel getExtSubmodel(String endpoint) {
         LOG.info("Getting submodel from {}", endpoint);
-        return getWebClient(endpoint).get().retrieve().bodyToMono(Submodel.class).block();
+        return getWebClient(endpoint)
+                .get()
+                .retrieve()
+                .bodyToMono(Submodel.class)
+                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
+                .block();
     }
 
     private static WebClient getWebClient(String baseUrl) {
