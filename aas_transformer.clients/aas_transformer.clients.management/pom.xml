@@ -58,6 +58,11 @@
             <artifactId>aas_transformer.model</artifactId>
             <version>${revision}</version>
         </dependency>
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.aas</artifactId>
+            <version>${revision}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
