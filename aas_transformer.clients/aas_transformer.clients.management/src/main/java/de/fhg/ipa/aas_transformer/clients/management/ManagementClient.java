@@ -2,6 +2,7 @@ package de.fhg.ipa.aas_transformer.clients.management;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import de.fhg.ipa.aas_transformer.aas.serializer.SubmodelSerializer;
 import de.fhg.ipa.aas_transformer.clients.ApiClient;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,8 +15,6 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
-
-import java.time.Duration;
 
 @Component
 public class ManagementClient extends TransformerRestControllerApi {

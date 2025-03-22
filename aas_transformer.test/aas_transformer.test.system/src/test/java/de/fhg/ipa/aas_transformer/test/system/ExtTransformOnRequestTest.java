@@ -4,14 +4,17 @@ import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.model.TransformerDTOListener;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
+import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelDescriptor;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultProperty;
+import org.eclipse.digitaltwin.basyx.pagination.GetSubmodelElementsResult;
+import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.GetSubmodelDescriptorsResult;
+import org.eclipse.digitaltwin.basyx.submodelrepository.http.pagination.GetSubmodelsResult;
 import org.junit.jupiter.api.*;
 import org.springframework.core.ParameterizedTypeReference;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.getRandomAnsibleFactsTriples;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.registerAasObjectsFromTriples;
@@ -72,7 +75,7 @@ public class ExtTransformOnRequestTest extends AbstractExtSystemTest {
                 List.of(ansibleFactsTriple)
         );
 
-        sleep(2000);
+        sleep(3000);
 
         assertTrue(smRegistry.getSubmodelDescriptors().size() == 2);
         assertTrue(getDestinationSubmodels().size() == 1);
@@ -89,6 +92,12 @@ public class ExtTransformOnRequestTest extends AbstractExtSystemTest {
                     getValueOfSubmodelElement(destinationSubmodelElements, destinationSmeIdShort)
             );
         });
+
+        // Check if destination Submodel is registered in source shell:
+        assertTrue(aasRepository.getAas(sourceShell.getId()).getSubmodels().size() == 2);
+
+        // Check executor hosted Submodel Descriptors
+        assertTrue(getDestinationSubmodelDescriptors().size() == 1);
     }
 
     @Test
@@ -132,6 +141,12 @@ public class ExtTransformOnRequestTest extends AbstractExtSystemTest {
                 getValueOfSubmodelElement(updatedSourceSubmodelElements, "distribution_release"),
                 getValueOfSubmodelElement(destinationSubmodel.getSubmodelElements(), "distribution_release_new")
         );
+
+        // Check if destination Submodel is registered in source shell:
+        assertTrue(aasRepository.getAas(sourceShell.getId()).getSubmodels().size() == 2);
+
+        // Check executor hosted Submodel Descriptors
+        assertTrue(getDestinationSubmodelDescriptors().size() == 1);
     }
 
     @Test
@@ -148,6 +163,12 @@ public class ExtTransformOnRequestTest extends AbstractExtSystemTest {
         Optional<Submodel> destinationSubmodel = Optional.ofNullable(getDestinationSubmodel());
 
         assertTrue(destinationSubmodel.isEmpty());
+
+        // Check if destination Submodel is unregistered in source shell:
+        assertTrue(aasRepository.getAas(sourceShell.getId()).getSubmodels().size() == 0);
+
+        // Check executor hosted Submodel Descriptors
+        assertTrue(getDestinationSubmodelDescriptors().size() == 0);
     }
 
     // Run two times to test if transformation description got deleted
@@ -177,6 +198,9 @@ public class ExtTransformOnRequestTest extends AbstractExtSystemTest {
 
         assertTrue(smRegistry.getSubmodelDescriptors().size() == 1);
         assertTrue(getDestinationSubmodels().size() == 0);
+
+        // Check executor hosted Submodel Descriptors
+        assertTrue(getDestinationSubmodelDescriptors().size() == 0);
 
         // Cleanup and reset test environment for second run
         deleteAllAasObjects();
@@ -231,7 +255,27 @@ public class ExtTransformOnRequestTest extends AbstractExtSystemTest {
                 .get()
                 .uri("/submodels")
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<List<Submodel>>() {})
+                .bodyToMono(GetSubmodelsResult.class)
+                .block()
+                .getResult();
+    }
+
+    private List<org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor> getDestinationSubmodelDescriptors() {
+        return executorWebclient
+                .get()
+                .uri("/submodel-descriptors")
+                .retrieve()
+                .bodyToMono(GetSubmodelDescriptorsResult.class)
+                .block()
+                .getResult();
+    }
+
+    private SubmodelDescriptor getDestinationSubmodelDescriptor() {
+        return executorWebclient
+                .get()
+                .uri("/submodel-descriptors/"+b64Encode(destinationSubmodelId))
+                .retrieve()
+                .bodyToMono(SubmodelDescriptor.class)
                 .block();
     }
 
@@ -240,8 +284,9 @@ public class ExtTransformOnRequestTest extends AbstractExtSystemTest {
                 .get()
                 .uri("/submodels/"+b64Encode(destinationSubmodelId)+"/submodel-elements")
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<List<SubmodelElement>>() {})
-                .block();
+                .bodyToMono(GetSubmodelElementsResult.class)
+                .block()
+                .getResult();
     }
 
     private SubmodelElement getDestinationSubmodelElement(String submodelElementIdShort) {

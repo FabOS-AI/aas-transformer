@@ -2,16 +2,14 @@ package de.fhg.ipa.aas_transformer.test.system;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import de.fhg.ipa.aas_transformer.aas.AasRegistry;
-import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
+import de.fhg.ipa.aas_transformer.aas.*;
+import de.fhg.ipa.aas_transformer.aas.serializer.SubmodelDescriptorSerializer;
+import de.fhg.ipa.aas_transformer.aas.serializer.SubmodelElementSerializer;
+import de.fhg.ipa.aas_transformer.aas.serializer.SubmodelSerializer;
 import de.fhg.ipa.aas_transformer.clients.management.*;
-import de.fhg.ipa.aas_transformer.clients.redis.SubmodelDescriptorDeserializer;
-import de.fhg.ipa.aas_transformer.clients.redis.SubmodelDeserializer;
-import de.fhg.ipa.aas_transformer.clients.redis.SubmodelElementDeserializer;
-import de.fhg.ipa.aas_transformer.test.system.performance.model.AggregatedTestResult;
-import de.fhg.ipa.aas_transformer.test.system.performance.model.TestResult;
+import de.fhg.ipa.aas_transformer.aas.deserializer.SubmodelDescriptorDeserializer;
+import de.fhg.ipa.aas_transformer.aas.deserializer.SubmodelDeserializer;
+import de.fhg.ipa.aas_transformer.aas.deserializer.SubmodelElementDeserializer;
 import de.fhg.ipa.aas_transformer.test.utils.GrafanaClient;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelDescriptor;
@@ -21,9 +19,6 @@ import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AbstractExtSystemTest {
 

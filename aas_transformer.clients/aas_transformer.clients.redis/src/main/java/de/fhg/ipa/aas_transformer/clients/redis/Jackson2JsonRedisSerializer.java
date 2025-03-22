@@ -2,6 +2,7 @@ package de.fhg.ipa.aas_transformer.clients.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import de.fhg.ipa.aas_transformer.aas.deserializer.SubmodelDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;

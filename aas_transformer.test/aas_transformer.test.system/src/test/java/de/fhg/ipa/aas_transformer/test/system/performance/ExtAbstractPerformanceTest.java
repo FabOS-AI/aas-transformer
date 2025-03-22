@@ -1,17 +1,9 @@
 package de.fhg.ipa.aas_transformer.test.system.performance;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import de.fhg.ipa.aas_transformer.aas.AasRegistry;
-import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.alertmanager.AlertManagerClient;
-import de.fhg.ipa.aas_transformer.clients.management.*;
 import de.fhg.ipa.aas_transformer.clients.prometheus.PrometheusClient;
 import de.fhg.ipa.aas_transformer.clients.prometheus.model.Alert;
 import de.fhg.ipa.aas_transformer.clients.prometheus.model.AlertState;
-import de.fhg.ipa.aas_transformer.clients.redis.SubmodelDeserializer;
 import de.fhg.ipa.aas_transformer.model.TransformationLog;
 import de.fhg.ipa.aas_transformer.test.system.AbstractExtSystemTest;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.AggregatedTestResult;
@@ -23,11 +15,6 @@ import org.eclipse.digitaltwin.aas4j.v3.model.Reference;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.junit.jupiter.api.AfterEach;
-import org.springframework.http.MediaType;
-import org.springframework.http.codec.json.Jackson2JsonDecoder;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.time.Instant;

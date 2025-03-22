@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
-import de.fhg.ipa.aas_transformer.clients.management.SubmodelSerializer;
+import de.fhg.ipa.aas_transformer.aas.serializer.SubmodelSerializer;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
-import de.fhg.ipa.aas_transformer.clients.redis.SubmodelDeserializer;
+import de.fhg.ipa.aas_transformer.aas.deserializer.SubmodelDeserializer;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
@@ -30,7 +30,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -41,12 +40,9 @@ import reactor.core.publisher.Sinks;
 
 import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
-import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getDestinationSubmodelIdOfAnsibleFactsTransformer;
 import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.*;
 
