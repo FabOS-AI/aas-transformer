@@ -120,6 +120,8 @@ public class AasRepository {
     }
 
     public static AssetAdministrationShell getExtAas(String endpoint, String aasId) {
+        if(endpoint == null)
+            return null;
         ConnectedAasRepository connectedAasRepository = new ConnectedAasRepository(
                 getAasRepositoryBaseUrl(endpoint)
         );
@@ -127,6 +129,8 @@ public class AasRepository {
     }
 
     private static String getAasRepositoryBaseUrl(String endpoint) {
+        if(endpoint == null)
+            return null;
         String delimiter = "/shells";
         int index = endpoint.indexOf(delimiter);
         if(index == -1)
