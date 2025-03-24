@@ -2,6 +2,7 @@ package de.fhg.ipa.aas_transformer.aas;
 
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.KeyTypes;
+import org.eclipse.digitaltwin.aas4j.v3.model.ReferenceTypes;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultKey;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultReference;
@@ -87,18 +88,31 @@ public class AasRepository {
                 .collect(Collectors.toList());
     }
 
+    public static String getEndpointOfExtAas(
+            AasRegistry aasRegistry,
+            String aasId
+    ) {
+        try {
+            LOG.info("Getting AAS Descriptor with ID {} from AAS registry", aasId);
+            AssetAdministrationShellDescriptor descriptor = aasRegistry.getAasDescriptor(aasId).get();
+            return descriptor.getEndpoints().get(0).getProtocolInformation().getHref();
+        } catch (ApiException e) {
+            LOG.error("AAS with ID {} not found in AAS registry", aasId);
+            return null;
+        } catch (NoSuchElementException e) {
+            LOG.error("AAS with ID {} not found in AAS registry", aasId);
+            return null;
+        }
+    }
+
     public static AssetAdministrationShell getExtAas(
             AasRegistry aasRegistry,
             String aasId
     ) {
         try {
-            AssetAdministrationShellDescriptor descriptor = aasRegistry.getAasDescriptor(aasId).get();
-            String endpoint = descriptor.getEndpoints().get(0).getProtocolInformation().getHref();
-            String baseUrl = getAasRepositoryBaseUrl(endpoint);
-            return getExtAas(baseUrl, aasId);
-        } catch (ApiException e) {
-            LOG.error("AAS with ID {} not found in AAS registry", aasId);
-            return null;
+            String endpoint = getEndpointOfExtAas(aasRegistry, aasId);
+            LOG.info("Getting shell with ID {} from {}", aasId, endpoint);
+            return getExtAas(getAasRepositoryBaseUrl(endpoint), aasId);
         } catch (NoSuchElementException e) {
             LOG.error("AAS with ID {} not found in AAS registry", aasId);
             return null;
@@ -126,16 +140,27 @@ public class AasRepository {
         return aas;
     }
 
+    public static void addSubmodelReferenceToExtAas(AasRegistry aasRegistry, String aasId, String submodelId) {
+        String endpoint = getEndpointOfExtAas(aasRegistry, aasId);
+        ConnectedAasRepository repo = new ConnectedAasRepository(getAasRepositoryBaseUrl(endpoint));
+        repo.addSubmodelReference(aasId, createReferenceToSubmodel(submodelId));
+    }
+
     public void addSubmodelReferenceToAas(String aasId, Submodel submodel) {
         addSubmodelReferenceToAas(aasId, submodel.getId());
     }
 
-    public void addSubmodelReferenceToAas(String aasId, String submodelId) {
-        var submodelReference = new DefaultReference.Builder()
+    public static DefaultReference createReferenceToSubmodel(String submodelId) {
+        return new DefaultReference.Builder()
+                .type(ReferenceTypes.MODEL_REFERENCE)
                 .keys(new DefaultKey.Builder()
                         .type(KeyTypes.SUBMODEL)
                         .value(submodelId).build())
                 .build();
+    }
+
+    public void addSubmodelReferenceToAas(String aasId, String submodelId) {
+        var submodelReference = createReferenceToSubmodel(submodelId);
         try {
             this.connectedAasRepository.addSubmodelReference(aasId, submodelReference);
         } catch(CollidingSubmodelReferenceException e) {
