@@ -465,10 +465,11 @@ public class TransformationExecutionService {
                     destinationAas.getId(),
                     destinationSubmodelDescriptorOptional.get()
             );
-            this.aasRepository.addSubmodelReferenceToAas(
-                    destinationAas.getId(),
-                    destinationSubmodelId
-            );
+            AasRepository.addSubmodelReferenceToExtAas(aasRegistry, destinationAas.getId(), destinationSubmodelId);
+//            this.aasRepository.addSubmodelReferenceToAas(
+//                    destinationAas.getId(),
+//                    destinationSubmodelId
+//            );
         }
     }
 
