@@ -147,7 +147,14 @@ public class AasRepository {
     public static void addSubmodelReferenceToExtAas(AasRegistry aasRegistry, String aasId, String submodelId) {
         String endpoint = getEndpointOfExtAas(aasRegistry, aasId);
         ConnectedAasRepository repo = new ConnectedAasRepository(getAasRepositoryBaseUrl(endpoint));
-        repo.addSubmodelReference(aasId, createReferenceToSubmodel(submodelId));
+        try {
+            repo.addSubmodelReference(aasId, createReferenceToSubmodel(submodelId));
+        } catch(CollidingSubmodelReferenceException e) {
+            LOG.info("Skipping adding submodel-ref with ID {} to AAS with ID {} because it already exists",
+                    submodelId,
+                    aasId
+            );
+        }
     }
 
     public void addSubmodelReferenceToAas(String aasId, Submodel submodel) {
