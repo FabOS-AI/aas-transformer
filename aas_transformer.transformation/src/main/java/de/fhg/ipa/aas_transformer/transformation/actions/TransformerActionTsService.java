@@ -8,8 +8,10 @@ import de.fhg.ipa.aas_transformer.model.TransformerActionTsFilterAbstract;
 import org.eclipse.digitaltwin.aas4j.v3.model.DataTypeDefXsd;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
+import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElementCollection;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultProperty;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodelElementCollection;
+import org.eclipse.digitaltwin.basyx.submodelservice.pathparsing.HierarchicalSubmodelElementParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,7 +132,9 @@ public abstract class TransformerActionTsService extends TransformerActionServic
             List<String> recordNames,
             DefaultSubmodelElementCollection internalSegment
     ) {
-        // TODO get all records if recordNames is empty
+        if(recordNames.isEmpty())
+            recordNames = getAllRecordNamesByInternalSegment(internalSegment);
+
         HashMap<String, List<Object>> recordMap = new HashMap<>();
         Optional<SubmodelElement> optionalRecordsSubmodelElement = getRecordsSubmodelElementByInternalSegment(internalSegment);
 
@@ -153,6 +157,20 @@ public abstract class TransformerActionTsService extends TransformerActionServic
         }
 
         return recordMap;
+    }
+
+    private List<String> getAllRecordNamesByInternalSegment(DefaultSubmodelElementCollection internalSegment) {
+        SubmodelElementCollection records = (SubmodelElementCollection) internalSegment.getValue()
+                .stream()
+                .filter(e -> e.getIdShort().equals("Records"))
+                .findFirst()
+                .get();
+        return ((SubmodelElementCollection)records.getValue().get(0))
+                .getValue()
+                .stream()
+                .filter(prop -> !prop.getIdShort().equals("time"))
+                .map(prop -> ((DefaultProperty)prop).getIdShort())
+                .toList();
     }
 
     @Override
