@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
     JsonSubTypes.Type(value = TransformerActionSubmodelElementTemplate::class, name = "SUBMODEL_ELEMENT_TEMPLATE"),
     JsonSubTypes.Type(value = TransformerActionTsAvg::class, name = "TS_AVG"),
     JsonSubTypes.Type(value = TransformerActionTsMdn::class, name = "TS_MDN"),
+    JsonSubTypes.Type(value = TransformerActionTsReduceDropEvery::class, name = "TS_DROP_EVERY"),
+    JsonSubTypes.Type(value = TransformerActionTsReduceTakeEvery::class, name = "TS_TAKE_EVERY")
 )
 abstract class TransformerAction(
     @JsonProperty("actionType")
