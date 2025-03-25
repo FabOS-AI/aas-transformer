@@ -157,7 +157,7 @@ public class TransformerHandler {
                         emitToSink(new TransformerChangeEvent(TransformerChangeEventType.DELETE, t));
                         LOG.info("Deleted transformer with ID: {}", transformerId);
                     })
-                    .subscribe();
+                    .block();
                 this.transformationDescriptionJpaRepository
                     .findByTransformerId(transformerId)
                     .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
@@ -168,7 +168,7 @@ public class TransformerHandler {
                                 .doOnSuccess(v ->
                                         LOG.info("Deleted transformation description with ID: {}", td.getId())
                                 )
-                                .subscribe();
+                                .block();
                     });
             });
     }
