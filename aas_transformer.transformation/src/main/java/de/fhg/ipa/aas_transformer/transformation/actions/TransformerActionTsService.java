@@ -88,7 +88,7 @@ public abstract class TransformerActionTsService extends TransformerActionServic
 
         recordMap.forEach((key, value) ->{
             List<Object> filteredValues = runFilter(value);
-            resultMap.put(key, filteredValues);
+            resultMap.put(key.toLowerCase(), filteredValues);
         });
 
         return resultMap;
