@@ -50,8 +50,8 @@ public class TransformerRestController {
 
     @RequestMapping(method = RequestMethod.GET)
     @Operation(summary = "Get all Transformer")
-    public Flux<Transformer> getAllTransformer() {
-        return transformerHandler.getAllTransformer();
+    public List<Transformer> getAllTransformer() {
+        return transformerHandler.getAllTransformer().collectList().block();
     }
 
 
