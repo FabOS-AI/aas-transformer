@@ -8,6 +8,7 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService;
+import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionServiceFactory;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ public class TransformationServiceFactory {
     private final TransformerActionServiceFactory transformerActionServiceFactory;
     private final MetricsClient metricsClient;
     private final TransformationDescriptionJpaRepository transformationDescriptionJpaRepository;
+    private final TransformationUtils transformationUtils;
 
     public TransformationServiceFactory(
             TemplateRenderer templateRenderer,
@@ -40,7 +42,8 @@ public class TransformationServiceFactory {
             SubmodelRepository submodelRepository,
             TransformerActionServiceFactory transformerActionServiceFactory,
             MetricsClient metricsClient,
-            TransformationDescriptionJpaRepository transformationDescriptionJpaRepository
+            TransformationDescriptionJpaRepository transformationDescriptionJpaRepository,
+            TransformationUtils transformationUtils
     ) {
         this.templateRenderer = templateRenderer;
         this.aasRegistry = aasRegistry;
@@ -50,6 +53,7 @@ public class TransformationServiceFactory {
         this.transformerActionServiceFactory = transformerActionServiceFactory;
         this.metricsClient = metricsClient;
         this.transformationDescriptionJpaRepository = transformationDescriptionJpaRepository;
+        this.transformationUtils = transformationUtils;
     }
 
     public TransformationExecutionService createExecutionService(Transformer transformer) {
@@ -65,7 +69,8 @@ public class TransformationServiceFactory {
                 this.transformerActionServiceFactory,
                 this.metricsClient,
                 this.transformationDescriptionJpaRepository,
-                this.externalBaseUrl
+                this.externalBaseUrl,
+                this.transformationUtils
         );
 
         return executionService;

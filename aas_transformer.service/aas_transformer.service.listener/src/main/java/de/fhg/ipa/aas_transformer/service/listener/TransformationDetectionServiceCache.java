@@ -8,6 +8,7 @@ import de.fhg.ipa.aas_transformer.clients.management.TransformerDTOListenerCache
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.service.listener.events.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.transformation.TransformationDetectionService;
+import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
@@ -34,8 +35,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
 
     private final SubmodelRepository submodelRepository;
     private final TemplateRenderer templateRenderer;
-    private final AasRegistry aasRegistry;
-    private final AasRepository aasRepository;
+    private final TransformationUtils transformationUtils;
     public List<TransformationDetectionService> transformationDetectionServices = new ArrayList<>();
     private Disposable transformerEventDisposable;
 
@@ -44,16 +44,14 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
 
     public TransformationDetectionServiceCache(
             ManagementClient managementClient,
-            AasRegistry aasRegistry,
-            AasRepository aasRepository,
             SubmodelRepository submodelRepository,
-            TemplateRenderer templateRenderer
+            TemplateRenderer templateRenderer,
+            TransformationUtils transformationUtils
     ) {
         super(managementClient);
-        this.aasRegistry = aasRegistry;
-        this.aasRepository = aasRepository;
         this.submodelRepository = submodelRepository;
         this.templateRenderer = templateRenderer;
+        this.transformationUtils = transformationUtils;
     }
 
     @Override
@@ -153,8 +151,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
                 new TransformationDetectionService(
                         transformerDTOListener,
                         templateRenderer,
-                        aasRegistry,
-                        aasRepository
+                        transformationUtils
                 )
         );
     }

@@ -7,6 +7,7 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.model.TransformationDescription;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService;
+import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService.lookupDestinationShells;
 
 @Component
 public class SubmodelDescriptorHandler {
@@ -37,6 +37,8 @@ public class SubmodelDescriptorHandler {
     private SubmodelRegistry submodelRegistry;
     @Autowired
     private SubmodelRepository submodelRepository;
+    @Autowired
+    private TransformationUtils transformationUtils;
     @Value("${aas_transformer.services.executor.external_base_url}")
     public String externalBaseUrl;
 
@@ -68,9 +70,7 @@ public class SubmodelDescriptorHandler {
         TransformationExecutionService execService = this.transformationExecutionServiceCache
                 .getTransformationExecutionServiceByTransformerId(transformerId);
 
-        List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
-                this.aasRegistry,
-                this.aasRepository,
+        List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
                 sourceSubmodelId,
                 execService.getTransformer().getDestination().getAasDestination(),
                 templateRenderer.getTemplateContext(

@@ -54,7 +54,6 @@ public class TransformationDetectionServiceTest {
         TransformationDetectionService transformationDetectionService = new TransformationDetectionService(
                 transformerDTOListener,
                 templateRenderer,
-                null,
                 null
         );
 
@@ -95,7 +94,6 @@ public class TransformationDetectionServiceTest {
         TransformationDetectionService transformationDetectionService = new TransformationDetectionService(
                 transformerDTOListener,
                 templateRenderer,
-                null,
                 null
         );
 
@@ -130,7 +128,6 @@ public class TransformationDetectionServiceTest {
         TransformationDetectionService transformationDetectionService = new TransformationDetectionService(
                 transformerDTOListener,
                 templateRenderer,
-                null,
                 null
         );
 

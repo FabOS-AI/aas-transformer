@@ -12,6 +12,7 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.service.management.converter.modelmapper.TransformerChangeEventToTransformerChangeEventDTOListenerConverter;
 import de.fhg.ipa.aas_transformer.service.management.converter.modelmapper.TransformerToTransformerDTOListenerConverter;
 import de.fhg.ipa.aas_transformer.transformation.TransformationDetectionService;
+import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
@@ -33,7 +34,6 @@ import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.DELETE;
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.transformation.TransformationDetectionUtils.isSubmodelSourceOfTransformer;
 import static de.fhg.ipa.aas_transformer.transformation.TransformationDetectionUtils.lookupSourceSubmodels;
-import static de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService.lookupDestinationShells;
 import static de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer.hasTemplate;
 import static java.util.stream.Collectors.toList;
 
@@ -54,6 +54,7 @@ public class TransformerHandler {
             Sinks.many().multicast().onBackpressureBuffer();
     private final Sinks.Many<TransformerChangeEventDTOListener> transformerChangeEventDTOListenerSink =
             Sinks.many().multicast().onBackpressureBuffer();
+    private final TransformationUtils transformationUtils;
 
     public TransformerHandler(
             AasRegistry aasRegistry,
@@ -64,7 +65,8 @@ public class TransformerHandler {
             TransformationDescriptionJpaRepository transformationDescriptionJpaRepository,
             ModelMapper modelMapper,
             RedisJobProducer redisJobProducer,
-            TemplateRenderer templateRenderer
+            TemplateRenderer templateRenderer,
+            TransformationUtils transformationUtils
     ) {
         this.aasRegistry = aasRegistry;
         this.aasRepository = aasRepository;
@@ -75,6 +77,7 @@ public class TransformerHandler {
         this.modelMapper = modelMapper;
         this.redisJobProducer = redisJobProducer;
         this.templateRenderer = templateRenderer;
+        this.transformationUtils = transformationUtils;
 
         // Set Model Mapper Converters:
         modelMapper.addConverter(new TransformerToTransformerDTOListenerConverter());
@@ -114,8 +117,7 @@ public class TransformerHandler {
         TransformationDetectionService service = new TransformationDetectionService(
             modelMapper.map(transformer, TransformerDTOListener.class),
             templateRenderer,
-            aasRegistry,
-            aasRepository
+            transformationUtils
         );
         // get all submodels
         try {
@@ -332,9 +334,7 @@ public class TransformerHandler {
         List<String> destinationSubmodelIds = new ArrayList<>();
 
         for(Submodel sourceSubmodel : sourceSubmodels) {
-            List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
-                    aasRegistry,
-                    aasRepository,
+            List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
                     sourceSubmodel.getId(),
                     t.getDestination().getAasDestination(),
                     templateRenderer.getTemplateContext(

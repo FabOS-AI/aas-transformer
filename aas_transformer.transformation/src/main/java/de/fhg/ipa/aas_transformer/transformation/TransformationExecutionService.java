@@ -41,6 +41,7 @@ public class TransformationExecutionService {
     private final MetricsClient metricsClient;
     private final TransformationDescriptionJpaRepository transformationDescriptionJpaRepository;
     private final String externalBaseUrl;
+    private final TransformationUtils transformationUtils;
     private List<TransformerActionService> transformerActionServices = new ArrayList<>();
 
     public TransformationExecutionService(
@@ -53,7 +54,8 @@ public class TransformationExecutionService {
             TransformerActionServiceFactory transformerActionServiceFactory,
             MetricsClient metricsClient,
             TransformationDescriptionJpaRepository transformationDescriptionJpaRepository,
-            String externalBaseUrl
+            String externalBaseUrl,
+            TransformationUtils transformationUtils
     ) {
         this.transformer = transformer;
         this.aasRegistry = aasRegistry;
@@ -64,6 +66,7 @@ public class TransformationExecutionService {
         this.metricsClient = metricsClient;
         this.transformationDescriptionJpaRepository = transformationDescriptionJpaRepository;
         this.externalBaseUrl = externalBaseUrl;
+        this.transformationUtils = transformationUtils;
         if(this.templateRenderer == null)
             this.templateRenderer = templateRenderer;
 
@@ -80,60 +83,6 @@ public class TransformationExecutionService {
     public Transformer getTransformer() { return this.transformer; }
 
     public boolean getTransformOnRequest() {return this.transformer.getTransformOnRequest(); }
-
-    public static List<AssetAdministrationShell> lookupDestinationShells(
-            AasRegistry aasRegistry,
-            AasRepository aasRepository,
-            String sourceSubmodelId,
-            DestinationAAS destinationAas,
-            Map<String, Object> templateContext
-    ) {
-        List<String> destinationShellIds = lookupDestinationShellIds(
-                aasRepository,
-                sourceSubmodelId,
-                destinationAas,
-                templateContext
-        );
-        List<AssetAdministrationShell> destinationShells = new ArrayList<>();
-        for(String shellId: destinationShellIds) {
-            AssetAdministrationShell destinationShell = aasRepository.getExtAas(aasRegistry, shellId);
-            if(destinationShell == null) {
-                aasRepository.createAasOrDoNothing(
-                    new DefaultAssetAdministrationShell.Builder()
-                        .id(shellId)
-                        .build()
-                );
-                destinationShell = aasRepository.getAas(shellId);
-            }
-
-            destinationShells.add(destinationShell);
-        }
-        return destinationShells;
-    }
-
-    public static List<String> lookupDestinationShellIds(
-            AasRepository aasRepository,
-            String sourceSubmodelId,
-            DestinationAAS destinationAas,
-            Map<String, Object> templateContext
-    ) {
-        List<String> destinationShellIds;
-        if(destinationAas != null) {
-            String destinationShellId = templateRenderer.render(
-                    destinationAas.getId(),
-                    templateContext
-            );
-
-            destinationShellIds = List.of(destinationShellId);
-        } else {
-            destinationShellIds = aasRepository
-                    .getAllAasContainingSubmodelBySubmodelId(sourceSubmodelId)
-                    .stream()
-                    .map(shell -> shell.getId())
-                    .toList();
-        }
-        return destinationShellIds;
-    }
 
     private void executeOnRequestJob(
             String sourceSubmodelId,
@@ -209,9 +158,7 @@ public class TransformationExecutionService {
         Instant endLookupSource = Instant.now();
 
         // Destination Shells:
-        List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
-                this.aasRegistry,
-                this.aasRepository,
+        List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
                 sourceSubmodel.getId(),
                 transformer.getDestination().getAasDestination(),
                 templateRenderer.getTemplateContext(this.transformer.getId(), List.of(), sourceSubmodel)
@@ -279,9 +226,7 @@ public class TransformationExecutionService {
         }
 
         // Destination Shells:
-        List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
-                this.aasRegistry,
-                this.aasRepository,
+        List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
                 sourceSubmodel.getId(),
                 transformer.getDestination().getAasDestination(),
                 templateRenderer.getTemplateContext(this.transformer.getId(),List.of(), sourceSubmodel)

@@ -14,26 +14,22 @@ import java.util.List;
 import java.util.Map;
 
 import static de.fhg.ipa.aas_transformer.transformation.TransformationDetectionUtils.isSubmodelSourceOfTransformer;
-import static de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService.lookupDestinationShells;
 
 public class TransformationDetectionService {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationDetectionService.class);
 
     private final TransformerDTOListener transformerDTOListener;
     private final TemplateRenderer templateRenderer;
-    private final AasRegistry aasRegistry;
-    private final AasRepository aasRepository;
+    private final TransformationUtils transformationUtils;
 
     public TransformationDetectionService(
             TransformerDTOListener transformerDTOListener,
             TemplateRenderer templateRenderer,
-            AasRegistry aasRegistry,
-            AasRepository aasRepository
+            TransformationUtils transformationUtils
     ) {
         this.transformerDTOListener = transformerDTOListener;
         this.templateRenderer = templateRenderer;
-        this.aasRegistry = aasRegistry;
-        this.aasRepository = aasRepository;
+        this.transformationUtils = transformationUtils;
     }
     public boolean isSubmodelSourceOfTransformerActions(Submodel submodel) {
         return isSubmodelSourceOfTransformer(
@@ -43,9 +39,7 @@ public class TransformationDetectionService {
     }
 
     public boolean isSubmodelDestinationOfTransformerAction(Submodel submodel) {
-        List<AssetAdministrationShell> destinationShells = lookupDestinationShells(
-                aasRegistry,
-                aasRepository,
+        List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
                 submodel.getId(),
                 transformerDTOListener.getDestination().getAasDestination(),
                 templateRenderer.getTemplateContext(transformerDTOListener.getId(),List.of(), submodel)
