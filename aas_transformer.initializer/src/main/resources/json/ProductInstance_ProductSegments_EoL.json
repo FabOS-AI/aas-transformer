@@ -28,7 +28,7 @@
       "ruleOperator": "NOT_EQUALS",
       "sourceSubmodelId": {
         "type": "ID",
-        "id": ".*_avg$"
+        "id": ".*_red$"
       }
     }
   ]

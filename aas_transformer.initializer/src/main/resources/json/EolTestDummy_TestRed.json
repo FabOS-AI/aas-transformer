@@ -1,0 +1,34 @@
+{
+  "id": "62d0205d-2395-4c3d-a2bd-cc6fcb23a199",
+  "destination": {
+    "aasDestination": {
+      "id": "http://ipa.fraunhofer.de/h2giga/eol-test-dummy-aas"
+    },
+    "submodelDestination": {
+      "idShort": "{{ submodel:idShort(SOURCE_SUBMODEL) }}_red",
+      "id": "{{ submodel:id(SOURCE_SUBMODEL) }}_red"
+    }
+  },
+  "transformerActions": [
+    {
+      "actionType": "TS_TAKE_EVERY",
+      "n": 10
+    }
+  ],
+  "sourceSubmodelIdRules": [
+    {
+      "ruleOperator": "EQUALS",
+      "sourceSubmodelId": {
+        "type": "SEMANTIC_ID",
+        "id": "https://admin-shell.io/idta/TimeSeries/1/1"
+      }
+    },
+    {
+      "ruleOperator": "NOT_EQUALS",
+      "sourceSubmodelId": {
+        "type": "ID",
+        "id": ".*_red$"
+      }
+    }
+  ]
+}
