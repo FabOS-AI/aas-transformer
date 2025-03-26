@@ -4,25 +4,26 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.redis.testcontainers.RedisContainer;
+import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
+import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
-import de.fhg.ipa.aas_transformer.model.TransformationJob;
-import de.fhg.ipa.aas_transformer.model.TransformerChangeEvent;
-import de.fhg.ipa.aas_transformer.model.TransformerChangeEventDTOListener;
-import de.fhg.ipa.aas_transformer.model.TransformerDTOListener;
+import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.service.listener.events.consumers.SubmodelElementMessageEventConsumer;
 import de.fhg.ipa.aas_transformer.service.listener.events.consumers.SubmodelMessageEventConsumer;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
+import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.LangStringTextType;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultLangStringTextType;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultMultiLanguageProperty;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultProperty;
+import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -49,7 +50,7 @@ import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.getAnsibleFactsSubmodel;
+import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
 import static de.fhg.ipa.aas_transformer.test.utils.GenericTestConfig.getSimpleSubmodel;
 import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.*;
@@ -70,6 +71,7 @@ public class JobCreateTest {
     @ServiceConnection(name = "redis")
     static RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:7"));
 
+    static AssetAdministrationShell shell = getSimpleShell("","");
     static Submodel ansibleFactsSubmodel = getAnsibleFactsSubmodel();
     static TransformerDTOListener ansibleFactsTransformer = getAnsibleFactsTransformerDTOListener();
 
@@ -104,6 +106,12 @@ public class JobCreateTest {
     }
 
     @Autowired
+    public AasRegistry aasRegistry;
+    @Autowired
+    public AasRepository aasRepository;
+    @Autowired
+    public SubmodelRegistry submodelRegistry;
+    @Autowired
     public SubmodelRepository submodelRepository;
 
     @Autowired
@@ -125,8 +133,17 @@ public class JobCreateTest {
     @Test
     @Order(20)
     public void createSubmodelAndExpectJobCountInRedisOne() throws InterruptedException {
+
+        registerShellAndSubmodel(
+                aasRegistry,
+                aasRepository,
+                submodelRegistry,
+                submodelRepository,
+                shell,
+                ansibleFactsSubmodel
+        );
         // TODO add create of shell and registering submodel in shell
-        submodelRepository.createOrUpdateSubmodel(ansibleFactsSubmodel);
+//        submodelRepository.createOrUpdateSubmodel(ansibleFactsSubmodel);
 
         assertExpectedJobCount(redisJobReader, 1);
     }
@@ -163,6 +180,25 @@ public class JobCreateTest {
                 ));
 
         submodelRepository.deleteSubmodel(ansibleFactsSubmodel.getId());
+
+        assertExpectedJobCount(redisJobReader, expectedJobCount);
+    }
+
+    @Test
+    @Order(50)
+    public void createDestinationSubmodelAndExpectNoChangeInJobCount() throws IOException, DeserializationException, InterruptedException {
+        int expectedJobCount = redisJobProducer.getWaitingJobCount();
+        Transformer ansibleFactsTransformerStatic = getAnsibleFactsTransformer(true);
+
+        DefaultSubmodel submodel = new DefaultSubmodel();
+        submodel.setId(
+                ansibleFactsTransformerStatic.getDestination().getSubmodelDestination().getId()
+        );
+        submodel.setIdShort(
+                ansibleFactsTransformerStatic.getDestination().getSubmodelDestination().getIdShort()
+        );
+
+        submodelRepository.createOrUpdateSubmodel(submodel);
 
         assertExpectedJobCount(redisJobReader, expectedJobCount);
     }

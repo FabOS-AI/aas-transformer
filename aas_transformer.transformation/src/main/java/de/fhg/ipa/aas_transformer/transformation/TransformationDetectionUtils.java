@@ -1,6 +1,7 @@
 package de.fhg.ipa.aas_transformer.transformation;
 
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
+import de.fhg.ipa.aas_transformer.model.Destination;
 import de.fhg.ipa.aas_transformer.model.RuleOperator;
 import de.fhg.ipa.aas_transformer.model.SourceSubmodelIdRule;
 import de.fhg.ipa.aas_transformer.model.Transformer;
@@ -17,8 +18,6 @@ import java.util.regex.Pattern;
 
 public class TransformationDetectionUtils {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationDetectionUtils.class);
-
-
 
     public static List<Submodel> lookupSourceSubmodels(Transformer transformer, SubmodelRepository submodelRepository) {
         List<Submodel> sourceSubmodels;

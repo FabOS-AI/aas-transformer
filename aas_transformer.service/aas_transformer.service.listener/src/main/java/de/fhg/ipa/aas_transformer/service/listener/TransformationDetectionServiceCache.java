@@ -1,11 +1,14 @@
 package de.fhg.ipa.aas_transformer.service.listener;
 
+import de.fhg.ipa.aas_transformer.aas.AasRegistry;
+import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.TransformerDTOListenerCache;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.service.listener.events.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.transformation.TransformationDetectionService;
+import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
@@ -30,6 +33,9 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
     private static final Logger LOG = LoggerFactory.getLogger(TransformationDetectionServiceCache.class);
 
     private final SubmodelRepository submodelRepository;
+    private final TemplateRenderer templateRenderer;
+    private final AasRegistry aasRegistry;
+    private final AasRepository aasRepository;
     public List<TransformationDetectionService> transformationDetectionServices = new ArrayList<>();
     private Disposable transformerEventDisposable;
 
@@ -38,10 +44,16 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
 
     public TransformationDetectionServiceCache(
             ManagementClient managementClient,
-            SubmodelRepository submodelRepository
+            AasRegistry aasRegistry,
+            AasRepository aasRepository,
+            SubmodelRepository submodelRepository,
+            TemplateRenderer templateRenderer
     ) {
         super(managementClient);
+        this.aasRegistry = aasRegistry;
+        this.aasRepository = aasRepository;
         this.submodelRepository = submodelRepository;
+        this.templateRenderer = templateRenderer;
     }
 
     @Override
@@ -88,6 +100,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
         return this.transformationDetectionServices
                 .stream()
                 .filter(service -> service.isSubmodelSourceOfTransformerActions(event.getSubmodel()))
+                .filter(service -> !service.isSubmodelDestinationOfTransformerAction(event.getSubmodel()))
                 .map(service -> createTransformationJob(event, service))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
@@ -137,7 +150,12 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
 
     private void addTransformationDetectionService(TransformerDTOListener transformerDTOListener) {
         transformationDetectionServices.add(
-                new TransformationDetectionService(transformerDTOListener)
+                new TransformationDetectionService(
+                        transformerDTOListener,
+                        templateRenderer,
+                        aasRegistry,
+                        aasRepository
+                )
         );
     }
 

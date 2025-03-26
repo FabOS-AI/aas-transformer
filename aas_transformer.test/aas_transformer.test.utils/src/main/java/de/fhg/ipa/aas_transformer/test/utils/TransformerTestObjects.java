@@ -115,6 +115,7 @@ public class TransformerTestObjects {
 
         return  new TransformerDTOListener(
             factsTransformer.getId(),
+            factsTransformer.getDestination(),
             factsTransformer.getSourceSubmodelIdRules(),
             false
         );

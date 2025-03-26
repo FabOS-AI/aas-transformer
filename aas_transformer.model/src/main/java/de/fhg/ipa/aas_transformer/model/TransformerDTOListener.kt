@@ -4,6 +4,7 @@ import java.util.*
 
 data class TransformerDTOListener(
     var id: UUID?,
+    var destination: Destination? = null,
     var sourceSubmodelIdRules : MutableList<SourceSubmodelIdRule> = LinkedList(),
     var transformOnRequest: Boolean = false
 ) : AbstractTransformer() {

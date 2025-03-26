@@ -112,7 +112,10 @@ public class TransformerHandler {
 
     private void pushTransformationJobsAfterCreate(Transformer transformer) {
         TransformationDetectionService service = new TransformationDetectionService(
-            modelMapper.map(transformer, TransformerDTOListener.class)
+            modelMapper.map(transformer, TransformerDTOListener.class),
+            templateRenderer,
+            aasRegistry,
+            aasRepository
         );
         // get all submodels
         try {
