@@ -31,7 +31,7 @@ public class TransformerActionTsReduceService extends TransformerActionService {
 
     @Override
     public Submodel execute(
-            Submodel sourceSubmodel, 
+            Submodel sourceSubmodel,
             Submodel intermediateResult,
             Map<String, Object> context,
             boolean isFirstAction
@@ -65,7 +65,6 @@ public class TransformerActionTsReduceService extends TransformerActionService {
         List<SubmodelElement> newRecordValues = new ArrayList<>();
 
         for(int i = 0; i < originalRecordValues.size(); i++) {
-
             switch (this.transformerAction.getActionType()) {
                 case TS_TAKE_EVERY:
                     if(i % this.transformerAction.getN() == 0)
@@ -74,6 +73,7 @@ public class TransformerActionTsReduceService extends TransformerActionService {
                 case TS_DROP_EVERY:
                     if((i+1) % this.transformerAction.getN() != 0)
                         newRecordValues.add(originalRecordValues.get(i));
+                    break;
                 default:
                     LOG.error("Unknown TS Reduce action type: {}", this.transformerAction.getActionType().name());
                     break;
