@@ -62,7 +62,7 @@ public class TemplateRenderer {
     }
 
     public static boolean hasTemplate(String inputString) {
-        String regexp = "\\{\\{.*\\}\\}";
+        String regexp = ".*\\{\\{.*\\}\\}.*";
         var regExPattern = Pattern.compile(regexp);
         return regExPattern.matcher(inputString).matches();
     }
