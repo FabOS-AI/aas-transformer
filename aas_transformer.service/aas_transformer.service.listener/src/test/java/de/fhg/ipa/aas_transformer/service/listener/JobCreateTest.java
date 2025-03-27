@@ -222,17 +222,21 @@ public class JobCreateTest {
     @Order(60)
     public void createDestinationSubmodelWithSourceSmTemplateAndExpectNoChangeInJobCount() throws FileNotFoundException, DeserializationException, ApiException, InterruptedException {
         JsonDeserializer jsonDeserializer = new JsonDeserializer();
+        int expectedJobCount = redisJobProducer.getWaitingJobCount() + 1;
 
         File tsSrcSubmodelFile = new File("src/test/resources/submodels/eol_ts_src_submodel.json");
         File tsDstSubmodelFile = new File("src/test/resources/submodels/eol_ts_dst_submodel.json");
         var srcSubmodel = jsonDeserializer.read(new FileInputStream(tsSrcSubmodelFile), Submodel.class);
         var dstSubmodel = jsonDeserializer.read(new FileInputStream(tsDstSubmodelFile), Submodel.class);
 
+        // Create source submodel
         submodelRepository.createOrUpdateSubmodel(srcSubmodel);
         submodelRegistry.registerSubmodel(srcSubmodel);
-        int expectedJobCount = redisJobProducer.getWaitingJobCount();
+        assertExpectedJobCount(redisJobReader, expectedJobCount);
 
+        // Create destination submodel of source submodel:
         submodelRepository.createOrUpdateSubmodel(dstSubmodel);
+        sleep(3000);
 
         assertExpectedJobCount(redisJobReader, expectedJobCount);
     }
