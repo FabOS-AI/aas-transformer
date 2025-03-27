@@ -16,6 +16,7 @@ import de.fhg.ipa.aas_transformer.service.listener.events.consumers.SubmodelMess
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.LangStringTextType;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
@@ -24,6 +25,7 @@ import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultLangStringTextType;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultMultiLanguageProperty;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultProperty;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
+import org.eclipse.digitaltwin.basyx.submodelregistry.client.ApiException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -42,6 +44,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
+import javax.xml.transform.Source;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
@@ -74,6 +79,16 @@ public class JobCreateTest {
     static AssetAdministrationShell shell = getSimpleShell("","");
     static Submodel ansibleFactsSubmodel = getAnsibleFactsSubmodel();
     static TransformerDTOListener ansibleFactsTransformer = getAnsibleFactsTransformerDTOListener();
+    static TransformerDTOListener eolTsTransformer = new TransformerDTOListener(
+            UUID.fromString("800e7303-969f-4f68-b68b-caf99a495351"),
+            new Destination(
+                    new DestinationSubmodel("{{ submodel:idShort(SOURCE_SUBMODEL) }}_red", "{{ submodel:id(SOURCE_SUBMODEL) }}_red")
+            ),
+            List.of(
+                    new SourceSubmodelIdRule(RuleOperator.EQUALS, new SubmodelId(SubmodelIdType.SEMANTIC_ID, "https://admin-shell.io/idta/TimeSeries/1/1"))
+            ),
+            false
+    );
 
     @Autowired
     RedisJobReader redisJobReader;
@@ -95,7 +110,7 @@ public class JobCreateTest {
                     .thenReturn(Flux.empty());
             Mockito
                     .when(managementClient.getAllTransformerDTOListener())
-                    .thenReturn(Flux.just(ansibleFactsTransformer));
+                    .thenReturn(Flux.just(ansibleFactsTransformer, eolTsTransformer));
             Mockito
                     .when(managementClient.getTransformerChangeEventStream())
                     .thenReturn(transformerChangeEventFlux);
@@ -199,6 +214,25 @@ public class JobCreateTest {
         );
 
         submodelRepository.createOrUpdateSubmodel(submodel);
+
+        assertExpectedJobCount(redisJobReader, expectedJobCount);
+    }
+
+    @Test
+    @Order(60)
+    public void createDestinationSubmodelWithSourceSmTemplateAndExpectNoChangeInJobCount() throws FileNotFoundException, DeserializationException, ApiException, InterruptedException {
+        JsonDeserializer jsonDeserializer = new JsonDeserializer();
+
+        File tsSrcSubmodelFile = new File("src/test/resources/submodels/eol_ts_src_submodel.json");
+        File tsDstSubmodelFile = new File("src/test/resources/submodels/eol_ts_dst_submodel.json");
+        var srcSubmodel = jsonDeserializer.read(new FileInputStream(tsSrcSubmodelFile), Submodel.class);
+        var dstSubmodel = jsonDeserializer.read(new FileInputStream(tsDstSubmodelFile), Submodel.class);
+
+        submodelRepository.createOrUpdateSubmodel(srcSubmodel);
+        submodelRegistry.registerSubmodel(srcSubmodel);
+        int expectedJobCount = redisJobProducer.getWaitingJobCount();
+
+        submodelRepository.createOrUpdateSubmodel(dstSubmodel);
 
         assertExpectedJobCount(redisJobReader, expectedJobCount);
     }
