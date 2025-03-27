@@ -117,7 +117,9 @@ public class TransformerHandler {
         TransformationDetectionService service = new TransformationDetectionService(
             modelMapper.map(transformer, TransformerDTOListener.class),
             templateRenderer,
-            transformationUtils
+            transformationUtils,
+            aasRegistry,
+            submodelRegistry
         );
         // get all submodels
         try {

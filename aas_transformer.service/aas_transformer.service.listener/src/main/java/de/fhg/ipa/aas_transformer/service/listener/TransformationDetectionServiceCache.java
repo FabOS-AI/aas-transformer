@@ -2,6 +2,7 @@ package de.fhg.ipa.aas_transformer.service.listener;
 
 import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
+import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.TransformerDTOListenerCache;
@@ -36,6 +37,8 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
     private final SubmodelRepository submodelRepository;
     private final TemplateRenderer templateRenderer;
     private final TransformationUtils transformationUtils;
+    private final AasRegistry aasRegistry;
+    private final SubmodelRegistry submodelRegistry;
     public List<TransformationDetectionService> transformationDetectionServices = new ArrayList<>();
     private Disposable transformerEventDisposable;
 
@@ -44,11 +47,15 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
 
     public TransformationDetectionServiceCache(
             ManagementClient managementClient,
+            AasRegistry aasRegistry,
+            SubmodelRegistry submodelRegistry,
             SubmodelRepository submodelRepository,
             TemplateRenderer templateRenderer,
             TransformationUtils transformationUtils
     ) {
         super(managementClient);
+        this.aasRegistry = aasRegistry;
+        this.submodelRegistry = submodelRegistry;
         this.submodelRepository = submodelRepository;
         this.templateRenderer = templateRenderer;
         this.transformationUtils = transformationUtils;
@@ -151,7 +158,9 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
                 new TransformationDetectionService(
                         transformerDTOListener,
                         templateRenderer,
-                        transformationUtils
+                        transformationUtils,
+                        aasRegistry,
+                        submodelRegistry
                 )
         );
     }
