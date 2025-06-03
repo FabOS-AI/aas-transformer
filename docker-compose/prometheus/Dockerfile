@@ -46,5 +46,6 @@ USER nobody
 ENTRYPOINT  ["/etc/prometheus/startup.sh"]
 CMD         [ "--config.file=/etc/prometheus/prometheus.yml", \
               "--storage.tsdb.path=/prometheus", \
+              "--storage.tsdb.retention.size=2GB", \
               "--web.console.libraries=/usr/share/prometheus/console_libraries", \
               "--web.console.templates=/usr/share/prometheus/consoles" ]
