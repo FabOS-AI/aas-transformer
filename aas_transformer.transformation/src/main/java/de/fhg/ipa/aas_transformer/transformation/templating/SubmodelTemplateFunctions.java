@@ -115,7 +115,7 @@ public class SubmodelTemplateFunctions extends AbstractTemplateFunctions {
         }
     }
 
-    public String getSubmodelElementValueOfSubmodel(String serializedSubmodel, String smeIdShortPath) {
+    public String getSubmodelElementValueOfSubmodel(String serializedSubmodel, String smeIdShortPath) throws SubmodelTemplateException {
         try {
             var jsonDeserializer = new JsonDeserializer();
             var sourceSubmodel = jsonDeserializer.read(serializedSubmodel, Submodel.class);
@@ -127,13 +127,14 @@ public class SubmodelTemplateFunctions extends AbstractTemplateFunctions {
                     return value;
                 }
                  else {
-                     return "Submodel Element [id='" + smeIdShortPath + "'] not a property";
+                     throw new SubmodelTemplateException("Submodel Element [id='" + smeIdShortPath + "'] not a property");
                  }
             }
-            return "ERROR: Submodel Element [id='" + smeIdShortPath + "'] not found";
+
+            throw new SubmodelTemplateException("ERROR: Submodel Element [id='" + smeIdShortPath + "'] not found");
         } catch (DeserializationException e) {
            LOG.error(e.getMessage());
-           return "ERROR: " + e.getMessage();
+           throw new SubmodelTemplateException("ERROR: " + e.getMessage());
         }
     }
 
@@ -162,5 +163,11 @@ public class SubmodelTemplateFunctions extends AbstractTemplateFunctions {
         }
 
         return Optional.empty();
+    }
+
+    class SubmodelTemplateException extends Exception {
+        public SubmodelTemplateException(String message) {
+            super(message);
+        }
     }
 }
