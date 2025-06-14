@@ -6,6 +6,8 @@ import de.fhg.ipa.aas_transformer.model.DestinationAAS;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import java.util.Map;
 
 @Component
 public class TransformationUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(TransformationUtils.class);
 
     private final AasRegistry aasRegistry;
     private final AasRepository aasRepository;
@@ -63,12 +66,16 @@ public class TransformationUtils {
     ) {
         List<String> destinationShellIds;
         if(destinationAas != null) {
-            String destinationShellId = templateRenderer.render(
-                    destinationAas.getId(),
-                    templateContext
-            );
-
-            destinationShellIds = List.of(destinationShellId);
+            try {
+                String destinationShellId = templateRenderer.render(
+                        destinationAas.getId(),
+                        templateContext
+                );
+                destinationShellIds = List.of(destinationShellId);
+            } catch (Exception e) {
+                LOG.warn("Failed to render destination shell ID based on template {}", destinationAas.getId());
+                destinationShellIds = List.of();
+            }
         } else {
             destinationShellIds = aasRepository
                     .getAllAasContainingSubmodelBySubmodelId(sourceSubmodelId)
