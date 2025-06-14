@@ -56,6 +56,11 @@ public class TransformationDetectionService {
         for(SubmodelDescriptor smd : submodelRegistry.getSubmodelDescriptors()) {
             Submodel potentialSourceSubmodel = SubmodelRepository.getExtSubmodel(submodelRegistry, smd.getId());
             if(isSubmodelTransformationSourceOfSubmodel(potentialSourceSubmodel, sourceSubmodel)) {
+                LOG.info(
+                        "Submodel with id = {} is a transformation source of submodel with id = {}",
+                        potentialSourceSubmodel.getId(),
+                        sourceSubmodel.getId()
+                );
                 return true;
             }
         }
@@ -74,12 +79,17 @@ public class TransformationDetectionService {
                 destinationShells,
                 sourceSubmodel
         );
-        String potentialDestinationId = templateRenderer.render(
-                transformerDTOListener.getDestination().getSubmodelDestination().getId(),
-                context
-        );
+        try {
+            String potentialDestinationId = templateRenderer.render(
+                    transformerDTOListener.getDestination().getSubmodelDestination().getId(),
+                    context
+            );
 
-        return potentialDestinationId.equals(destinationSubmodel.getId());
+            return potentialDestinationId.equals(destinationSubmodel.getId());
+        } catch (Exception e) {
+            LOG.error("Failed to render destination submodel ID template: {}", e.getMessage());
+            return false;
+        }
     }
 
     public TransformerDTOListener getTransformerDTOListener() {
