@@ -13,7 +13,7 @@
     {
       "actionType": "SUBMODEL_ELEMENT_TEMPLATE",
       "destinationSubmodelElementId": "Segments",
-      "submodelElementTemplate": "{ \"idShort\": \"\", \"modelType\": \"SubmodelElementCollection\", \"displayName\": [ { \"language\": \"en\", \"text\": \"End-of-Line-Test\" } ], \"value\": [ { \"idShort\": \"SegmentResults\", \"modelType\": \"SubmodelElementCollection\", \"value\": [ { \"idShort\": \"ResultParameter\", \"modelType\": \"SubmodelElementCollection\", \"value\": [ { \"idShort\": \"EoLTestResult\", \"modelType\": \"ReferenceElement\", \"value\": { \"type\": \"ModelReference\", \"keys\": [ { \"type\": \"Submodel\", \"value\": \"{{ submodel:id(SOURCE_SUBMODEL) }}\" } ] } } ] } ] } ] }"
+      "submodelElementTemplate": "{ \"idShort\": \"\", \"modelType\": \"SubmodelElementCollection\", \"displayName\": [ { \"language\": \"en\", \"text\": \"End-of-Line-Test\" } ], \"value\": [ { \"idShort\": \"SegmentResults\", \"modelType\": \"SubmodelElementCollection\", \"value\": [ { \"idShort\": \"ResultParameter\", \"modelType\": \"SubmodelElementCollection\", \"value\": [ { \"idShort\": \"EoLTestResult\", \"modelType\": \"ReferenceElement\", \"value\": { \"type\": \"ModelReference\", \"keys\": [{ \"type\": \"AssetAdministrationShell\", \"value\": \"http://ipa.fraunhofer.de/h2giga/eol-test-dummy-aas\"}, { \"type\": \"Submodel\", \"value\": \"{{ submodel:id(SOURCE_SUBMODEL) }}\" }, {\"type\": \"SubmodelElementCollection\", \"value\": \"Metadata\"} ] } } ] } ] } ] }"
     }
   ],
   "sourceSubmodelIdRules": [
