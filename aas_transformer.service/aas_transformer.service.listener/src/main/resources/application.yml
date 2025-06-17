@@ -48,6 +48,8 @@ aas_transformer:
     listener:
       strict-mode:
         enabled: false
+      avoid-recursive-calls:
+        enabled: false
     management:
       schema: http
       host: localhost

@@ -45,6 +45,9 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
     @Value("${aas_transformer.services.listener.strict-mode.enabled:false}")
     private boolean strictModeEnabled;
 
+    @Value("${aas_transformer.services.listener.avoid-recursive-calls.enabled:false}")
+    private boolean avoidRecursiveCallsEnabled;
+
     public TransformationDetectionServiceCache(
             ManagementClient managementClient,
             AasRegistry aasRegistry,
@@ -105,7 +108,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
         return this.transformationDetectionServices
                 .stream()
                 .filter(service -> service.isSubmodelSourceOfTransformerActions(event.getSubmodel()))
-                .filter(service -> !service.isSubmodelDestinationOfTransformerAction(event.getSubmodel()))
+                .filter(service -> !avoidRecursiveCallsEnabled || !service.isSubmodelDestinationOfTransformerAction(event.getSubmodel()))
                 .map(service -> createTransformationJob(event, service))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
