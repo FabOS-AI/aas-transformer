@@ -123,7 +123,7 @@ public class SubmodelRepository {
                     .get()
                     .retrieve()
                     .bodyToMono(Submodel.class)
-                    .retryWhen(Retry.fixedDelay(10, Duration.ofSeconds(1)))
+//                    .retryWhen(Retry.fixedDelay(10, Duration.ofSeconds(1)))
                     .block();
         } catch (Exception e) {
             LOG.error("Failed to get submodel from {}", endpoint);
