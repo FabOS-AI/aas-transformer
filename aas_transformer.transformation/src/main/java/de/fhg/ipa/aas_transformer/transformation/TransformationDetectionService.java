@@ -55,6 +55,8 @@ public class TransformationDetectionService {
 
         for(SubmodelDescriptor smd : submodelRegistry.getSubmodelDescriptors()) {
             Submodel potentialSourceSubmodel = SubmodelRepository.getExtSubmodel(submodelRegistry, smd.getId());
+            if(potentialSourceSubmodel == null)
+                continue;
             if(isSubmodelTransformationSourceOfSubmodel(potentialSourceSubmodel, sourceSubmodel)) {
                 LOG.info(
                         "Submodel with id = {} is a transformation source of submodel with id = {}",
