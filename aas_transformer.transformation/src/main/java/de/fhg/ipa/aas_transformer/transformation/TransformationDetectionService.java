@@ -8,6 +8,7 @@ import de.fhg.ipa.aas_transformer.model.TransformerDTOListener;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
+import org.eclipse.digitaltwin.basyx.core.exceptions.ElementDoesNotExistException;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,23 +72,27 @@ public class TransformationDetectionService {
     }
 
     private boolean isSubmodelTransformationSourceOfSubmodel(Submodel sourceSubmodel, Submodel destinationSubmodel) {
-        List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
-                sourceSubmodel.getId(),
-                transformerDTOListener.getDestination().getAasDestination(),
-                templateRenderer.getTemplateContext(transformerDTOListener.getId(),List.of(), sourceSubmodel)
-        );
-        Map<String, Object> context = templateRenderer.getTemplateContext(
-                transformerDTOListener.getId(),
-                destinationShells,
-                sourceSubmodel
-        );
         try {
+            List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
+                    sourceSubmodel.getId(),
+                    transformerDTOListener.getDestination().getAasDestination(),
+                    templateRenderer.getTemplateContext(transformerDTOListener.getId(), List.of(), sourceSubmodel)
+            );
+
+            Map<String, Object> context = templateRenderer.getTemplateContext(
+                    transformerDTOListener.getId(),
+                    destinationShells,
+                    sourceSubmodel
+            );
             String potentialDestinationId = templateRenderer.render(
                     transformerDTOListener.getDestination().getSubmodelDestination().getId(),
                     context
             );
 
             return potentialDestinationId.equals(destinationSubmodel.getId());
+        } catch(ElementDoesNotExistException e) {
+            LOG.error("Failed to lookup destination shells for submodel with id = {}: {}", sourceSubmodel.getId(), e.getMessage());
+            return false;
         } catch (Exception e) {
             LOG.error("Failed to render destination submodel ID template: {}", e.getMessage());
             return false;
