@@ -47,3 +47,5 @@ aas_transformer:
     listener:
       strict-mode:
         enabled: true
+      avoid-recursive-calls:
+        enabled: true
