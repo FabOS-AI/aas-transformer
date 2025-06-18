@@ -45,16 +45,6 @@ public class TransformerActionSmCopyTest {
     @MockBean
     TemplateRenderer templateRenderer;
 
-//    @BeforeAll
-//    public static void setup() {
-//        new TransformerActionSmCopyService(
-//                submodelRegistry,
-//                submodelRepository,
-//                templateRenderer,
-//                new TransformerActionSmCopy("testSmId")
-//        );
-//    }
-
     @Test
     public void testExecute() {
         String smIdOfToBeCopiedSubmodel = "testSmId";

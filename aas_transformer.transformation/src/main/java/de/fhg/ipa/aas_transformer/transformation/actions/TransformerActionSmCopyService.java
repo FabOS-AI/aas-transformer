@@ -5,6 +5,7 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.model.TransformerAction;
 import de.fhg.ipa.aas_transformer.model.TransformerActionSmCopy;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
+import org.eclipse.digitaltwin.aas4j.v3.model.ReferenceTypes;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,9 @@ public class TransformerActionSmCopyService extends TransformerActionService {
         intermediateResult.setSemanticId(cpSourceSubmodel.getSemanticId());
         intermediateResult.getSubmodelElements().addAll(cpSourceSubmodel.getSubmodelElements());
         intermediateResult.setSupplementalSemanticIds(cpSourceSubmodel.getSupplementalSemanticIds());
+
+        // Avoids error during registration if type is not set in source submodel
+        intermediateResult.getSemanticId().setType(ReferenceTypes.EXTERNAL_REFERENCE);
 
         return intermediateResult;
     }
