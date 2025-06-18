@@ -2,6 +2,7 @@ package de.fhg.ipa.aas_transformer.model
 
 enum class TransformerActionType {
     COPY,
+    SM_COPY,
     SUBMODEL_TEMPLATE,
     SUBMODEL_ELEMENT_TEMPLATE,
     TS_AVG,

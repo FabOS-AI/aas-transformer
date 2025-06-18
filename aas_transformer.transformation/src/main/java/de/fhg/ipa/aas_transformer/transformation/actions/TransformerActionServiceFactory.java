@@ -33,6 +33,14 @@ public class TransformerActionServiceFactory {
             case COPY:
                 return new TransformerActionCopyService((TransformerActionCopy) transformerAction);
 
+            case SM_COPY:
+                return new TransformerActionSmCopyService(
+                        this.submodelRegistry,
+                        this.submodelRepository,
+                        this.templateRenderer,
+                        (TransformerActionSmCopy) transformerAction
+                );
+
             case SUBMODEL_TEMPLATE:
                 return new TransformerActionSubmodelTemplateService(
                         (TransformerActionSubmodelTemplate) transformerAction,
