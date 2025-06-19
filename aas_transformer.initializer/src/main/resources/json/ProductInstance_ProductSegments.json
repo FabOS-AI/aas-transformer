@@ -23,6 +23,13 @@
         "type": "ID_SHORT",
         "id": "LotDataMES_.*"
       }
+    },
+    {
+      "ruleOperator": "NOT_EQUALS",
+      "sourceSubmodelId": {
+        "type": "ID",
+        "id": ".*_ProductInstance"
+      }
     }
   ]
 }
