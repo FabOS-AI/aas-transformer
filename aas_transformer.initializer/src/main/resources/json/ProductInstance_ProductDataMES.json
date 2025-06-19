@@ -5,7 +5,7 @@
       "id": "ProductInstance_{{ submodel:sme_value(SOURCE_SUBMODEL, 'JobId') }}"
     },
     "submodelDestination": {
-      "idShort": "ProductDataMES_{{ submodel:sme_value(SOURCE_SUBMODEL, 'ProductId') }}_{{ submodel:sme_value(SOURCE_SUBMODEL, 'JobId') }}",
+      "idShort": "ProductDataMES_{{ submodel:sme_value(SOURCE_SUBMODEL, 'ProductId') }}",
       "id": "Product_{{ submodel:sme_value(SOURCE_SUBMODEL, 'ProductId') }}_ProductDataMES_ProductInstance_{{ submodel:sme_value(SOURCE_SUBMODEL, 'JobId') }}"
     }
   },
