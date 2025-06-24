@@ -43,16 +43,26 @@ public class TransformerActionSmCopyService extends TransformerActionService {
         String cpSourceSubmodelId = this.templateRenderer.render(this.transformerAction.getSubmodelId(), context);
         Submodel cpSourceSubmodel = this.submodelRepository.getExtSubmodel(this.submodelRegistry, cpSourceSubmodelId);
 
-        intermediateResult.setAdministration(cpSourceSubmodel.getAdministration());
-        intermediateResult.setCategory(cpSourceSubmodel.getCategory());
-        intermediateResult.setDescription(cpSourceSubmodel.getDescription());
-        intermediateResult.setDisplayName(cpSourceSubmodel.getDisplayName());
-        intermediateResult.setEmbeddedDataSpecifications(cpSourceSubmodel.getEmbeddedDataSpecifications());
-        intermediateResult.setExtensions(cpSourceSubmodel.getExtensions());
-        intermediateResult.setQualifiers(cpSourceSubmodel.getQualifiers());
-        intermediateResult.setSemanticId(cpSourceSubmodel.getSemanticId());
-        intermediateResult.getSubmodelElements().addAll(cpSourceSubmodel.getSubmodelElements());
-        intermediateResult.setSupplementalSemanticIds(cpSourceSubmodel.getSupplementalSemanticIds());
+        if(cpSourceSubmodel.getAdministration() != null)
+            intermediateResult.setAdministration(cpSourceSubmodel.getAdministration());
+        if(cpSourceSubmodel.getCategory() != null)
+            intermediateResult.setCategory(cpSourceSubmodel.getCategory());
+        if(cpSourceSubmodel.getDescription() != null)
+            intermediateResult.setDescription(cpSourceSubmodel.getDescription());
+        if(cpSourceSubmodel.getDisplayName() != null)
+            intermediateResult.setDisplayName(cpSourceSubmodel.getDisplayName());
+        if(cpSourceSubmodel.getEmbeddedDataSpecifications() != null)
+            intermediateResult.setEmbeddedDataSpecifications(cpSourceSubmodel.getEmbeddedDataSpecifications());
+        if(cpSourceSubmodel.getExtensions() != null)
+            intermediateResult.setExtensions(cpSourceSubmodel.getExtensions());
+        if(cpSourceSubmodel.getQualifiers() != null)
+            intermediateResult.setQualifiers(cpSourceSubmodel.getQualifiers());
+        if(cpSourceSubmodel.getSemanticId() != null)
+            intermediateResult.setSemanticId(cpSourceSubmodel.getSemanticId());
+        if(cpSourceSubmodel.getSubmodelElements() != null)
+            intermediateResult.getSubmodelElements().addAll(cpSourceSubmodel.getSubmodelElements());
+        if(cpSourceSubmodel.getSupplementalSemanticIds() != null)
+            intermediateResult.setSupplementalSemanticIds(cpSourceSubmodel.getSupplementalSemanticIds());
 
         // Avoids error during registration if type is not set in source submodel
         intermediateResult.getSemanticId().setType(ReferenceTypes.EXTERNAL_REFERENCE);
