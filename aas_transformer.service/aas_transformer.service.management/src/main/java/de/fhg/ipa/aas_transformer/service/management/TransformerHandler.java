@@ -35,7 +35,6 @@ import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.transformation.TransformationDetectionUtils.isSubmodelSourceOfTransformer;
 import static de.fhg.ipa.aas_transformer.transformation.TransformationDetectionUtils.lookupSourceSubmodels;
 import static de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer.hasTemplate;
-import static java.util.stream.Collectors.toList;
 
 @Component
 public class TransformerHandler {
@@ -101,16 +100,38 @@ public class TransformerHandler {
 
 //    @Transactional
     public Mono<Transformer> createOrUpdateTransformer(Transformer transformer, Boolean execute) {
+        Transformer existingTransformer = transformerJpaRepository.findById(transformer.getId()).block();
+
+        if(existingTransformer != null) {
+            LOG.info("Update transformer with ID: {}", transformer.getId());
+            return updateTransformer(existingTransformer, transformer, execute);
+        } else {
+            LOG.info("Creating transformer with ID: {}", transformer.getId());
+            return createTransformer(transformer, execute);
+        }
+    }
+
+    private Mono<Transformer> createTransformer(Transformer transformer, Boolean execute) {
         return this.transformerJpaRepository
                 .save(transformer)
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
                 .publishOn(Schedulers.boundedElastic())
                 .doOnSuccess(t -> {
+                    LOG.info("Transformer created with ID: {}", transformer.getId());
                     emitToSink(new TransformerChangeEvent(TransformerChangeEventType.CREATE, t));
                     if(execute) {
                         pushTransformationJobsAfterCreate(t);
                     }
                 });
+    }
+
+    private Mono<Transformer> updateTransformer(Transformer existingTransformer, Transformer newTransformer, Boolean execute) {
+        existingTransformer.setDestination(newTransformer.getDestination());
+        existingTransformer.setTransformerActions(newTransformer.getTransformerActions());
+        existingTransformer.setSourceSubmodelIdRules(newTransformer.getSourceSubmodelIdRules());
+        existingTransformer.setTransformOnRequest(newTransformer.getTransformOnRequest());
+
+        return createTransformer(existingTransformer, execute);
     }
 
     private void pushTransformationJobsAfterCreate(Transformer transformer) {
