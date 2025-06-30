@@ -107,6 +107,29 @@ public class TransformerRestControllerTest {
     }
 
     @Test
+    @Order(45)
+    public void updateTransformerExpectTransformerUpdated() {
+        // Update the Transformer:
+        String newId = newTransformer.getDestination().getSubmodelDestination().getId() + "_updated";
+        String newIdShort = newTransformer.getDestination().getSubmodelDestination().getIdShort() + "_updated";
+
+        DestinationSubmodel newDestinationSubmodel = new DestinationSubmodel(newIdShort, newId);
+        Destination newDestination = new Destination(newDestinationSubmodel);
+
+        newTransformer.setDestination(newDestination);
+        this.managementClient
+                .createTransformer(newTransformer, false)
+                .block();
+
+        // Verify the Update:
+        Transformer updatedTransformer = this.managementClient.getTransformer(newTransformer.getId()).block();
+        assertEquals(
+                newTransformer,
+                updatedTransformer
+        );
+    }
+
+    @Test
     @Order(50)
     public void deleteTransformerExpectValidChangeEventResponse() throws InterruptedException {
         // Create Expected Change Event Objects:
