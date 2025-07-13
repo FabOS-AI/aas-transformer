@@ -1,4 +1,4 @@
-FROM openjdk:18.0.2.1-jdk-slim-buster
+FROM eclipse-temurin:18
 
 ENV DATABASE_HOST="aas-transformer-database" \
     DATABASE_PORT=3306 \
