@@ -71,13 +71,9 @@ public class SubmodelDescriptorHandler {
                 .getTransformationExecutionServiceByTransformerId(transformerId);
 
         List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
-                sourceSubmodelId,
-                execService.getTransformer().getDestination().getAasDestination(),
-                templateRenderer.getTemplateContext(
-                        transformerId,
-                        List.of(),
-                        submodelRepository.getExtSubmodel(submodelRegistry, sourceSubmodelId)
-                )
+                transformerId,
+                execService.getTransformer().getDestination(),
+                submodelRepository.getExtSubmodel(submodelRegistry, sourceSubmodelId)
         );
 
         // Set context for template rendering
