@@ -1,4 +1,4 @@
-FROM openjdk:18.0.2.1-jdk-slim-buster
+FROM eclipse-temurin:18
 
 ENV AAS_TRANSFORMER_SERVICE_MANAGEMENT_SCHEMA="http" \
     AAS_TRANSFORMER_SERVICE_MANAGEMENT_HOST="aas-transformer-management" \
