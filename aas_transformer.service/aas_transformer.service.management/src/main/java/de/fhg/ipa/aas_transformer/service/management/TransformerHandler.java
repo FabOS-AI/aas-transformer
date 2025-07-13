@@ -4,16 +4,16 @@ import com.hubspot.jinjava.interpret.InterpretException;
 import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
+import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobProducer;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformerJpaRepository;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.service.management.converter.modelmapper.TransformerChangeEventToTransformerChangeEventDTOListenerConverter;
 import de.fhg.ipa.aas_transformer.service.management.converter.modelmapper.TransformerToTransformerDTOListenerConverter;
 import de.fhg.ipa.aas_transformer.transformation.TransformationDetectionService;
 import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
-import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
+import de.fhg.ipa.aas_transformer.transformation.templating.AasTemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.eclipse.digitaltwin.aas4j.v3.model.*;
@@ -28,7 +28,10 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.DELETE;
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
@@ -47,7 +50,7 @@ public class TransformerHandler {
     private final TransformerJpaRepository transformerJpaRepository;
     private final TransformationDescriptionJpaRepository transformationDescriptionJpaRepository;
     private final RedisJobProducer redisJobProducer;
-    private final TemplateRenderer templateRenderer;
+    private final AasTemplateRenderer aasTemplateRenderer;
 
     private final Sinks.Many<TransformerChangeEvent> transformerChangeEventSink =
             Sinks.many().multicast().onBackpressureBuffer();
@@ -64,7 +67,7 @@ public class TransformerHandler {
             TransformationDescriptionJpaRepository transformationDescriptionJpaRepository,
             ModelMapper modelMapper,
             RedisJobProducer redisJobProducer,
-            TemplateRenderer templateRenderer,
+            AasTemplateRenderer aasTemplateRenderer,
             TransformationUtils transformationUtils
     ) {
         this.aasRegistry = aasRegistry;
@@ -75,7 +78,7 @@ public class TransformerHandler {
         this.transformationDescriptionJpaRepository = transformationDescriptionJpaRepository;
         this.modelMapper = modelMapper;
         this.redisJobProducer = redisJobProducer;
-        this.templateRenderer = templateRenderer;
+        this.aasTemplateRenderer = aasTemplateRenderer;
         this.transformationUtils = transformationUtils;
 
         // Set Model Mapper Converters:
@@ -137,7 +140,7 @@ public class TransformerHandler {
     private void pushTransformationJobsAfterCreate(Transformer transformer) {
         TransformationDetectionService service = new TransformationDetectionService(
             modelMapper.map(transformer, TransformerDTOListener.class),
-            templateRenderer,
+            aasTemplateRenderer,
             transformationUtils,
             aasRegistry,
             submodelRegistry
@@ -148,12 +151,20 @@ public class TransformerHandler {
                     //filter all submodels being source of transformation
                     .filter(service::isSubmodelSourceOfTransformerActions)
                     .map(submodel -> {
+                        // render target submodel ID:
+                        String destinationSubmodelId = aasTemplateRenderer.renderDestinationSubmodelId(
+                          transformer.getId(),
+                          transformer.getDestination(),
+                          submodel
+                        );
+
                         // create TransformationJob
                         return new TransformationJob(
                                 EXECUTE,
                                 transformer.getId(),
                                 submodel.getId(),
-                                null
+                                null,
+                                destinationSubmodelId
                         );
                     })
                     .forEach(job -> {
@@ -206,10 +217,12 @@ public class TransformerHandler {
                 // Create a TransformationJob for each destination submodel
                 .forEach(submodelId -> {
                     try {
+                        // render target submodel ID:
                         this.redisJobProducer.pushJob(new TransformationJob(
                                 DELETE,
                                 t.getId(),
                                 submodelId,
+                                null,
                                 null
                         ));
                     } catch (SerializationException e) {
@@ -249,18 +262,16 @@ public class TransformerHandler {
         List<Submodel> orphanDestinationSubmodels = new ArrayList<>();
         String destinationShellId = null;
 
-        Map<String, Object> templateContext = this.templateRenderer.getTemplateContext(
-                t.getId(),
-                new ArrayList<>(),
-                sourceSubmodel
-        );
-
         if(hasTransformerAasDestination(t)) {
             destinationShellId = t.getDestination().getAasDestination().getId();
 
             if(hasTemplate(destinationShellId)) {
                 try {
-                    destinationShellId = templateRenderer.render(destinationShellId, templateContext);
+                    destinationShellId = aasTemplateRenderer.renderDestinationShellId(
+                            t.getId(),
+                            t.getDestination(),
+                            sourceSubmodel
+                    );
                 } catch(InterpretException e) {
                     LOG.warn("""
                     Destination AAS is defined with templates in transformer but data missing to render template.
@@ -274,21 +285,15 @@ public class TransformerHandler {
         }
 
         DestinationSubmodel destinationSubmodelDef = t.getDestination().getSubmodelDestination();
-        AssetAdministrationShell destinationShell = null;
 
         if(destinationShellId != null) {
-            destinationShell = aasRepository.getAas(destinationShellId);
-            templateContext = templateRenderer.getTemplateContext(
-                    t.getId(),
-                    List.of(destinationShell),
-                    sourceSubmodel
-            );
-
             try {
-                String destinationSubmodelId = templateRenderer.render(destinationSubmodelDef.getId(), templateContext);
-                return List.of(
-                        submodelRepository.getSubmodel(destinationSubmodelId)
+                String destinationSubmodelId = aasTemplateRenderer.renderDestinationSubmodelId(
+                        t.getId(),
+                        t.getDestination(),
+                        sourceSubmodel
                 );
+                return List.of(submodelRepository.getSubmodel(destinationSubmodelId));
             } catch (InterpretException e) {
                 LOG.error("Failed to render destination submodel ID template: {}", e.getMessage());
             }
@@ -301,9 +306,10 @@ public class TransformerHandler {
         // get orphaned destination submodel based on idShort from definition of destination submodel in transformer
         // and the fact that AasDestination Definition is missing in transformer => source and destination submodel have been in the same shell
         try {
-            String destinationSubmodelIdShort = this.templateRenderer.render(
-                    destinationSubmodelDef.getIdShort(),
-                    templateContext
+            String destinationSubmodelIdShort = this.aasTemplateRenderer.renderDestinationSubmodelIdShort(
+                    t.getId(),
+                    t.getDestination(),
+                    sourceSubmodel
             );
             List<Submodel> destinationSubmodels = this.submodelRepository.getAllSubmodels()
                     .stream()
@@ -357,26 +363,13 @@ public class TransformerHandler {
         List<String> destinationSubmodelIds = new ArrayList<>();
 
         for(Submodel sourceSubmodel : sourceSubmodels) {
-            List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
-                    sourceSubmodel.getId(),
-                    t.getDestination().getAasDestination(),
-                    templateRenderer.getTemplateContext(
-                            t.getId(),
-                            List.of(),
+            destinationSubmodelIds.add(
+                    aasTemplateRenderer.renderDestinationSubmodelId(
+                            transformerId,
+                            t.getDestination(),
                             sourceSubmodel
                     )
             );
-
-            Map<String, Object> templateContext = this.templateRenderer.getTemplateContext(
-                    t.getId(),
-                    destinationShells,
-                    sourceSubmodel
-            );
-
-            destinationSubmodelIds.add(templateRenderer.render(
-                    t.getDestination().getSubmodelDestination().getId(),
-                    templateContext
-            ));
         }
 
         return destinationSubmodelIds;
