@@ -1,7 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.listener;
 
 import de.fhg.ipa.aas_transformer.aas.AasRegistry;
-import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
@@ -10,6 +9,7 @@ import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.service.listener.events.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.transformation.TransformationDetectionService;
 import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
+import de.fhg.ipa.aas_transformer.transformation.templating.AasTemplateRenderer;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
@@ -27,7 +27,6 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -35,7 +34,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
     private static final Logger LOG = LoggerFactory.getLogger(TransformationDetectionServiceCache.class);
 
     private final SubmodelRepository submodelRepository;
-    private final TemplateRenderer templateRenderer;
+    private final AasTemplateRenderer aasTemplateRenderer;
     private final TransformationUtils transformationUtils;
     private final AasRegistry aasRegistry;
     private final SubmodelRegistry submodelRegistry;
@@ -53,14 +52,14 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
             AasRegistry aasRegistry,
             SubmodelRegistry submodelRegistry,
             SubmodelRepository submodelRepository,
-            TemplateRenderer templateRenderer,
+            AasTemplateRenderer aasTemplateRenderer,
             TransformationUtils transformationUtils
     ) {
         super(managementClient);
         this.aasRegistry = aasRegistry;
         this.submodelRegistry = submodelRegistry;
         this.submodelRepository = submodelRepository;
-        this.templateRenderer = templateRenderer;
+        this.aasTemplateRenderer = aasTemplateRenderer;
         this.transformationUtils = transformationUtils;
     }
 
@@ -115,24 +114,30 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
     }
 
     private List<TransformationJob> createTransformationJob(SubmodelMessageEvent event, TransformationDetectionService service) {
+        TransformerDTOListener transformer = service.getTransformerDTOListener();
         switch (event.getChangeEventType()) {
             case CREATED:
             case UPDATED:
-                Submodel sourceSubmodel = null;
-                if(strictModeEnabled)
-                    sourceSubmodel = submodelRepository.getSubmodel(event.getSubmodel().getId());
+                Submodel sourceSubmodel = submodelRepository.getSubmodel(event.getSubmodel().getId());
+                String destinationSubmodelId = aasTemplateRenderer.renderDestinationSubmodelId(
+                        transformer.getId(),
+                        transformer.getDestination(),
+                        sourceSubmodel
+                );
                 return List.of(new TransformationJob(
                         TransformationJobAction.EXECUTE,
                         service.getTransformerDTOListener().getId(),
                         event.getSubmodel().getId(),
-                        sourceSubmodel
+                        sourceSubmodel,
+                        destinationSubmodelId
                 ));
             case DELETED:
                 if(service.getTransformerDTOListener().getTransformOnRequest())
                     return List.of(new TransformationJob(
                             TransformationJobAction.DELETE,
-                            service.getTransformerDTOListener().getId(),
+                            transformer.getId(),
                             event.getSubmodel().getId(),
+                            null,
                             null
                     ));
                 else
@@ -147,6 +152,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
                                     TransformationJobAction.DELETE,
                                     service.getTransformerDTOListener().getId(),
                                     smId,
+                                    null,
                                     null
                             ))
                             .collect(Collectors.toList());
@@ -160,7 +166,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
         transformationDetectionServices.add(
                 new TransformationDetectionService(
                         transformerDTOListener,
-                        templateRenderer,
+                        aasTemplateRenderer,
                         transformationUtils,
                         aasRegistry,
                         submodelRegistry
