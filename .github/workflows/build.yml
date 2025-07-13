@@ -41,6 +41,8 @@ jobs:
               "password": "${{secrets.GITHUB_TOKEN}}"
             }
           ]'
+      - name: Add host.docker.internal to /etc/hosts
+        run: echo "$(ip route | grep default | awk '{print $3}') host.docker.internal" | sudo tee -a /etc/hosts
       - name: Build with Maven and push Docker Images
         if: github.event_name != 'pull_request' && (github.ref_name == 'develop' || github.ref_name == 'main' || startsWith(github.ref_name, 'release/'))
         run: mvn $MAVEN_PROFILES $MAVEN_CLI_OPTS clean deploy
