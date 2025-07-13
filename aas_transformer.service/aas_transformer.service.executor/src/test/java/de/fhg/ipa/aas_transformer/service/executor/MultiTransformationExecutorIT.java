@@ -96,6 +96,7 @@ public class MultiTransformationExecutorIT extends AbstractIT {
                 EXECUTE,
                 testTransformer.getId(),
                 ((Submodel)triple.get(1)).getId(),
+                null,
                 null
             );
             redisClient.leftPushJob(new RedisTransformationJob(job));

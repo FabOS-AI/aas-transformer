@@ -209,6 +209,7 @@ public class SingleTransformationExecutorIT extends AbstractIT {
                 EXECUTE,
                 transformer.getId(),
                 getTestSubmodel(transformer).getId(),
+                null,
                 null
         );
 

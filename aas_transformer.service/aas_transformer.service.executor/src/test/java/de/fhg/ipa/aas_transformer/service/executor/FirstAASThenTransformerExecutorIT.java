@@ -119,6 +119,7 @@ public class FirstAASThenTransformerExecutorIT extends AbstractIT {
                 EXECUTE,
                 factsTransformer.getId(),
                 factsSubmodel.getId(),
+                null,
                 null
         );
 
@@ -142,6 +143,7 @@ public class FirstAASThenTransformerExecutorIT extends AbstractIT {
                 TransformationJobAction.DELETE,
                 factsTransformer.getId(),
                 destinationSubmodelId,
+                null,
                 null
         );
 

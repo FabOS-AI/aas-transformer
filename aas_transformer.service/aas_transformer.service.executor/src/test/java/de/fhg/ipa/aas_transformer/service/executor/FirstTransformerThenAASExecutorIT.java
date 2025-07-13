@@ -104,6 +104,7 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
                 TransformationJobAction.EXECUTE,
                 factsTransformer.getId(),
                 factsSubmodel.getId(),
+                null,
                 null
         );
 
@@ -130,7 +131,8 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
             TransformationJobAction.DELETE,
             null,
                 destinationSubmodelId,
-            null
+            null,
+                null
         );
 
         redisClient.leftPushJob(new RedisTransformationJob(deletedJob));

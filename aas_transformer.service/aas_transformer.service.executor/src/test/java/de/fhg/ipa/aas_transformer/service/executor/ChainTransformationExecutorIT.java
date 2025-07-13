@@ -106,18 +106,21 @@ public class ChainTransformationExecutorIT extends AbstractIT {
                     EXECUTE,
                     oneStepTransformerAvg.getId(),
                     timeseriesSubmodel.getId(),
+                    null,
                     null
             ),
             new TransformationJob(
                     EXECUTE,
                     oneStepTransformerTakeEvery.getId(),
                     timeseriesSubmodel.getId()+"_avg",
+                    null,
                     null
             ),
             new TransformationJob(
                     EXECUTE,
                     twoStepTransformer.getId(),
                     timeseriesSubmodel.getId(),
+                    null,
                     null
             )
     );

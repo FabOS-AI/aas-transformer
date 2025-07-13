@@ -127,7 +127,8 @@ public class StrictModeExecutorIT extends AbstractIT {
                 EXECUTE,
                 transformer.getId(),
                 getTestSubmodel(transformer).getId(),
-                getTestSubmodel(transformer)
+                getTestSubmodel(transformer),
+                null
         );
         RedisTransformationJob redisJob = new RedisTransformationJob(job);
 
