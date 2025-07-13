@@ -43,6 +43,8 @@ jobs:
           ]'
       - name: Add host.docker.internal to /etc/hosts
         run: echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+      - name: Test host.docker.internal
+        run: ping -c 1 host.docker.internal || echo "host.docker.internal is not reachable, continuing anyway"
       - name: Build with Maven and push Docker Images
         if: github.event_name != 'pull_request' && (github.ref_name == 'develop' || github.ref_name == 'main' || startsWith(github.ref_name, 'release/'))
         run: mvn $MAVEN_PROFILES $MAVEN_CLI_OPTS clean deploy
