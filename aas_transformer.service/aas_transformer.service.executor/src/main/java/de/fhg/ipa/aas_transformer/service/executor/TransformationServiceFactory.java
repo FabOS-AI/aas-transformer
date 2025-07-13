@@ -10,10 +10,10 @@ import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRe
 import de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService;
 import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionServiceFactory;
+import de.fhg.ipa.aas_transformer.transformation.templating.AasTemplateRenderer;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +24,7 @@ public class TransformationServiceFactory {
     @Value("${aas_transformer.services.executor.external_base_url}")
     public String externalBaseUrl;
 
-    private final TemplateRenderer templateRenderer;
+    private final AasTemplateRenderer aasTemplateRenderer;
     private final AasRegistry aasRegistry;
     private final AasRepository aasRepository;
     private final SubmodelRegistry submodelRegistry;
@@ -35,7 +35,7 @@ public class TransformationServiceFactory {
     private final TransformationUtils transformationUtils;
 
     public TransformationServiceFactory(
-            TemplateRenderer templateRenderer,
+            AasTemplateRenderer aasTemplateRenderer,
             AasRegistry aasRegistry,
             AasRepository aasRepository,
             SubmodelRegistry submodelRegistry,
@@ -45,7 +45,7 @@ public class TransformationServiceFactory {
             TransformationDescriptionJpaRepository transformationDescriptionJpaRepository,
             TransformationUtils transformationUtils
     ) {
-        this.templateRenderer = templateRenderer;
+        this.aasTemplateRenderer = aasTemplateRenderer;
         this.aasRegistry = aasRegistry;
         this.aasRepository = aasRepository;
         this.submodelRegistry = submodelRegistry;
@@ -61,7 +61,7 @@ public class TransformationServiceFactory {
 
         var executionService = new TransformationExecutionService(
                 transformer,
-                this.templateRenderer,
+                this.aasTemplateRenderer,
                 this.aasRegistry,
                 this.aasRepository,
                 this.submodelRegistry,
