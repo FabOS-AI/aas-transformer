@@ -27,7 +27,7 @@ public class RedisJobProducer extends RedisClient {
             return;
         };
 
-        this.leftPushJob(new RedisTransformationJob(job));
+        this.rightPushJob(new RedisTransformationJob(job));
         LOG.info("Pushing transformation job to queue: {}", job);
     }
 

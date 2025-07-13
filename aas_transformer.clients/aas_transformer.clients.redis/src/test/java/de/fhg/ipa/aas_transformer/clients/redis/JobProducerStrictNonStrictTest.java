@@ -25,14 +25,16 @@ public class JobProducerStrictNonStrictTest {
             EXECUTE,
             UUID.randomUUID(),
             UUID.randomUUID().toString(),
-            null
+            null,
+            UUID.randomUUID().toString()
     );
 
     public static TransformationJob jobStrict = new TransformationJob(
             EXECUTE,
             UUID.randomUUID(),
             UUID.randomUUID().toString(),
-            new DefaultSubmodel()
+            new DefaultSubmodel(),
+            UUID.randomUUID().toString()
     );
 
     @Test

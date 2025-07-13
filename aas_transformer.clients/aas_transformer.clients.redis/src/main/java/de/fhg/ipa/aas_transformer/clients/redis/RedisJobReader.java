@@ -1,15 +1,13 @@
 package de.fhg.ipa.aas_transformer.clients.redis;
 
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
-import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 @Component
 public class RedisJobReader extends RedisClient {

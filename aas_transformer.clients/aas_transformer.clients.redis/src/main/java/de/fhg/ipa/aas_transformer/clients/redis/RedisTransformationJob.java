@@ -29,6 +29,7 @@ public class RedisTransformationJob implements Serializable {
     public UUID transformerId;
     public String sourceSubmodelId;
     public String sourceSubmodel = null;
+    public String targetSubmodelId;
 
     // Default constructor is required for (De)serialization
     public RedisTransformationJob() {}
@@ -37,6 +38,7 @@ public class RedisTransformationJob implements Serializable {
         this.transformationJobAction = transformationJob.getTransformationJobAction();
         this.transformerId = transformationJob.getTransformerId();
         this.sourceSubmodelId = transformationJob.getSubmodelId();
+        this.targetSubmodelId = transformationJob.getTargetSubmodelId();
 
         if(transformationJob.getSubmodel() == null) {
             this.sourceSubmodel = null;
@@ -57,10 +59,8 @@ public class RedisTransformationJob implements Serializable {
         try {
             submodel = jsonDeserializer.read(this.sourceSubmodel, Submodel.class);
         } catch (DeserializationException e) {
-            LOG.error("Failed to deserialize submodel | {}", e.getMessage());
             submodel = null;
         } catch(IllegalArgumentException e) {
-            LOG.info("Submodel is null | {}", e.getMessage());
             submodel = null;
         }
 
@@ -68,7 +68,8 @@ public class RedisTransformationJob implements Serializable {
                 this.transformationJobAction,
                 this.transformerId,
                 this.sourceSubmodelId,
-                submodel
+                submodel,
+                this.targetSubmodelId
         );
     }
 

@@ -77,12 +77,14 @@ public class MultiJobTest {
         for(int i = 0; i < jobCount; i++) {
             LOG.info("Pushing job {}", i);
             String sourceSubmodelId = "submodelId"+i;
+            String targetSubmodelId = "targetSubmodelId"+i;
 
             TransformationJob job = new TransformationJob(
                     TransformationJobAction.EXECUTE,
                     UUID.randomUUID(),
                     sourceSubmodelId,
-                    null
+                    null,
+                    targetSubmodelId
             );
             RedisTransformationJob redisJob = new RedisTransformationJob(job);
 

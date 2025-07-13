@@ -24,9 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Disabled
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RedisClientTest {
 
-    RedisClient redisClient;
+    RedisClient redisClient = null;
 
     // Test Objects:
     static UUID transformerId = UUID.randomUUID();
@@ -40,7 +41,8 @@ public class RedisClientTest {
                 TransformationJobAction.EXECUTE,
                 transformerId,
                 getSimpleSubmodel().getId(),
-                null
+                null,
+                "targetSubmodelId"
         ));
     }
 
@@ -55,10 +57,12 @@ public class RedisClientTest {
 
     @PostConstruct
     public void init() {
-        Integer port = redisContainer.getFirstMappedPort();
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", port);
-        connectionFactory.start();
-        redisClient = new RedisClient(connectionFactory);
+        if(redisClient == null) {
+            Integer port = redisContainer.getFirstMappedPort();
+            LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", port);
+            connectionFactory.start();
+            redisClient = new RedisClient(connectionFactory);
+        }
     }
 
     @Test
