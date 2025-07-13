@@ -7,9 +7,10 @@ data class TransformationJob(
     var transformationJobAction: TransformationJobAction,
     var transformerId: UUID?,
     var submodelId: String?,
-    var submodel: Submodel?
+    var submodel: Submodel?,
+    var targetSubmodelId: String?
 ) {
     override fun toString(): String {
-        return "TransformationJob(transformationJobAction=$transformationJobAction, transformerId=$transformerId, submodelId=$submodelId, submodel=$submodel)"
+        return "TransformationJob(transformationJobAction=$transformationJobAction, transformerId=$transformerId, submodelId=$submodelId, submodel=$submodel, targetSubmodelId=$targetSubmodelId)"
     }
 }
