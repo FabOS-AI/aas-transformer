@@ -1,9 +1,5 @@
 package de.fhg.ipa.aas_transformer.transformation;
 
-import de.fhg.ipa.aas_transformer.aas.AasRegistry;
-import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.transformation.templating.*;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
@@ -11,11 +7,8 @@ import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultKey;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultReference;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
 import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,7 +19,7 @@ public class TransformationDetectionServiceTest {
     String id = "id";
     String idShort = "idShort";
     String semanticId = "semanticId";
-    TemplateRenderer templateRenderer = null;
+    AasTemplateRenderer aasTemplateRenderer = null;
 
     public TransformationDetectionServiceTest() {
         submodel1.setId(id);
@@ -53,7 +46,7 @@ public class TransformationDetectionServiceTest {
         TransformerDTOListener transformerDTOListener = new TransformerDTOListener();
         TransformationDetectionService transformationDetectionService = new TransformationDetectionService(
                 transformerDTOListener,
-                templateRenderer,
+                aasTemplateRenderer,
                 null,
                 null,
                 null
@@ -95,7 +88,7 @@ public class TransformationDetectionServiceTest {
         TransformerDTOListener transformerDTOListener = new TransformerDTOListener();
         TransformationDetectionService transformationDetectionService = new TransformationDetectionService(
                 transformerDTOListener,
-                templateRenderer,
+                aasTemplateRenderer,
                 null,
                 null,
                 null
@@ -131,7 +124,7 @@ public class TransformationDetectionServiceTest {
         TransformerDTOListener transformerDTOListener = new TransformerDTOListener();
         TransformationDetectionService transformationDetectionService = new TransformationDetectionService(
                 transformerDTOListener,
-                templateRenderer,
+                aasTemplateRenderer,
                 null,
                 null,
                 null
