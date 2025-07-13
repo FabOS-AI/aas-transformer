@@ -108,7 +108,7 @@ public class FirstAASThenTransformerSystemTest extends AbstractSystemTest {
         managementClient.deleteTransformer(transformerList.get(0).getId(), true).block();
 
         int tryCount = 0;
-        int tryLimit = 100;
+        int tryLimit = 20;
         int sleepInMs = 100;
         expectedTransformerCount = 0;
 

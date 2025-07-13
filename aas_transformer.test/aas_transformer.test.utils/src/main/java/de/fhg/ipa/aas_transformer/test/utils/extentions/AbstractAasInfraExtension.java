@@ -19,7 +19,7 @@ import java.util.UUID;
 abstract class AbstractAasInfraExtension {
     protected static final String basyxImageVersion = "2.0.0-milestone-04";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofMinutes(5);
-    public static String HOSTNAME = "localhost";
+    public static String HOSTNAME = "host.docker.internal";
 
     private static Network containerNetwork = Network.newNetwork();
     private static Map<String, String> containerLabels = Map.of(
@@ -97,6 +97,7 @@ abstract class AbstractAasInfraExtension {
 
         GenericContainer container = new GenericContainer<>(
                 DockerImageName.parse("eclipsebasyx/aas-environment:"+basyxImageVersion))
+                .withNetworkAliases("aas-env")
                 .withNetwork(containerNetwork)
                 .withLabels(aasEnvLabels)
                 .dependsOn()

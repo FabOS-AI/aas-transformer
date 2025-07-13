@@ -32,10 +32,10 @@ public class AbstractSystemTest {
         this.managementClient = new ManagementClient("http://localhost:" + transformerManagementPort);
         this.metricsClient = new MetricsClient("http://localhost:" + transformerManagementPort);
         this.jobsClient = new JobsClient("http://localhost:" + transformerManagementPort);
-        this.aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort);
-        this.aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort);
-        this.smRegistry = new SubmodelRegistry("http://localhost:" + smRegistryPort, "http://localhost:" + smRepositoryPort);
-        this.smRepository = new SubmodelRepository("http://localhost:" + smRepositoryPort);
+        this.aasRegistry = new AasRegistry("http://host.docker.internal:" + aasRegistryPort, "http://host.docker.internal:" + aasRepositoryPort);
+        this.aasRepository = new AasRepository("http://host.docker.internal:" + aasRepositoryPort);
+        this.smRegistry = new SubmodelRegistry("http://host.docker.internal:" + smRegistryPort, "http://host.docker.internal:" + smRepositoryPort);
+        this.smRepository = new SubmodelRepository("http://host.docker.internal:" + smRepositoryPort);
         LettuceConnectionFactory connFac = new LettuceConnectionFactory(
                 System.getProperty("spring.data.redis.host"),
                 Integer.parseInt(System.getProperty("spring.data.redis.port"))
