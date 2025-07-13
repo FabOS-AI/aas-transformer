@@ -9,6 +9,7 @@ import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionService;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionServiceFactory;
+import de.fhg.ipa.aas_transformer.transformation.templating.AasTemplateRenderer;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
@@ -19,7 +20,6 @@ import org.eclipse.digitaltwin.basyx.core.exceptions.ElementDoesNotExistExceptio
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 
 import java.time.Duration;
@@ -31,7 +31,7 @@ import static java.lang.Thread.sleep;
 public class TransformationExecutionService {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationExecutionService.class);
 
-    private static TemplateRenderer templateRenderer = null;
+    private static AasTemplateRenderer aasTemplateRenderer = null;
     private final Transformer transformer;
     private final AasRegistry aasRegistry;
     private final AasRepository aasRepository;
@@ -46,7 +46,7 @@ public class TransformationExecutionService {
 
     public TransformationExecutionService(
             Transformer transformer,
-            TemplateRenderer templateRenderer,
+            AasTemplateRenderer aasTemplateRenderer,
             AasRegistry aasRegistry,
             AasRepository aasRepository,
             SubmodelRegistry submodelRegistry,
@@ -67,8 +67,8 @@ public class TransformationExecutionService {
         this.transformationDescriptionJpaRepository = transformationDescriptionJpaRepository;
         this.externalBaseUrl = externalBaseUrl;
         this.transformationUtils = transformationUtils;
-        if(this.templateRenderer == null)
-            this.templateRenderer = templateRenderer;
+        if(this.aasTemplateRenderer == null)
+            this.aasTemplateRenderer = aasTemplateRenderer;
 
         for (var transformerAction : transformer.getTransformerActions()) {
             var transformerActionService = this.transformerActionServiceFactory.create(transformerAction);
@@ -112,19 +112,18 @@ public class TransformationExecutionService {
     private Submodel executeJob(
             Submodel sourceSubmodel,
             String destinationSubmodelId,
-            String destinationSubmodelIdShort,
-            Map<String, Object> context
+            String destinationSubmodelIdShort
     ) {
         try {
             // Create or get destination submodel:
-            Submodel intermediateResult = createDestinationSubmodel(context);
+            Submodel intermediateResult = createDestinationSubmodel(sourceSubmodel);
             boolean isFirstAction = true;
             // Execute transformer actions
             for (var transformerActionService : this.transformerActionServices) {
                 intermediateResult = transformerActionService.execute(
                         sourceSubmodel,
                         intermediateResult,
-                        context,
+                        aasTemplateRenderer.getTemplateContext(transformer.getId(), transformer.getDestination(), sourceSubmodel),
                         isFirstAction
                 );
                 isFirstAction = false;
@@ -159,34 +158,35 @@ public class TransformationExecutionService {
 
         // Destination Shells:
         List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
-                sourceSubmodel.getId(),
-                transformer.getDestination().getAasDestination(),
-                templateRenderer.getTemplateContext(this.transformer.getId(), List.of(), sourceSubmodel)
-        );
-
-        // Set context for template rendering
-        Map<String, Object> context = templateRenderer.getTemplateContext(
-                this.transformer.getId(),
-                destinationShells,
+                transformer.getId(),
+                transformer.getDestination(),
                 sourceSubmodel
         );
 
+        // Set context for template rendering
+//        Map<String, Object> context = templateRenderer.getTemplateContext(
+//                this.transformer.getId(),
+//                destinationShells,
+//                sourceSubmodel
+//        );
+
         // Set ID and IdShort for destination submodel:
-        var destinationSubmodelId = this.templateRenderer.render(
-                this.transformer.getDestination().getSubmodelDestination().getId(),
-                context
+        var destinationSubmodelId = this.aasTemplateRenderer.renderDestinationSubmodelId(
+                this.transformer.getId(),
+                this.transformer.getDestination(),
+                sourceSubmodel
         );
-        var destinationSubmodelIdShort = this.templateRenderer.render(
-                this.transformer.getDestination().getSubmodelDestination().getIdShort(),
-                context
+        var destinationSubmodelIdShort = this.aasTemplateRenderer.renderDestinationSubmodelIdShort(
+                this.transformer.getId(),
+                this.transformer.getDestination(),
+                sourceSubmodel
         );
 
         Instant startTransformation = Instant.now();
         Submodel destinationSubmodel = executeJob(
                 sourceSubmodel,
                 destinationSubmodelId,
-                destinationSubmodelIdShort,
-                context
+                destinationSubmodelIdShort
         );
         Instant endTransformation = Instant.now();
 
@@ -227,26 +227,28 @@ public class TransformationExecutionService {
 
         // Destination Shells:
         List<AssetAdministrationShell> destinationShells = transformationUtils.lookupDestinationShells(
-                sourceSubmodel.getId(),
-                transformer.getDestination().getAasDestination(),
-                templateRenderer.getTemplateContext(this.transformer.getId(),List.of(), sourceSubmodel)
-        );
-
-        // Set context for template rendering
-        Map<String, Object> context = templateRenderer.getTemplateContext(
-                this.transformer.getId(),
-                destinationShells,
+                transformer.getId(),
+                transformer.getDestination(),
                 sourceSubmodel
         );
 
+        // Set context for template rendering
+//        Map<String, Object> context = aasTemplateRenderer.getTemplateContext(
+//                this.transformer.getId(),
+//                destinationShells,
+//                sourceSubmodel
+//        );
+
         // Set ID and IdShort for destination submodel:
-        var destinationSubmodelId = this.templateRenderer.render(
-                this.transformer.getDestination().getSubmodelDestination().getId(),
-                context
+        var destinationSubmodelId = this.aasTemplateRenderer.renderDestinationSubmodelId(
+                this.transformer.getId(),
+                this.transformer.getDestination(),
+                sourceSubmodel
         );
-        var destinationSubmodelIdShort = this.templateRenderer.render(
-                this.transformer.getDestination().getSubmodelDestination().getIdShort(),
-                context
+        var destinationSubmodelIdShort = this.aasTemplateRenderer.renderDestinationSubmodelIdShort(
+                this.transformer.getId(),
+                this.transformer.getDestination(),
+                sourceSubmodel
         );
 
         if(!this.transformer.getTransformOnRequest()) {
@@ -254,8 +256,7 @@ public class TransformationExecutionService {
             Submodel destinationSubmodel = executeJob(
                     sourceSubmodel,
                     destinationSubmodelId,
-                    destinationSubmodelIdShort,
-                    context
+                    destinationSubmodelIdShort
             );
             Instant endTransformation = Instant.now();
 
@@ -284,9 +285,8 @@ public class TransformationExecutionService {
         }
 
         addSubmodelReferenceToShells(
-                sourceSubmodel.getId(),
-                destinationSubmodelId,
-                context
+                sourceSubmodel,
+                destinationSubmodelId
         );
     }
 
@@ -315,16 +315,15 @@ public class TransformationExecutionService {
     }
 
     private void addSubmodelReferenceToShells(
-            String sourceSubmodelId,
-            String destinationSubmodelId,
-            Map<String, Object> context
+            Submodel sourceSubmodel,
+            String destinationSubmodelId
     ) {
         // Add reference to new submodel in destination AAS
         if (transformer.getDestination().getAasDestination() != null) {
             try {
                 addReferenceToNewSubmodelInDestinationAas(
-                        destinationSubmodelId,
-                        context
+                        sourceSubmodel,
+                        destinationSubmodelId
                 );
             } catch (ApiException e) {
                 LOG.error("Could not add reference to new submodel in destination AAS | {}", e.getMessage());
@@ -332,7 +331,7 @@ public class TransformationExecutionService {
             // Add reference to new submodel in source AAS
         } else {
             addReferenceToNewSubmodelInOriginAAS(
-                    sourceSubmodelId,
+                    sourceSubmodel.getId(),
                     destinationSubmodelId
             );
         }
@@ -382,13 +381,15 @@ public class TransformationExecutionService {
     }
 
     private void addReferenceToNewSubmodelInDestinationAas(
-            String destinationSubmodelId,
-            Map<String, Object> context
+            Submodel sourceSubmodel,
+            String destinationSubmodelId
     ) throws ApiException {
-        var destinationAasId = this.templateRenderer.render(
-                transformer.getDestination().getAasDestination().getId(),
-                context
+        var destinationAasId = this.aasTemplateRenderer.renderDestinationShellId(
+                transformer.getId(),
+                transformer.getDestination(),
+                sourceSubmodel
         );
+
         // Check if destination AAS exists
         var destinationAASDescriptorOptional = this.aasRegistry.getAasDescriptor(destinationAasId);
 
@@ -411,23 +412,30 @@ public class TransformationExecutionService {
                     destinationSubmodelDescriptorOptional.get()
             );
             AasRepository.addSubmodelReferenceToExtAas(aasRegistry, destinationAas.getId(), destinationSubmodelId);
-//            this.aasRepository.addSubmodelReferenceToAas(
-//                    destinationAas.getId(),
-//                    destinationSubmodelId
-//            );
         }
     }
 
-    private Submodel createDestinationSubmodel(Map<String, Object> context) {
+    private Submodel createDestinationSubmodel(Submodel sourceSubmodel) {
         // Create ID and IdShort for destination submodel:
-        var destinationSubmodelId = this.templateRenderer.render(
-                this.transformer.getDestination().getSubmodelDestination().getId(),
-                context
+        var destinationSubmodelId = this.aasTemplateRenderer.renderDestinationSubmodelId(
+                this.transformer.getId(),
+                this.transformer.getDestination(),
+                sourceSubmodel
         );
-        var destinationSubmodelIdShort = this.templateRenderer.render(
-                this.transformer.getDestination().getSubmodelDestination().getIdShort(),
-                context
+//                .render(
+//                this.transformer.getDestination().getSubmodelDestination().getId(),
+//                context
+//        );
+        var destinationSubmodelIdShort = this.aasTemplateRenderer.renderDestinationSubmodelIdShort(
+                this.transformer.getId(),
+                this.transformer.getDestination(),
+                sourceSubmodel
         );
+
+//                this.aasTemplateRenderer.render(
+//                this.transformer.getDestination().getSubmodelDestination().getIdShort(),
+//                context
+//        );
 
         // Create new destination submodel :
         var newDestinationSubmodel = new DefaultSubmodel();

@@ -2,9 +2,10 @@ package de.fhg.ipa.aas_transformer.transformation;
 
 import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import de.fhg.ipa.aas_transformer.model.DestinationAAS;
+import de.fhg.ipa.aas_transformer.model.Destination;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
+import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class TransformationUtils {
@@ -33,18 +35,18 @@ public class TransformationUtils {
     }
 
     public List<AssetAdministrationShell> lookupDestinationShells(
-            String sourceSubmodelId,
-            DestinationAAS destinationAas,
-            Map<String, Object> templateContext
+            UUID transformerId,
+            Destination transformerDestination,
+            Submodel sourceSubmodel
     ) {
         List<String> destinationShellIds = lookupDestinationShellIds(
-                sourceSubmodelId,
-                destinationAas,
-                templateContext
+                transformerId,
+                transformerDestination,
+                sourceSubmodel
         );
         List<AssetAdministrationShell> destinationShells = new ArrayList<>();
         for(String shellId: destinationShellIds) {
-            AssetAdministrationShell destinationShell = aasRepository.getExtAas(aasRegistry, shellId);
+            AssetAdministrationShell destinationShell = AasRepository.getExtAas(aasRegistry, shellId);
             if(destinationShell == null) {
                 aasRepository.createAasOrDoNothing(
                         new DefaultAssetAdministrationShell.Builder()
@@ -60,25 +62,32 @@ public class TransformationUtils {
     }
 
     public List<String> lookupDestinationShellIds(
-            String sourceSubmodelId,
-            DestinationAAS destinationAas,
-            Map<String, Object> templateContext
+            UUID transformerId,
+            Destination transformerDestination,
+            Submodel sourceSubmodel
     ) {
         List<String> destinationShellIds;
-        if(destinationAas != null) {
+        if(transformerDestination.getAasDestination() != null) {
             try {
+                Map<String, Object> templateContext = templateRenderer.getTemplateContext(
+                        transformerId,
+                        List.of(),
+                        sourceSubmodel
+                );
+
                 String destinationShellId = templateRenderer.render(
-                        destinationAas.getId(),
+                        transformerDestination.getAasDestination().getId(),
                         templateContext
                 );
+
                 destinationShellIds = List.of(destinationShellId);
             } catch (Exception e) {
-                LOG.warn("Failed to render destination shell ID based on template {}", destinationAas.getId());
+                LOG.warn("Failed to render destination shell ID based on template {}", transformerDestination.getAasDestination().getId());
                 destinationShellIds = List.of();
             }
         } else {
             destinationShellIds = aasRepository
-                    .getAllAasContainingSubmodelBySubmodelId(sourceSubmodelId)
+                    .getAllAasContainingSubmodelBySubmodelId(sourceSubmodel.getId())
                     .stream()
                     .map(shell -> shell.getId())
                     .toList();
