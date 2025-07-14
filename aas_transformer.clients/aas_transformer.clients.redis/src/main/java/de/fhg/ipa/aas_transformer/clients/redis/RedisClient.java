@@ -65,7 +65,7 @@ public class RedisClient {
         try {
             Optional<RedisTransformationJob> job = this.moveJobInProcessingList();
             if (job.isPresent())
-                LOG.info("Move job into processing list | {}", job);
+                LOG.info("Move job into processing list | {}", job.get().toStringShort());
             return job;
         } catch (NullPointerException e) {
             // Happens if REDIS_JOBS_LIST_KEY is empty

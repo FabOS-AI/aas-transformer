@@ -73,8 +73,26 @@ public class RedisTransformationJob implements Serializable {
         );
     }
 
+//    @Override
+//    public String toString() {
+//        return "RedisTransformationJob{" +
+//                "transformationJobAction=" + transformationJobAction +
+//                ", transformerId=" + transformerId +
+//                ", sourceSubmodelId='" + sourceSubmodelId + '\'' +
+//                ", targetSubmodelId='" + targetSubmodelId + '\'' +
+//                '}';
+//    }
+
     @Override
     public String toString() {
+        try {
+            return objectMapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String toStringShort() {
         return "RedisTransformationJob{" +
                 "transformationJobAction=" + transformationJobAction +
                 ", transformerId=" + transformerId +
@@ -82,15 +100,6 @@ public class RedisTransformationJob implements Serializable {
                 ", targetSubmodelId='" + targetSubmodelId + '\'' +
                 '}';
     }
-
-    //    @Override
-//    public String toString() {
-//        try {
-//            return objectMapper.writeValueAsString(this);
-//        } catch (JsonProcessingException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
 
     @Override
     public boolean equals(Object o) {
