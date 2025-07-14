@@ -75,12 +75,22 @@ public class RedisTransformationJob implements Serializable {
 
     @Override
     public String toString() {
-        try {
-            return objectMapper.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return "RedisTransformationJob{" +
+                "transformationJobAction=" + transformationJobAction +
+                ", transformerId=" + transformerId +
+                ", sourceSubmodelId='" + sourceSubmodelId + '\'' +
+                ", targetSubmodelId='" + targetSubmodelId + '\'' +
+                '}';
     }
+
+    //    @Override
+//    public String toString() {
+//        try {
+//            return objectMapper.writeValueAsString(this);
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     @Override
     public boolean equals(Object o) {
