@@ -88,7 +88,7 @@ public class MultiJobTest {
             );
             RedisTransformationJob redisJob = new RedisTransformationJob(job);
 
-            redisClient.leftPushJob(redisJob);
+            redisClient.rightPushJob(redisJob);
             redisClient.moveJobInProcessingList();
             assertListCounts(0,1);
 
