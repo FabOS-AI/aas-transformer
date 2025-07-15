@@ -1,11 +1,5 @@
 package de.fhg.ipa.aas_transformer.test.system;
 
-import de.fhg.ipa.aas_transformer.aas.AasRegistry;
-import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasTransformerExtension;
@@ -16,12 +10,11 @@ import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShe
 import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
 import java.util.List;
 
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpectedJobCount;
+import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 
 @ExtendWith(MariaDbExtension.class)
 @ExtendWith(AasITExtension.class)
