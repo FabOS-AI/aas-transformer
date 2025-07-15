@@ -6,7 +6,6 @@ import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import javax.annotation.PreDestroy;
 import java.util.List;
 
 import static java.lang.Thread.sleep;
@@ -73,7 +71,7 @@ public class RedisJobConsumer extends RedisClient implements Runnable, Applicati
     }
 
     private void getAndEmitNextJobInProcessingList() {
-        List<RedisTransformationJob> nextProcJobList = this.lookupNextProcJob();
+        List<RedisTransformationJob> nextProcJobList = this.lookupFirstInProcJobList();
         if(nextProcJobList != null && nextProcJobList.size() > 0) {
             TransformationJob job = nextProcJobList.get(0).getTransformationJob();
             this.jobSink.tryEmitNext(job);
@@ -93,7 +91,7 @@ public class RedisJobConsumer extends RedisClient implements Runnable, Applicati
     }
 
     public void markJobAsProcessed() throws SerializationException {
-        RedisTransformationJob redisJob = this.lookupNextProcJob().get(0);
+        RedisTransformationJob redisJob = this.lookupFirstInProcJobList().get(0);
         TransformationJob job = redisJob.getTransformationJob();
         LOG.info("Mark job as finished | sourceSmIdShort {} | TransformerID {}",
                 job.getSubmodelId(),
