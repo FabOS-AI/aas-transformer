@@ -27,7 +27,7 @@ import java.io.FileNotFoundException;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpectedJobCount;
+import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getDestinationSubmodelIdOfAnsibleFactsTransformer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -125,7 +125,7 @@ public class FirstAASThenTransformerExecutorIT extends AbstractIT {
 
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
 
-        redisClient.leftPushJob(new RedisTransformationJob(createdJob));
+        redisClient.rightPushJob(new RedisTransformationJob(createdJob));
 
         assertExpectedJobCount(redisJobReader, 0);
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 2, 2);
@@ -152,7 +152,7 @@ public class FirstAASThenTransformerExecutorIT extends AbstractIT {
                 this.smRepository.getAllSubmodels().size()
         );
 
-        redisClient.leftPushJob(new RedisTransformationJob(deleteJob));
+        redisClient.rightPushJob(new RedisTransformationJob(deleteJob));
 
         assertExpectedJobCount(redisJobReader, 0);
         assertExpectedSubmodelCount(

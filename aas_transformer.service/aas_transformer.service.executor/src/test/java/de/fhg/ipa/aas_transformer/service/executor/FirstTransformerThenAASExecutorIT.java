@@ -1,12 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
-import de.fhg.ipa.aas_transformer.aas.AasRegistry;
-import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
@@ -15,26 +9,22 @@ import de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
-import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
 import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
-import org.eclipse.digitaltwin.basyx.aasregistry.client.model.AssetAdministrationShellDescriptor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
 
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpectedJobCount;
+import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getDestinationSubmodelIdOfAnsibleFactsTransformer;
 import static java.lang.Thread.sleep;
@@ -111,7 +101,7 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
         assertEquals(1, aasRepository.getAas(shell.getId()).getSubmodels().size());
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
 
-        redisClient.leftPushJob(new RedisTransformationJob(createdJob));
+        redisClient.rightPushJob(new RedisTransformationJob(createdJob));
 
         int expectedSubmodelCount = 2;
 
@@ -135,7 +125,7 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
                 null
         );
 
-        redisClient.leftPushJob(new RedisTransformationJob(deletedJob));
+        redisClient.rightPushJob(new RedisTransformationJob(deletedJob));
 
         int expectedSubmodelCount = 1;
 
