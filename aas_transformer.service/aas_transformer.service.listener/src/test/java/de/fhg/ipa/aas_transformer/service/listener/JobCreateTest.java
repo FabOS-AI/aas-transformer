@@ -1,8 +1,5 @@
 package de.fhg.ipa.aas_transformer.service.listener;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.redis.testcontainers.RedisContainer;
 import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
@@ -11,24 +8,20 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.model.*;
-import de.fhg.ipa.aas_transformer.service.listener.events.consumers.SubmodelElementMessageEventConsumer;
-import de.fhg.ipa.aas_transformer.service.listener.events.consumers.SubmodelMessageEventConsumer;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
-import org.eclipse.digitaltwin.aas4j.v3.model.LangStringTextType;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
-import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultLangStringTextType;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultMultiLanguageProperty;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultProperty;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.ApiException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,25 +37,19 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
-import javax.xml.transform.Source;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.test.utils.GenericTestConfig.getSimpleSubmodel;
-import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpectedJobCount;
-import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.*;
+import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformerDTOListener;
 import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(AasITExtension.class)
@@ -89,9 +76,6 @@ public class JobCreateTest {
             ),
             false
     );
-
-    @Autowired
-    RedisJobReader redisJobReader;
 
     @TestConfiguration
     public static class TestConfig {
@@ -128,9 +112,10 @@ public class JobCreateTest {
     public SubmodelRegistry submodelRegistry;
     @Autowired
     public SubmodelRepository submodelRepository;
-
     @Autowired
     RedisJobReader redisJobProducer;
+    @Autowired
+    RedisJobReader redisJobReader;
 
     @Test
     @Order(10)
