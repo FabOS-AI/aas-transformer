@@ -5,16 +5,20 @@ import com.redis.testcontainers.RedisContainer;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import de.fhg.ipa.aas_transformer.model.TransformationJobAction;
 import jakarta.annotation.PostConstruct;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
+import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesSubmodel;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -73,8 +77,8 @@ public class MultiClientLockTest {
     @Test
     @Order(20)
     public void testConsecutiveCheckoutsByDifferentRedisClients() {
-        job1FromJobQueue = redisClient1.moveJobInProcessingList().get();
-        job2FromJobQueue = redisClient2.moveJobInProcessingList().get();
+        job1FromJobQueue = redisClient1.moveNextJobIntoProcessingList().get();
+        job2FromJobQueue = redisClient2.moveNextJobIntoProcessingList().get();
 
         assertEquals(targetSubmodelId1, job1FromJobQueue.getTransformationJob().getTargetSubmodelId(),
                 "First job should match the first target submodel ID");
@@ -88,14 +92,14 @@ public class MultiClientLockTest {
         assertTrue(redisClient1.getJobCountInt() > 0,
                 "There should be jobs available in redis job queue");
 
-        Optional<RedisTransformationJob> optionalJob = redisClient3.moveJobInProcessingList();
+        Optional<RedisTransformationJob> optionalJob = redisClient3.moveNextJobIntoProcessingList();
 
         assertTrue(optionalJob.isEmpty(),"No job should be available for checkout since all jobs are locked by other clients");
     }
 
     @Test
     @Order(40)
-    public void testFinsishJobAndConsumeUnlockedJob() {
+    public void testFinishJobAndConsumeUnlockedJob() {
         // Finish job from client 1
         redisClient1.markJobAsProcessed(job1FromJobQueue);
 
@@ -117,7 +121,7 @@ public class MultiClientLockTest {
 
         redisClient1.rightPushJob(new RedisTransformationJob(jobWithTargetNull));
 
-        Optional<RedisTransformationJob> jobWithTargetNullFromQueue = redisClient1.moveJobInProcessingList();
+        Optional<RedisTransformationJob> jobWithTargetNullFromQueue = redisClient1.moveNextJobIntoProcessingList();
 
         assertTrue(jobWithTargetNullFromQueue.isPresent(), "Job with null target submodel ID should be processed");
 
@@ -125,6 +129,27 @@ public class MultiClientLockTest {
                 () -> redisClient1.markJobAsProcessed(jobWithTargetNullFromQueue.get()),
                 "Marking job with null target submodel ID as processed should not throw an exception"
         );
-        ;
+    }
+
+    @Test
+    @Order(60)
+    public void testCheckoutJobOnHeavyLoadedQueue() throws IOException, DeserializationException {
+        Submodel tsSubmodel = getRandomTimeseriesSubmodel(10, 100);
+
+        // Simulate a heavy loaded queue by adding more jobs
+        for (int i = 0; i < 1000; i++) {
+            TransformationJob job = new TransformationJob(
+                    TransformationJobAction.EXECUTE,
+                    UUID.randomUUID(),
+                    "submodelId" + i,
+                    tsSubmodel,
+                    "targetSubmodelId" + i
+            );
+            redisClient1.rightPushJob(new RedisTransformationJob(job));
+        }
+
+        // Check if we can still checkout jobs
+        Optional<RedisTransformationJob> optionalJob = redisClient1.moveNextJobIntoProcessingList();
+        assertTrue(optionalJob.isPresent(), "Client 2 should be able to checkout a job from a heavy loaded queue");
     }
 }
