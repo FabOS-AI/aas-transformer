@@ -1,21 +1,23 @@
 package de.fhg.ipa.aas_transformer.clients.redis;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.integration.redis.util.RedisLockRegistry;
 
-import java.time.Duration;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.springframework.data.redis.connection.RedisListCommands.Direction.LEFT;
-import static org.springframework.data.redis.connection.RedisListCommands.Direction.RIGHT;
 
 public class RedisClient {
     private static final Logger LOG = LoggerFactory.getLogger(RedisClient.class);
@@ -30,6 +32,8 @@ public class RedisClient {
     private final RedisLockRegistry redisLockRegistry;
     private final ListOperations<String, RedisTransformationJob> listOps;
     private final RedisTemplate<String, RedisTransformationJob> template = new RedisTemplate<>();
+    private final RedisTemplate<String, String> scriptTemplate = new RedisTemplate<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public RedisClient(RedisConnectionFactory connectionFactory) {
         this.redisLockRegistry = new RedisLockRegistry(connectionFactory, REDIS_LOCK_REGISTRY_KEY, 15000);
@@ -39,6 +43,11 @@ public class RedisClient {
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new Jackson2JsonRedisSerializer());
         template.afterPropertiesSet();
+
+        scriptTemplate.setConnectionFactory(connectionFactory);
+        scriptTemplate.setKeySerializer(new StringRedisSerializer());
+        scriptTemplate.setValueSerializer(new StringRedisSerializer());
+        scriptTemplate.afterPropertiesSet();
     }
 
     protected int getJobCountInt() {
@@ -57,7 +66,7 @@ public class RedisClient {
         return listOps.range(REDIS_PROC_JOBS_LIST_KEY, 0, getProcJobCountInt());
     }
 
-    protected List<RedisTransformationJob> lookupNextProcJob() {
+    protected List<RedisTransformationJob> lookupFirstInProcJobList() {
         return listOps.range(REDIS_PROC_JOBS_LIST_KEY, 0, 0);
     }
 
@@ -92,38 +101,53 @@ public class RedisClient {
         }
     }
 
-    @Deprecated(since="Introduction of locks")
-    public void leftPushJob(RedisTransformationJob value) {
-        listOps.leftPush(REDIS_JOBS_LIST_KEY, value);
-    }
-
     public void rightPushJob(RedisTransformationJob value) {
         listOps.rightPush(REDIS_JOBS_LIST_KEY, value);
     }
 
+    public RedisTransformationJob getNextTransformationJob() {
+        String script;
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("get_next_job.lua")) {
+            if (inputStream == null) {
+                LOG.error("Lua script not found in resources");
+                return null;
+            }
+            script = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOG.error("Failed to read Lua script for getting next job: {}", e.getMessage());
+            return null;
+        }
+        RedisScript<String> redisScript = RedisScript.of(script, String.class);
+
+        String result = scriptTemplate.execute(redisScript, List.of(), "jobs");
+
+        if (result == null || result.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return objectMapper.readValue(result, RedisTransformationJob.class);
+        } catch (JsonProcessingException e) {
+            LOG.error("Failed to deserialize next job from Lua script result: {}", e.getMessage());
+            return null;
+        }
+
+    }
 
     public Optional<RedisTransformationJob> moveJobInProcessingList() {
         // Find next unlocked job and lock it
-        Optional<RedisTransformationJob> optionalNextJob = this.listOps.range(REDIS_JOBS_LIST_KEY, 0, -1)
-                .stream()
-                .filter(job -> {
-                    try {
-                        return redisLockRegistry.obtain(job.targetSubmodelId).tryLock();
-                    } catch (IllegalArgumentException e) {
-                        LOG.warn("Job has no target submodel id => Start it without a lock | {}", job);
-                        return true;
-                    }
-                })
-                .findFirst();
+        Optional<RedisTransformationJob> optionalNextJob = Optional.of(getNextTransformationJob());
 
         // Move job into processing list:
         if (optionalNextJob.isPresent()) {
+            // Obtain lock for the job based on its targetSubmodelId
+            if(optionalNextJob.get().targetSubmodelId != null)
+                redisLockRegistry.obtain(optionalNextJob.get().targetSubmodelId).lock();
             this.listOps.remove(REDIS_JOBS_LIST_KEY, 1, optionalNextJob.get());
             this.listOps.rightPush(REDIS_PROC_JOBS_LIST_KEY, optionalNextJob.get());
         }
 
         return optionalNextJob;
-
     }
 
     public static UUID getConsumerId() {
