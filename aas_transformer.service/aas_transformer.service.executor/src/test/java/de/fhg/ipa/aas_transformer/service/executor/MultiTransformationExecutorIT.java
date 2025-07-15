@@ -1,12 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
-import de.fhg.ipa.aas_transformer.aas.AasRegistry;
-import de.fhg.ipa.aas_transformer.aas.AasRepository;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import de.fhg.ipa.aas_transformer.model.Transformer;
@@ -23,11 +17,9 @@ import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -35,7 +27,7 @@ import java.util.List;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.test.utils.RedisTestObjects.assertExpectedJobCount;
+import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 
 @ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
@@ -99,7 +91,7 @@ public class MultiTransformationExecutorIT extends AbstractIT {
                 null,
                 null
             );
-            redisClient.leftPushJob(new RedisTransformationJob(job));
+            redisClient.rightPushJob(new RedisTransformationJob(job));
         }
 
         // Assert job count:
