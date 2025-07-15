@@ -1,9 +1,6 @@
-package de.fhg.ipa.aas_transformer.test.utils;
-
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
+package de.fhg.ipa.aas_transformer.clients.redis;
 
 import static java.lang.Thread.sleep;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RedisTestObjects {
 
@@ -21,9 +18,6 @@ public class RedisTestObjects {
             tryCount++;
         }
 
-        assertEquals(
-                expectedJobCount,
-                redisJobReader.getTotalJobCount()
-        );
+        assert expectedJobCount == redisJobReader.getTotalJobCount();
     }
 }
