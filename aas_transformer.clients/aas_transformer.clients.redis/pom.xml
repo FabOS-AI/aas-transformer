@@ -72,6 +72,13 @@
             <version>2.2.2</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.test.utils</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>
