@@ -81,7 +81,7 @@ public class RedisClientTest {
     @Test
     @Order(30)
     public void createJobExpectOneJob() {
-        redisClient.leftPushJob(this.redisJob);
+        redisClient.rightPushJob(this.redisJob);
         assertEquals(
                 1,
                 redisClient.getJobCountInt()
