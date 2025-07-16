@@ -163,6 +163,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
     }
 
     private void addTransformationDetectionService(TransformerDTOListener transformerDTOListener) {
+        LOG.info("Adding TransformationDetectionService for transformer: {}", transformerDTOListener.getId());
         transformationDetectionServices.add(
                 new TransformationDetectionService(
                         transformerDTOListener,
