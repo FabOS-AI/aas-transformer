@@ -73,16 +73,6 @@ public class RedisTransformationJob implements Serializable {
         );
     }
 
-//    @Override
-//    public String toString() {
-//        return "RedisTransformationJob{" +
-//                "transformationJobAction=" + transformationJobAction +
-//                ", transformerId=" + transformerId +
-//                ", sourceSubmodelId='" + sourceSubmodelId + '\'' +
-//                ", targetSubmodelId='" + targetSubmodelId + '\'' +
-//                '}';
-//    }
-
     @Override
     public String toString() {
         try {
