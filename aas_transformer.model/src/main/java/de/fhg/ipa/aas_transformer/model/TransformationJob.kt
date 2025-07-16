@@ -11,6 +11,6 @@ data class TransformationJob(
     var targetSubmodelId: String?
 ) {
     override fun toString(): String {
-        return "TransformationJob(transformationJobAction=$transformationJobAction, transformerId=$transformerId, submodelId=$submodelId, submodel=$submodel, targetSubmodelId=$targetSubmodelId)"
+        return "TransformationJob(transformationJobAction=$transformationJobAction, transformerId=$transformerId, submodelId=$submodelId, targetSubmodelId=$targetSubmodelId)"
     }
 }
