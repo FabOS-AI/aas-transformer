@@ -93,11 +93,11 @@ public class RedisClient {
         try {
             redisLockRegistry.obtain(job.targetSubmodelId).unlock();
         } catch (IllegalArgumentException e) {
-            LOG.warn("Job has no target submodel id => No lock to release | {}", job);
+            LOG.warn("Job has no target submodel id => No lock to release | {}", job.toStringShort());
         } catch (IllegalStateException e) {
-            LOG.warn("Lock for job {} is already released or not held by this thread", job);
+            LOG.warn("Lock for job {} is already released or not held by this thread", job.toStringShort());
         } catch (Exception e) {
-            LOG.error("Error while releasing lock for job {}: {}", job, e.getMessage(), e);
+            LOG.error("Error while releasing lock for job {}: {}", job.toStringShort(), e.getMessage(), e);
         }
     }
 
