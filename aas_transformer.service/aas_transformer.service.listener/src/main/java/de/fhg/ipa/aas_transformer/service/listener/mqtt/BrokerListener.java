@@ -112,9 +112,7 @@ public class BrokerListener implements Runnable, MqttCallback, ApplicationListen
     }
 
     @Override
-    public void connectionLost(Throwable throwable) {
-
-    }
+    public void connectionLost(Throwable throwable) { }
 
     @Override
     public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
