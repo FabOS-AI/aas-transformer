@@ -37,7 +37,7 @@ public class MultiTransformationSystemTest extends AbstractSystemTest {
 
         registerAasObjectsFromTriples(aasRegistry, aasRepository, smRegistry, smRepository, triples);
 
-        // Assert job count:
+        // Make sure all jobs are processed:
         assertExpectedJobCount(redisJobReader, 0);
 
         for(List<Object> triple : triples) {
@@ -50,6 +50,7 @@ public class MultiTransformationSystemTest extends AbstractSystemTest {
                     2
             );
         }
+        return;
     }
 
     @Test
