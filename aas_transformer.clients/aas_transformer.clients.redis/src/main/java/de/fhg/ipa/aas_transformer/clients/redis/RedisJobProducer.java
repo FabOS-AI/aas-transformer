@@ -8,7 +8,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RedisJobProducer extends RedisClient {
+public class RedisJobProducer extends RedisJobClient {
     private static final Logger LOG = LoggerFactory.getLogger(RedisJobProducer.class);
 
     public RedisJobProducer(

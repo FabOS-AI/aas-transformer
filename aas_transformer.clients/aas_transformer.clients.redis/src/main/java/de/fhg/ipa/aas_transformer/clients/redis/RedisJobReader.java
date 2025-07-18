@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class RedisJobReader extends RedisClient {
+public class RedisJobReader extends RedisJobClient {
     private static final Logger LOG = LoggerFactory.getLogger(RedisJobReader.class);
 
     public RedisJobReader(RedisConnectionFactory connectionFactory) {
