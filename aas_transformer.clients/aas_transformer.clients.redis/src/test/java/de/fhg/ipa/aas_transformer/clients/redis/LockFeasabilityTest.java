@@ -1,6 +1,7 @@
 package de.fhg.ipa.aas_transformer.clients.redis;
 
 import com.redis.testcontainers.RedisContainer;
+import de.fhg.ipa.aas_transformer.clients.redis.serializer.TransformationJob2RedisSerializer;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import de.fhg.ipa.aas_transformer.model.TransformationJobAction;
 import org.junit.jupiter.api.*;
@@ -74,7 +75,7 @@ public class LockFeasabilityTest {
         this.listOps = template.opsForList();
         template.setConnectionFactory(redisConnectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer());
+        template.setValueSerializer(new TransformationJob2RedisSerializer());
         template.afterPropertiesSet();
     }
 
