@@ -100,7 +100,7 @@ public class AbstractExtSystemTest {
         simpleModule.addSerializer(new SubmodelDescriptorSerializer(SubmodelDescriptor.class));
         simpleModule.addDeserializer(SubmodelDescriptor.class, new SubmodelDescriptorDeserializer());
         // Submodels:
-        simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
+        simpleModule.addSerializer(Submodel.class, new SubmodelSerializer());
         simpleModule.addDeserializer(Submodel.class, new SubmodelDeserializer());
         // SubmodelElements:
         simpleModule.addSerializer(new SubmodelElementSerializer(SubmodelElement.class));
