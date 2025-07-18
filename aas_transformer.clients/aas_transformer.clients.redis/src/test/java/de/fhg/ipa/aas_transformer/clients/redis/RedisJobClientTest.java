@@ -25,9 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class RedisClientTest {
+public class RedisJobClientTest {
 
-    RedisClient redisClient = null;
+    RedisJobClient redisJobClient = null;
 
     // Test Objects:
     static UUID transformerId = UUID.randomUUID();
@@ -36,7 +36,7 @@ public class RedisClientTest {
     @Autowired
     RedisContainer redisContainer;
 
-    public RedisClientTest() throws IOException, DeserializationException, SerializationException {
+    public RedisJobClientTest() throws IOException, DeserializationException, SerializationException {
         redisJob = new RedisTransformationJob(new TransformationJob(
                 TransformationJobAction.EXECUTE,
                 transformerId,
@@ -57,41 +57,41 @@ public class RedisClientTest {
 
     @PostConstruct
     public void init() {
-        if(redisClient == null) {
+        if(redisJobClient == null) {
             Integer port = redisContainer.getFirstMappedPort();
             LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", port);
             connectionFactory.start();
-            redisClient = new RedisClient(connectionFactory);
+            redisJobClient = new RedisJobClient(connectionFactory);
         }
     }
 
     @Test
     @Order(10)
     public void testContextLoaded() {
-        assertNotNull(redisClient);
+        assertNotNull(redisJobClient);
     }
 
     @Test
     @Order(20)
     public void getJobCountExpectZero() {
-        int jobCount = redisClient.getJobCountInt();
+        int jobCount = redisJobClient.getJobCountInt();
         assertEquals(0, jobCount);
     }
 
     @Test
     @Order(30)
     public void createJobExpectOneJob() {
-        redisClient.rightPushJob(this.redisJob);
+        redisJobClient.rightPushJob(this.redisJob);
         assertEquals(
                 1,
-                redisClient.getJobCountInt()
+                redisJobClient.getJobCountInt()
         );
     }
 
     @Test
     @Order(40)
     public void popJobExpectJobBeingEqualToCreatedJob()  {
-        RedisTransformationJob poppedJob = redisClient.moveJobInProcessingList().get();
+        RedisTransformationJob poppedJob = redisJobClient.moveJobInProcessingList().get();
         assertEquals(
             this.redisJob,
             poppedJob
@@ -101,24 +101,24 @@ public class RedisClientTest {
     @Test
     @Order(60)
     public void getJobCountAfterPopExpectZero() {
-        int jobCount = redisClient.getJobCountInt();
+        int jobCount = redisJobClient.getJobCountInt();
         assertEquals(0, jobCount);
     }
 
     @Test
     @Order(70)
     public void getProcJobCountAfterPopExpectOne() {
-        int jobCount = redisClient.getProcJobCountInt();
+        int jobCount = redisJobClient.getProcJobCountInt();
         assertEquals(1, jobCount);
     }
 
     @Test
     @Order(80)
     public void markProcJobAsProcessedExpectZeroProcJobs() throws SerializationException {
-        redisClient.markJobAsProcessed(this.redisJob);
+        redisJobClient.markJobAsProcessed(this.redisJob);
         assertEquals(
                 0,
-                redisClient.getProcJobCountInt()
+                redisJobClient.getProcJobCountInt()
         );
     }
 }
