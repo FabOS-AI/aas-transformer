@@ -4,13 +4,9 @@ import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisClient;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
 import jakarta.annotation.PostConstruct;
-import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
-import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
-import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
-import org.eclipse.digitaltwin.basyx.aasregistry.client.model.AssetAdministrationShellDescriptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
@@ -38,7 +34,7 @@ public abstract class AbstractIT {
     @Autowired
     RedisJobReader redisJobReader;
 
-    RedisClient redisClient;
+    RedisJobClient redisJobClient;
 
     static {
         // Init AAS Clients:
@@ -53,6 +49,6 @@ public abstract class AbstractIT {
         // Setup Redis Client:
         LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", Integer.parseInt(redisPort));
         connectionFactory.start();
-        redisClient = new RedisClient(connectionFactory);
+        redisJobClient = new RedisJobClient(connectionFactory);
     }
 }
