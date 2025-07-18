@@ -1,12 +1,14 @@
-package de.fhg.ipa.aas_transformer.service.listener.events;
+package de.fhg.ipa.aas_transformer.model.message_event;
 
 import de.fhg.ipa.aas_transformer.model.SubmodelChangeEventType;
 
 public class SubmodelElementMessageEvent extends MessageEvent {
 
-    private final String submodelId;
+    private String submodelId;
 
-    private final String submodelElementId;
+    private String submodelElementId;
+
+    public SubmodelElementMessageEvent() {}
 
     public SubmodelElementMessageEvent(SubmodelChangeEventType submodelChangeEventType, String submodelId, String submodelElementId) {
         super(submodelChangeEventType);
@@ -20,5 +22,13 @@ public class SubmodelElementMessageEvent extends MessageEvent {
 
     public String getSubmodelElementId() {
         return submodelElementId;
+    }
+
+    public void setSubmodelId(String submodelId) {
+        this.submodelId = submodelId;
+    }
+
+    public void setSubmodelElementId(String submodelElementId) {
+        this.submodelElementId = submodelElementId;
     }
 }
