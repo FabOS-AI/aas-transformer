@@ -216,7 +216,7 @@ public class SingleTransformationExecutorIT extends AbstractIT {
                 expectedCount
         );
 
-        redisClient.rightPushJob(new RedisTransformationJob(job));
+        redisJobClient.rightPushJob(new RedisTransformationJob(job));
 
         // Assert job count:
         assertExpectedJobCount(redisJobReader, 0);

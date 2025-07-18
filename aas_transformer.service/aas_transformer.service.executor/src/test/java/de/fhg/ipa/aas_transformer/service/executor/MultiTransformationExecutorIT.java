@@ -91,7 +91,7 @@ public class MultiTransformationExecutorIT extends AbstractIT {
                 null,
                 null
             );
-            redisClient.rightPushJob(new RedisTransformationJob(job));
+            redisJobClient.rightPushJob(new RedisTransformationJob(job));
         }
 
         // Assert job count:

@@ -101,7 +101,7 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
         assertEquals(1, aasRepository.getAas(shell.getId()).getSubmodels().size());
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
 
-        redisClient.rightPushJob(new RedisTransformationJob(createdJob));
+        redisJobClient.rightPushJob(new RedisTransformationJob(createdJob));
 
         int expectedSubmodelCount = 2;
 
@@ -125,7 +125,7 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
                 null
         );
 
-        redisClient.rightPushJob(new RedisTransformationJob(deletedJob));
+        redisJobClient.rightPushJob(new RedisTransformationJob(deletedJob));
 
         int expectedSubmodelCount = 1;
 

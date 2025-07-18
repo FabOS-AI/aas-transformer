@@ -112,7 +112,7 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
     private WebClient getExecutorWebclient(String baseUrl) {
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule simpleModule = new SimpleModule();
-        simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
+        simpleModule.addSerializer(Submodel.class, new SubmodelSerializer());
         simpleModule.addDeserializer(Submodel.class, new SubmodelDeserializer());
         objectMapper.registerModule(simpleModule);
 
@@ -156,7 +156,7 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
         assertEquals(1, aasRepository.getAas(shell.getId()).getSubmodels().size());
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
 
-        redisClient.rightPushJob(new RedisTransformationJob(createdJob));
+        redisJobClient.rightPushJob(new RedisTransformationJob(createdJob));
 
         waitForTransformationDescriptionCount(1);
 
@@ -223,7 +223,7 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
                 null
         );
 
-        redisClient.rightPushJob(new RedisTransformationJob(deleteJob));
+        redisJobClient.rightPushJob(new RedisTransformationJob(deleteJob));
 
         waitForTransformationDescriptionCount(0);
 

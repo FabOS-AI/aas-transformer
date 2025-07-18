@@ -136,7 +136,7 @@ public class StrictModeExecutorIT extends AbstractIT {
                 expectedSubmodelCount
         );
 
-        redisClient.rightPushJob(redisJob);
+        redisJobClient.rightPushJob(redisJob);
 
         // Assert job count:
         assertExpectedJobCount(redisJobReader, 0);
