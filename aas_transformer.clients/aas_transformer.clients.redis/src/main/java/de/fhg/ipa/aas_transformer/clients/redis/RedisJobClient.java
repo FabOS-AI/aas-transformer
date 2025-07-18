@@ -2,6 +2,7 @@ package de.fhg.ipa.aas_transformer.clients.redis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.fhg.ipa.aas_transformer.clients.redis.serializer.TransformationJob2RedisSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.QueryTimeoutException;
@@ -19,8 +20,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class RedisClient {
-    private static final Logger LOG = LoggerFactory.getLogger(RedisClient.class);
+public class RedisJobClient {
+    private static final Logger LOG = LoggerFactory.getLogger(RedisJobClient.class);
 
     private final static String REDIS_JOBS_LIST_KEY = "jobs";
     private final static String REDIS_PROC_JOBS_LIST_KEY_PREFIX = "proc_jobs";
@@ -35,13 +36,13 @@ public class RedisClient {
     private final RedisTemplate<String, String> scriptTemplate = new RedisTemplate<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public RedisClient(RedisConnectionFactory connectionFactory) {
+    public RedisJobClient(RedisConnectionFactory connectionFactory) {
         this.redisLockRegistry = new RedisLockRegistry(connectionFactory, REDIS_LOCK_REGISTRY_KEY, 15000);
         this.redisConnectionFactory = connectionFactory;
         this.listOps = template.opsForList();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new Jackson2JsonRedisSerializer());
+        template.setValueSerializer(new TransformationJob2RedisSerializer());
         template.afterPropertiesSet();
 
         scriptTemplate.setConnectionFactory(connectionFactory);
