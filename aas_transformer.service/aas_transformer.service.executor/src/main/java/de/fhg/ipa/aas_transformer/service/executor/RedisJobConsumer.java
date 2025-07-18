@@ -1,6 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
-import de.fhg.ipa.aas_transformer.clients.redis.RedisClient;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
@@ -18,7 +18,7 @@ import java.util.List;
 import static java.lang.Thread.sleep;
 
 @Component
-public class RedisJobConsumer extends RedisClient implements Runnable, ApplicationListener<ContextClosedEvent> {
+public class RedisJobConsumer extends RedisJobClient implements Runnable, ApplicationListener<ContextClosedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(RedisJobConsumer.class);
     private boolean isShuttingDown = false;
 

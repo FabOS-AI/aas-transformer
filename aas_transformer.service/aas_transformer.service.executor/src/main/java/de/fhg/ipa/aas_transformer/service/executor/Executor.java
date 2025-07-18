@@ -5,20 +5,17 @@ import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisClient;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobClient;
 import de.fhg.ipa.aas_transformer.model.TransformationDescription;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.transformation.TransformationExecutionService;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
-import org.eclipse.digitaltwin.basyx.submodelservice.SubmodelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -78,7 +75,7 @@ public class Executor {
                     job.getTransformerId()
             );
         else
-            executionService.execute(job, RedisClient.getConsumerId());
+            executionService.execute(job, RedisJobClient.getConsumerId());
     }
 
     public List<Submodel> executeBatchOnRequest() {
@@ -108,7 +105,7 @@ public class Executor {
         } else {
             return executionService.executeTransformationDescription(
                     transformationDescription,
-                    RedisClient.getConsumerId()
+                    RedisJobClient.getConsumerId()
             );
         }
     }
