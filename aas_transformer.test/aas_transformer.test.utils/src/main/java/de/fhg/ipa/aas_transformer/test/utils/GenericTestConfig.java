@@ -29,10 +29,15 @@ public class GenericTestConfig {
         return "http://localhost:"+ SUBMODEL_REPOSITORY_PUBLIC_PORT +"/aasServer";
     }
 
-    public static Submodel getSimpleSubmodel() throws IOException, DeserializationException {
+    public static Submodel getSimpleSubmodel() {
         InputStream in = GenericTestConfig.class.getClassLoader().getResourceAsStream("simple-submodel.json");
         JsonDeserializer jsonDeserializer = new JsonDeserializer();
-        var submodel = jsonDeserializer.read(in, Submodel.class);
+        Submodel submodel = null;
+        try {
+            submodel = jsonDeserializer.read(in, Submodel.class);
+        } catch (DeserializationException e) {
+            throw new RuntimeException(e);
+        }
 
         return submodel;
     }
