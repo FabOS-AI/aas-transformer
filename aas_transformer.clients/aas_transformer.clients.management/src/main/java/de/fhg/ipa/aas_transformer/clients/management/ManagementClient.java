@@ -24,7 +24,7 @@ public class ManagementClient extends TransformerRestControllerApi {
     static {
         objectMapper = new ObjectMapper();
         SimpleModule simpleModule = new SimpleModule();
-        simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
+        simpleModule.addSerializer(Submodel.class, new SubmodelSerializer());
         objectMapper.registerModule(simpleModule);
 
         // Create WebClient:
