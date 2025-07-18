@@ -6,11 +6,10 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.TransformerDTOListenerCache;
 import de.fhg.ipa.aas_transformer.model.*;
-import de.fhg.ipa.aas_transformer.service.listener.events.SubmodelMessageEvent;
+import de.fhg.ipa.aas_transformer.model.message_event.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.transformation.TransformationDetectionService;
 import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
 import de.fhg.ipa.aas_transformer.transformation.templating.AasTemplateRenderer;
-import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
@@ -115,7 +114,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
 
     private List<TransformationJob> createTransformationJob(SubmodelMessageEvent event, TransformationDetectionService service) {
         TransformerDTOListener transformer = service.getTransformerDTOListener();
-        switch (event.getChangeEventType()) {
+        switch (event.getSubmodelChangeEventType()) {
             case CREATED:
             case UPDATED:
                 Submodel sourceSubmodel = submodelRepository.getSubmodel(event.getSubmodel().getId());
