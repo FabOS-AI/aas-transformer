@@ -39,7 +39,7 @@ public class SubmodelRepository {
     private final static ObjectMapper objectMapper = new ObjectMapper();
     private final static SimpleModule simpleModule = new SimpleModule();
     static {
-        simpleModule.addSerializer(new SubmodelSerializer(Submodel.class));
+        simpleModule.addSerializer(Submodel.class, new SubmodelSerializer());
         simpleModule.addDeserializer(Submodel.class, new SubmodelDeserializer());
         objectMapper.registerModule(simpleModule);
     }
