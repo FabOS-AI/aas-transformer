@@ -2,18 +2,18 @@ package de.fhg.ipa.aas_transformer.service.listener.mqtt;
 
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisMessageEventProducer;
 import de.fhg.ipa.aas_transformer.model.SubmodelChangeEventType;
-import de.fhg.ipa.aas_transformer.service.listener.events.MessageEvent;
-import de.fhg.ipa.aas_transformer.service.listener.events.SubmodelMessageEvent;
+import de.fhg.ipa.aas_transformer.model.message_event.MessageEvent;
+import de.fhg.ipa.aas_transformer.model.message_event.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.service.listener.events.producers.ISubmodelMessageEventProducer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -27,19 +27,13 @@ public class SubmodelMqttListener extends MqttListener implements IMqttMessageLi
     private String topicRegEx = "sm-repository/([-\\w.]+)/submodels/([a-zA-Z]+)";
     private String sharedTopic = SHARED_SUBSCRIPTION_PREFIX+"/"+SHARED_SUBSCRIPTION_GROUP_ID+"/"+topic;
 
-    private LinkedBlockingQueue<SubmodelMessageEvent> submodelEventCache = new LinkedBlockingQueue();
-
     public SubmodelMqttListener(
             SubmodelRegistry submodelRegistry,
-            SubmodelRepository submodelRepository
+            SubmodelRepository submodelRepository,
+            RedisMessageEventProducer redisMessageEventProducer
     ) {
-        super(submodelRegistry, submodelRepository);
+        super(submodelRegistry, submodelRepository, redisMessageEventProducer);
         this.topics.add(sharedTopic);
-    }
-
-    @Override
-    public LinkedBlockingQueue<? extends MessageEvent> getMessageEventCache() {
-        return this.submodelEventCache;
     }
 
     @Override
@@ -62,7 +56,7 @@ public class SubmodelMqttListener extends MqttListener implements IMqttMessageLi
             var submodel = jsonDeserializer.read(message.toString(), Submodel.class);
 
             var submodelMessageEvent = new SubmodelMessageEvent(changeEventType, submodel);
-            submodelEventCache.add(submodelMessageEvent);
+            redisMessageEventProducer.pushMessage(submodelMessageEvent);
         } catch (Exception e) {
             LOG.error(e.getMessage() + " | TOPIC: "  + topic + " | MESSAGE: " + message.toString());
             e.printStackTrace();

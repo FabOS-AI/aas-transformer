@@ -1,11 +1,11 @@
 package de.fhg.ipa.aas_transformer.service.listener.mqtt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisMessageEventProducer;
 import de.fhg.ipa.aas_transformer.model.SubmodelChangeEventType;
-import de.fhg.ipa.aas_transformer.service.listener.events.MessageEvent;
-import de.fhg.ipa.aas_transformer.service.listener.events.SubmodelElementMessageEvent;
+import de.fhg.ipa.aas_transformer.model.message_event.MessageEvent;
+import de.fhg.ipa.aas_transformer.model.message_event.SubmodelElementMessageEvent;
 import de.fhg.ipa.aas_transformer.service.listener.events.producers.ISubmodelElementMessageProducer;
 import org.eclipse.digitaltwin.basyx.http.Base64UrlEncoder;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
@@ -25,18 +25,15 @@ public class SubmodelElementMqttListener extends MqttListener implements IMqttMe
     private String topic = "sm-repository/+/submodels/+/submodelElements/#";
     private String topicRegEx = "sm-repository/([-\\w.]+)/submodels/([a-zA-Z0-9]+)/submodelElements/([-\\w.]+)/([a-zA-Z]+)";
     private String sharedTopic = SHARED_SUBSCRIPTION_PREFIX+"/"+SHARED_SUBSCRIPTION_GROUP_ID+"/"+topic;
-    private LinkedBlockingQueue<SubmodelElementMessageEvent> submodelElementEventCache = new LinkedBlockingQueue();
 
-    public SubmodelElementMqttListener(SubmodelRegistry submodelRegistry, SubmodelRepository submodelRepository) {
-        super(submodelRegistry, submodelRepository);
+    public SubmodelElementMqttListener(
+            SubmodelRegistry submodelRegistry,
+            SubmodelRepository submodelRepository,
+            RedisMessageEventProducer redisMessageEventProducer
+    ) {
+        super(submodelRegistry, submodelRepository, redisMessageEventProducer);
         this.topics.add(sharedTopic);
     }
-
-    @Override
-    public LinkedBlockingQueue<? extends MessageEvent> getMessageEventCache() {
-        return this.submodelElementEventCache;
-    }
-
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
@@ -56,7 +53,7 @@ public class SubmodelElementMqttListener extends MqttListener implements IMqttMe
             var changeEventType = SubmodelChangeEventType.valueOf(changeEventTypeString.toUpperCase());
 
             var submodelElementMessageEvent = new SubmodelElementMessageEvent(changeEventType, submodelId, submodelElementId);
-            this.submodelElementEventCache.add(submodelElementMessageEvent);
+            redisMessageEventProducer.pushMessage(submodelElementMessageEvent);
 
         } catch (Exception e) {
             LOG.error(e.getMessage() + " | TOPIC: "  + topic + " | MESSAGE: " + message.toString());

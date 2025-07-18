@@ -2,9 +2,9 @@ package de.fhg.ipa.aas_transformer.service.listener.mqtt;
 
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.service.listener.events.MessageEvent;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisMessageEventProducer;
+import de.fhg.ipa.aas_transformer.model.message_event.MessageEvent;
 //import org.eclipse.digitaltwin.basyx.submodelrepository.SubmodelRepository;
-import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodelRepository;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
@@ -24,21 +24,23 @@ public abstract class MqttListener implements IMqttMessageListener {
 
     protected final SubmodelRepository submodelRepository;
 
+    protected final RedisMessageEventProducer redisMessageEventProducer;
+
     protected List<String> topics = new ArrayList<>();
 
     public MqttListener(
             SubmodelRegistry submodelRegistry,
-            SubmodelRepository submodelRepository
+            SubmodelRepository submodelRepository,
+            RedisMessageEventProducer redisMessageEventProducer
     ) {
         this.submodelRegistry = submodelRegistry;
         this.submodelRepository = submodelRepository;
+        this.redisMessageEventProducer = redisMessageEventProducer;
     }
 
     public List<String> getTopics() {
         return topics;
     }
-
-    public abstract LinkedBlockingQueue<? extends MessageEvent> getMessageEventCache();
 
     protected void printMsg(String topic, MqttMessage message) {
         LOG.info("TOPIC: " + topic);
