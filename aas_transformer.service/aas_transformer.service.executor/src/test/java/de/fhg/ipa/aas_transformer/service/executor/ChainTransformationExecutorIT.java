@@ -155,7 +155,7 @@ public class ChainTransformationExecutorIT extends AbstractIT {
 
         // Push transformation jobs to Redis:
         jobs.stream().forEach(job -> {
-            redisClient.rightPushJob(new RedisTransformationJob(job));
+            redisJobClient.rightPushJob(new RedisTransformationJob(job));
         });
 
         // Assert job count - make sure all transformations are done:
