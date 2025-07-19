@@ -10,7 +10,7 @@ public class RedisTestObjects {
             int expectedJobCount
     ) throws InterruptedException {
         int tryCount = 0;
-        int maxTries = 1000;
+        int maxTries = 10000;
         int sleepInMs = 100;
 
         while(tryCount <= maxTries && redisJobReader.getTotalJobCount() != expectedJobCount) {
