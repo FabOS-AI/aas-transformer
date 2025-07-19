@@ -4,23 +4,19 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisMessageEventProducer;
 import de.fhg.ipa.aas_transformer.model.SubmodelChangeEventType;
-import de.fhg.ipa.aas_transformer.model.message_event.MessageEvent;
 import de.fhg.ipa.aas_transformer.model.message_event.SubmodelMessageEvent;
-import de.fhg.ipa.aas_transformer.service.listener.events.producers.ISubmodelMessageEventProducer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
 @Component
-public class SubmodelMqttListener extends MqttListener implements IMqttMessageListener, ISubmodelMessageEventProducer { // , IMqttMessageListener
+public class SubmodelMqttListener extends MqttListener implements IMqttMessageListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(SubmodelMqttListener.class);
     private String topic = "sm-repository/+/submodels/+";

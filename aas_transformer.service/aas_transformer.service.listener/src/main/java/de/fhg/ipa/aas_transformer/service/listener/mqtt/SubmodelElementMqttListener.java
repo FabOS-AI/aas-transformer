@@ -4,9 +4,7 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisMessageEventProducer;
 import de.fhg.ipa.aas_transformer.model.SubmodelChangeEventType;
-import de.fhg.ipa.aas_transformer.model.message_event.MessageEvent;
 import de.fhg.ipa.aas_transformer.model.message_event.SubmodelElementMessageEvent;
-import de.fhg.ipa.aas_transformer.service.listener.events.producers.ISubmodelElementMessageProducer;
 import org.eclipse.digitaltwin.basyx.http.Base64UrlEncoder;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -14,11 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
 @Component
-public class SubmodelElementMqttListener extends MqttListener implements IMqttMessageListener, ISubmodelElementMessageProducer {
+public class SubmodelElementMqttListener extends MqttListener implements IMqttMessageListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(SubmodelElementMqttListener.class);
 
