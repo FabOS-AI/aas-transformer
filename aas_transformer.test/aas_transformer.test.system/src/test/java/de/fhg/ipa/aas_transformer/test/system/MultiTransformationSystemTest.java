@@ -58,6 +58,9 @@ public class MultiTransformationSystemTest extends AbstractSystemTest {
     public void testDeleteMultiSubmodels() throws InterruptedException, DeserializationException, ApiException {
         deleteSourceSubmodelsFromTriples(aasRegistry, aasRepository, smRepository, triples);
 
+        // Make sure all jobs are processed:
+        assertExpectedJobCount(redisJobReader, 0);
+
         for(List<Object> triple : triples) {
             assertExpectedSubmodelCount(
                     aasRegistry,
