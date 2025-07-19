@@ -1,40 +1,46 @@
 package de.fhg.ipa.aas_transformer.service.listener;
 
+import de.fhg.ipa.aas_transformer.clients.redis.RedisMessageEventConsumer;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisMessageEventProducer;
 import de.fhg.ipa.aas_transformer.service.listener.mqtt.BrokerListener;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.model.SubmodelChangeEventType;
-import de.fhg.ipa.aas_transformer.service.listener.events.SubmodelMessageEvent;
+import de.fhg.ipa.aas_transformer.model.message_event.SubmodelMessageEvent;
 import de.fhg.ipa.aas_transformer.service.listener.mqtt.SubmodelElementMqttListener;
 import de.fhg.ipa.aas_transformer.service.listener.mqtt.SubmodelMqttListener;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.GenericTestConfig;
-import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
+import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
 import org.eclipse.digitaltwin.aas4j.v3.model.Property;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.io.IOException;
 
 import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(AasITExtension.class)
+@ExtendWith(RedisExtension.class)
+@SpringBootTest
 @ContextConfiguration(classes = {
         BrokerListener.class,
         SubmodelMqttListener.class,
         SubmodelElementMqttListener.class,
         SubmodelRegistry.class,
-        SubmodelRepository.class
+        SubmodelRepository.class,
+        RedisMessageEventProducer.class,
+        RedisMessageEventConsumer.class,
+        RedisTestConfig.class
 })
 @ActiveProfiles("test")
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
@@ -44,6 +50,8 @@ public class BrokerListenerTest {
     private SubmodelMqttListener submodelMqttListener;
     @SpyBean
     private BrokerListener brokerListener;
+    @Autowired
+    RedisMessageEventConsumer redisMessageEventConsumer;
 
     @Autowired
     public SubmodelRepository submodelRepository;
@@ -103,9 +111,9 @@ public class BrokerListenerTest {
             assertThat(argumentTopic.getAllValues())
                     .contains("sm-repository/sm-repo/submodels/created");
             sleep(100);
-            assertThat(submodelMqttListener.getMessageEventCache()).hasSize(1);
-            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)submodelMqttListener.getMessageEventCache().poll();
-            assertThat(submodelMessageEvent.getChangeEventType()).isEqualTo(SubmodelChangeEventType.CREATED);
+            assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
+            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
+            assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.CREATED);
             assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
         }
 
@@ -132,9 +140,9 @@ public class BrokerListenerTest {
             assertThat(argumentTopic.getAllValues())
                     .contains("sm-repository/sm-repo/submodels/updated");
             sleep(100);
-            assertThat(submodelMqttListener.getMessageEventCache()).hasSize(1);
-            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)submodelMqttListener.getMessageEventCache().poll();
-            assertThat(submodelMessageEvent.getChangeEventType()).isEqualTo(SubmodelChangeEventType.UPDATED);
+            assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
+            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
+            assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.UPDATED);
             assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
             updatedSubmodelElement = (Property)submodelMessageEvent.getSubmodel().getSubmodelElements().stream()
                     .filter(se -> se.getIdShort().equals(keyOfSubmodelElement)).findAny().get();
@@ -151,9 +159,9 @@ public class BrokerListenerTest {
             assertThat(argumentTopic.getAllValues())
                     .contains("sm-repository/sm-repo/submodels/deleted");
             sleep(100);
-            assertThat(submodelMqttListener.getMessageEventCache()).hasSize(1);
-            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)submodelMqttListener.getMessageEventCache().poll();
-            assertThat(submodelMessageEvent.getChangeEventType()).isEqualTo(SubmodelChangeEventType.DELETED);
+            assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
+            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
+            assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.DELETED);
             assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
         }
     }
