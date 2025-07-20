@@ -47,17 +47,13 @@ public class TransformationExecutionServiceCache extends TransformerCache implem
     public void init() {
         this.transformerFlux
             .log()
-                .doOnError(e -> {
-                    if (e instanceof java.net.UnknownHostException) {
-                        LOG.warn("UnknownHostException | ManagementClient konnte den Host nicht finden: {}", e.getMessage());
-                    } else {
-                        LOG.warn(
-                                "ManagementClient failed to connect: {} - retrying in {} ms...",
-                                e.getMessage(),
-                                this.connectionRetryTimeoutInMs
-                        );
-                    }
-                })
+            .doOnError(e -> {
+                LOG.warn(
+                        "ManagementClient failed to connect: {} - retrying in {} ms...",
+                        e.getMessage(),
+                        this.connectionRetryTimeoutInMs
+                );
+            })
             .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
             .doOnComplete(() -> {
                 this.transformerEventDisposable = this.transformerEventFlux

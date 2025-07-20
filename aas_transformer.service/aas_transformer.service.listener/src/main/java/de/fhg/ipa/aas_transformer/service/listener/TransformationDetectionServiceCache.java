@@ -73,7 +73,11 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
     public void init() {
         this.transformerFlux
             .doOnError(e -> {
-                LOG.warn("ManagementClient failed to connect: " + e.getMessage() + " - retrying in " + this.connectionRetryTimeoutInMs + " ms...");
+                LOG.warn(
+                        "ManagementClient failed to connect: {} - retrying in {} ms...",
+                        e.getMessage(),
+                        this.connectionRetryTimeoutInMs
+                );
             })
             .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
             .doOnComplete(() -> {
