@@ -107,8 +107,8 @@ public class BrokerListener implements Runnable, MqttCallback, ApplicationListen
                 e.printStackTrace();
             }
         }
-
-        LOG.info("Shutting down Broker listener.");
+        if (isShuttingDown)
+            LOG.info("BrokerListener is shutting down, not subscribing to topics.");
     }
 
     @Override
