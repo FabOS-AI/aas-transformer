@@ -21,7 +21,7 @@ import java.util.List;
 
 import static java.lang.Thread.sleep;
 
-public class TransformerCache {
+public abstract class TransformerCache {
     protected final int connectionRetryTimeoutInMs = 1000;
     protected final ManagementClient managementClient;
     protected Flux<Transformer> transformerFlux;
