@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.Disposable;
 import reactor.util.retry.Retry;
 
@@ -46,32 +47,31 @@ public class TransformationExecutionServiceCache extends TransformerCache implem
     @PostConstruct
     public void init() {
         this.transformerFlux
-            .log()
-            .doOnError(e -> {
-                LOG.warn(
-                        "ManagementClient failed to connect: {} - retrying in {} ms...",
-                        e.getMessage(),
-                        this.connectionRetryTimeoutInMs
-                );
-            })
-            .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
-            .doOnComplete(() -> {
-                this.transformerEventDisposable = this.transformerEventFlux
-                        .log()
-                        .retry()
-                        .subscribe(
-                            this::handleTransformerEvent,
-                            e -> {
-                                LOG.error("Error while handling transformer event: " + e.getMessage());
-                                this.init();
-                            },
-                            () -> {
-                                LOG.info("Connection to ManagementClient is complete. Reconnecting...");
-                                this.init();
-                            }
-                        );
-            })
-            .subscribe(this::addTransformationExecutionService);
+                .doOnError(e -> {
+                    LOG.warn(
+                            "ManagementClient failed to connect: {} - retrying in {} ms...",
+                            e.getMessage(),
+                            this.connectionRetryTimeoutInMs
+                    );
+                })
+                .retryWhen(Retry.fixedDelay(Long.MAX_VALUE, Duration.ofMillis(this.connectionRetryTimeoutInMs)))
+                .doOnComplete(() -> {
+                    this.transformerEventDisposable = this.transformerEventFlux
+                            .log()
+                            .retry()
+                            .subscribe(
+                                    this::handleTransformerEvent,
+                                    e -> {
+                                        LOG.error("Error while handling transformer event: " + e.getMessage());
+                                        this.init();
+                                    },
+                                    () -> {
+                                        LOG.info("Connection to ManagementClient is complete. Reconnecting...");
+                                        this.init();
+                                    }
+                            );
+                })
+                .subscribe(this::addTransformationExecutionService);
     }
 
     public TransformationExecutionService getTransformationExecutionServiceByTransformerId(UUID transformerId) {
