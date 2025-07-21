@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         RedisTestConfig.class
 })
 @ActiveProfiles("test")
-@TestClassOrder(ClassOrderer.OrderAnnotation.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class BrokerListenerTest {
     @SpyBean
@@ -67,10 +67,8 @@ public class BrokerListenerTest {
     @Order(20)
     public void testMqttConnection() throws InterruptedException {
         int tryCount = 0;
-        int tryLimit = 10;
         while (!brokerListener.isConnected()) {
-            tryCount++;
-            if (tryCount > tryLimit)
+            if (tryCount++ > 10)
                 throw new AssertionError("Mqtt connection was not established within the expected retries.");
             sleep(500);
         }
@@ -78,91 +76,86 @@ public class BrokerListenerTest {
         assertTrue(brokerListener.isConnected());
     }
 
-    @Nested
-    @Order(20)
-    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-    public class testAasCrudOperations {
-        @Test
-        @Order(10)
-        public void testCreateSubmodel() throws Exception {
-            submodelRepository.createOrUpdateSubmodel(GenericTestConfig.getSimpleSubmodel());
-            ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
-            int tryCount = 0;
-            int tryLimit = 10;
-            while(true) {
-                tryCount++;
-                if(tryCount > tryLimit)
-                    throw new AssertionError("Method messageArrived() was not called within the expected retries.");
-                try {
-                    Mockito
-                            .verify(submodelMqttListener, Mockito.timeout(5000).atLeast(1))
-                            .messageArrived(argumentTopic.capture(), Mockito.any());
-                    break;
-                } catch(org.mockito.exceptions.verification.VerificationInOrderFailure |
-                        org.mockito.exceptions.verification.NoInteractionsWanted |
-                        org.mockito.exceptions.verification.TooManyActualInvocations |
-                        org.mockito.exceptions.verification.WantedButNotInvoked e) {
-                    System.out.println("Try #"+tryCount+" failed.");
-                    sleep(500);
-                }
+    @Test
+    @Order(30)
+    public void testCreateSubmodel() throws Exception {
+        submodelRepository.createOrUpdateSubmodel(GenericTestConfig.getSimpleSubmodel());
+        ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
+        int tryCount = 0;
+        int tryLimit = 10;
+        while(true) {
+            tryCount++;
+            if(tryCount > tryLimit)
+                throw new AssertionError("Method messageArrived() was not called within the expected retries.");
+            try {
+                Mockito
+                        .verify(submodelMqttListener, Mockito.timeout(5000).atLeast(1))
+                        .messageArrived(argumentTopic.capture(), Mockito.any());
+                break;
+            } catch(org.mockito.exceptions.verification.VerificationInOrderFailure |
+                    org.mockito.exceptions.verification.NoInteractionsWanted |
+                    org.mockito.exceptions.verification.TooManyActualInvocations |
+                    org.mockito.exceptions.verification.WantedButNotInvoked e) {
+                System.out.println("Try #"+tryCount+" failed.");
+                sleep(500);
             }
+        }
 
 //            Mockito.verify(brokerListener, Mockito.atLeast(1)).messageArrived(argumentTopic.capture(), Mockito.any());
-            assertThat(argumentTopic.getAllValues())
-                    .contains("sm-repository/sm-repo/submodels/created");
-            sleep(100);
-            assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
-            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
-            assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.CREATED);
-            assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
-        }
+        assertThat(argumentTopic.getAllValues())
+                .contains("sm-repository/sm-repo/submodels/created");
+        sleep(100);
+        assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
+        SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
+        assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.CREATED);
+        assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
+    }
 
-        @Test
-        @Order(30)
-        public void testUpdateSubmodelElement() throws Exception {
-            String keyOfSubmodelElement = "SimpleProperty";
-            String newValueOfSubmodelElement = "NewValue";
+    @Test
+    @Order(40)
+    public void testUpdateSubmodelElement() throws Exception {
+        String keyOfSubmodelElement = "SimpleProperty";
+        String newValueOfSubmodelElement = "NewValue";
 
-            var updatedSubmodel = GenericTestConfig.getSimpleSubmodel();
-            var submodelElements = updatedSubmodel.getSubmodelElements();
-            var submodelElementToUpdateOptional = submodelElements.stream()
-                    .filter(se -> se.getIdShort().equals(keyOfSubmodelElement)).findAny();
-            var updatedSubmodelElement = ((Property)submodelElementToUpdateOptional.get());
-            updatedSubmodelElement.setValue(newValueOfSubmodelElement);
-            submodelElements.remove(submodelElementToUpdateOptional.get());
-            submodelElements.add(updatedSubmodelElement);
-            updatedSubmodel.setSubmodelElements(submodelElements);
+        var updatedSubmodel = GenericTestConfig.getSimpleSubmodel();
+        var submodelElements = updatedSubmodel.getSubmodelElements();
+        var submodelElementToUpdateOptional = submodelElements.stream()
+                .filter(se -> se.getIdShort().equals(keyOfSubmodelElement)).findAny();
+        var updatedSubmodelElement = ((Property)submodelElementToUpdateOptional.get());
+        updatedSubmodelElement.setValue(newValueOfSubmodelElement);
+        submodelElements.remove(submodelElementToUpdateOptional.get());
+        submodelElements.add(updatedSubmodelElement);
+        updatedSubmodel.setSubmodelElements(submodelElements);
 
-            submodelRepository.createOrUpdateSubmodel(updatedSubmodel);
+        submodelRepository.createOrUpdateSubmodel(updatedSubmodel);
 
-            ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
-            Mockito.verify(submodelMqttListener).messageArrived(argumentTopic.capture(), Mockito.any());
-            assertThat(argumentTopic.getAllValues())
-                    .contains("sm-repository/sm-repo/submodels/updated");
-            sleep(100);
-            assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
-            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
-            assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.UPDATED);
-            assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
-            updatedSubmodelElement = (Property)submodelMessageEvent.getSubmodel().getSubmodelElements().stream()
-                    .filter(se -> se.getIdShort().equals(keyOfSubmodelElement)).findAny().get();
-            assertThat(updatedSubmodelElement.getValue()).isEqualTo(newValueOfSubmodelElement);
-        }
+        ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(submodelMqttListener).messageArrived(argumentTopic.capture(), Mockito.any());
+        assertThat(argumentTopic.getAllValues())
+                .contains("sm-repository/sm-repo/submodels/updated");
+        sleep(100);
+        assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
+        SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
+        assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.UPDATED);
+        assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
+        updatedSubmodelElement = (Property)submodelMessageEvent.getSubmodel().getSubmodelElements().stream()
+                .filter(se -> se.getIdShort().equals(keyOfSubmodelElement)).findAny().get();
+        assertThat(updatedSubmodelElement.getValue()).isEqualTo(newValueOfSubmodelElement);
+    }
 
-        @Test
-        @Order(40)
-        public void testDeleteSubmodel() throws Exception {
-            submodelRepository.deleteSubmodel(GenericTestConfig.getSimpleSubmodel().getId());
+    @Test
+    @Order(50)
+    public void testDeleteSubmodel() throws Exception {
+        submodelRepository.deleteSubmodel(GenericTestConfig.getSimpleSubmodel().getId());
 
-            ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
-            Mockito.verify(submodelMqttListener, Mockito.atLeast(1)).messageArrived(argumentTopic.capture(), Mockito.any());
-            assertThat(argumentTopic.getAllValues())
-                    .contains("sm-repository/sm-repo/submodels/deleted");
-            sleep(100);
-            assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
-            SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
-            assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.DELETED);
-            assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
-        }
+        ArgumentCaptor<String> argumentTopic = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(submodelMqttListener, Mockito.atLeast(1)).messageArrived(argumentTopic.capture(), Mockito.any());
+        assertThat(argumentTopic.getAllValues())
+                .contains("sm-repository/sm-repo/submodels/deleted");
+        sleep(100);
+        assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
+        SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
+        assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.DELETED);
+        assertThat(submodelMessageEvent.getSubmodel().getId()).isEqualTo(GenericTestConfig.getSimpleSubmodel().getId());
     }
 }
