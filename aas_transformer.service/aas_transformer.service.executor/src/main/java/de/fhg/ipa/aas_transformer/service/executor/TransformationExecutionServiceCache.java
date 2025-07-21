@@ -46,6 +46,8 @@ public class TransformationExecutionServiceCache extends TransformerCache implem
 
     @PostConstruct
     public void init() {
+        this.waitForManagement();
+
         this.transformerFlux
                 .doOnError(e -> {
                     LOG.warn(
@@ -72,6 +74,23 @@ public class TransformationExecutionServiceCache extends TransformerCache implem
                             );
                 })
                 .subscribe(this::addTransformationExecutionService);
+    }
+
+    private void waitForManagement() {
+        while(true) {
+            try {
+                this.managementClient.getAllTransformer().collectList().block();
+                break;
+            } catch (WebClientRequestException e) {
+                LOG.error("Failed to connect to ManagementClient: " + e.getMessage());
+                try {
+                    Thread.sleep(this.connectionRetryTimeoutInMs);
+                } catch (InterruptedException ie) {
+                    LOG.error("Thread interrupted while waiting to retry connection: " + ie.getMessage());
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
     }
 
     public TransformationExecutionService getTransformationExecutionServiceByTransformerId(UUID transformerId) {

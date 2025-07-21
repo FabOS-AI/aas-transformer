@@ -23,8 +23,7 @@ import static java.lang.Thread.sleep;
 
 public class TransformerCache {
     protected final int connectionRetryTimeoutInMs = 1000;
-    private final ManagementClient managementClient;
-//    private List<Transformer> transformers = new ArrayList<>();
+    protected final ManagementClient managementClient;
     protected Flux<Transformer> transformerFlux;
     protected Flux<TransformerChangeEvent> transformerEventFlux;
 
