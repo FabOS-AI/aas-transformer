@@ -81,7 +81,7 @@ public class TransformationExecutionServiceCache extends TransformerCache implem
             try {
                 this.managementClient.getAllTransformer().collectList().block();
                 break;
-            } catch (WebClientRequestException e) {
+            } catch (Exception e) {
                 LOG.error("Failed to connect to ManagementClient: " + e.getMessage());
                 try {
                     Thread.sleep(this.connectionRetryTimeoutInMs);
