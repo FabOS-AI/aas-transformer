@@ -16,6 +16,7 @@
         <module>aas_transformer.clients.redis</module>
         <module>aas_transformer.clients.prometheus</module>
         <module>aas_transformer.clients.alertmanager</module>
+        <module>aas_transformer.clients.job_api</module>
     </modules>
 
     <properties>
