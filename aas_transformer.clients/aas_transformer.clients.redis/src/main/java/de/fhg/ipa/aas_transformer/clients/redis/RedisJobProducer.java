@@ -1,7 +1,6 @@
 package de.fhg.ipa.aas_transformer.clients.redis;
 
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
-import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -17,7 +16,7 @@ public class RedisJobProducer extends RedisJobClient {
         super(redisConnectionFactory);
     }
 
-    public void pushJob(TransformationJob job) throws SerializationException {
+    public void pushJob(TransformationJob job) {
         RedisTransformationJob redisJob = new RedisTransformationJob(job);
         if(isJobAlreadyInQueue(redisJob)) {
             LOG.info(
@@ -27,7 +26,7 @@ public class RedisJobProducer extends RedisJobClient {
             return;
         };
 
-        this.rightPushJob(new RedisTransformationJob(job));
+        this.rightPushJob(redisJob);
         LOG.info("Pushing transformation job to queue: {}", job);
     }
 
