@@ -15,7 +15,7 @@
         <maven.compiler.source>18</maven.compiler.source>
         <maven.compiler.target>18</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <docker.image.name>listener</docker.image.name>
+        <docker.image.name>job-api</docker.image.name>
         <docker.image.skip>false</docker.image.skip>
     </properties>
 
