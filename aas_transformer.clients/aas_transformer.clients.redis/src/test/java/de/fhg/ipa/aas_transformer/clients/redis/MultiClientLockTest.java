@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.*;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesSubmodel;
 
@@ -26,13 +27,11 @@ import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRand
 public class MultiClientLockTest {
 
     @Autowired
-    RedisConnectionFactory redisConnectionFactory;
-    @Autowired
     RedisContainer redisContainer;
-
-    RedisJobClient redisJobClient1;
-    RedisJobClient redisJobClient2;
-    RedisJobClient redisJobClient3;
+    @Autowired
+    RedisJobProducer redisJobProducer;
+    @Autowired
+    RedisJobConsumer redisJobConsumer;
 
     String targetSubmodelId1 = "targetSubmodelId1";
     String targetSubmodelId2 = "targetSubmodelId2";
@@ -46,39 +45,35 @@ public class MultiClientLockTest {
     RedisTransformationJob job1FromJobQueue;
     RedisTransformationJob job2FromJobQueue;
 
-    @PostConstruct
-    public void init() {
-        if (redisJobClient1 == null) {
-            redisJobClient1 = new RedisJobClient(redisConnectionFactory);
-        }
-        if (redisJobClient2 == null) {
-            redisJobClient2 = new RedisJobClient(redisConnectionFactory);
-        }
-        if (redisJobClient3 == null) {
-            redisJobClient3 = new RedisJobClient(redisConnectionFactory);
-        }
-    }
-
     @BeforeAll
     public void beforeAll() {
         // Create Jobs
         for (TransformationJob job : jobList) {
-            redisJobClient1.rightPushJob(new RedisTransformationJob(job));
+            redisJobProducer.pushJob(job);
         }
     }
 
     @Test
     @Order(10)
     public void testLengthOfJobQueue() {
-        assertEquals(jobList.size(), redisJobClient1.getJobCountInt(),
+        assertEquals(jobList.size(), redisJobProducer.getJobCountInt(),
                 "Job count in redis should match the number of jobs created");
     }
 
     @Test
     @Order(20)
-    public void testConsecutiveCheckoutsByDifferentRedisClients() {
-        job1FromJobQueue = redisJobClient1.moveNextJobIntoProcessingList().get();
-        job2FromJobQueue = redisJobClient2.moveNextJobIntoProcessingList().get();
+    public void testConsecutiveCheckoutsExpectLocksCreatedAndCorrectJobsReturned() throws InterruptedException {
+        assertTrue(redisJobProducer.getLockCount() == 0);
+
+        job1FromJobQueue = redisJobConsumer.moveJobInProcessingList().get();
+        sleep(100); // Ensure the lock is created before the next checkout
+
+        assertTrue(redisJobConsumer.getLockCount() == 1);
+
+        job2FromJobQueue = redisJobConsumer.moveJobInProcessingList().get();
+        sleep(200); // Ensure the lock is created before the next checkout
+
+        assertTrue(redisJobConsumer.getLockCount() == 2);
 
         assertEquals(targetSubmodelId1, job1FromJobQueue.getTransformationJob().getTargetSubmodelId(),
                 "First job should match the first target submodel ID");
@@ -89,22 +84,33 @@ public class MultiClientLockTest {
     @Test
     @Order(30)
     public void testJobCheckoutIfAvailableJobsAreLocked() {
-        assertTrue(redisJobClient1.getJobCountInt() > 0,
+        assertTrue(redisJobConsumer.getJobCountInt() > 0,
                 "There should be jobs available in redis job queue");
 
-        Optional<RedisTransformationJob> optionalJob = redisJobClient3.moveNextJobIntoProcessingList();
+        Optional<RedisTransformationJob> optionalJob = redisJobConsumer.moveJobInProcessingList();
 
         assertTrue(optionalJob.isEmpty(),"No job should be available for checkout since all jobs are locked by other clients");
     }
 
     @Test
     @Order(40)
-    public void testFinishJobAndConsumeUnlockedJob() {
+    public void testFinishJobAndConsumeUnlockedJob() throws InterruptedException {
+        // Get Lock Count
+        int lockCount = redisJobConsumer.getLockCount();
+
         // Finish job from client 1
-        redisJobClient1.markJobAsProcessed(job1FromJobQueue);
+        redisJobConsumer.markJobAsFinished(job1FromJobQueue.getTransformationJob());
+        sleep(100); // Ensure the lock is released before the next operation
+
+        // Check if lock count is reduced by 1
+        assertEquals(
+                lockCount - 1,
+                redisJobConsumer.getLockCount(),
+                "Lock count should be reduced by 1 after finishing a job"
+        );
 
         // Now client 3 should be able to consume the next available job
-        Optional<RedisTransformationJob> optionalJob = redisJobClient3.moveJobInProcessingList();
+        Optional<RedisTransformationJob> optionalJob = redisJobConsumer.moveJobInProcessingList();
         assertTrue(optionalJob.isPresent(), "Client 3 should be able to consume an unlocked job");
     }
 
@@ -119,14 +125,14 @@ public class MultiClientLockTest {
                 null
         );
 
-        redisJobClient1.rightPushJob(new RedisTransformationJob(jobWithTargetNull));
+        redisJobProducer.pushJob(jobWithTargetNull);
 
-        Optional<RedisTransformationJob> jobWithTargetNullFromQueue = redisJobClient1.moveNextJobIntoProcessingList();
+        Optional<RedisTransformationJob> jobWithTargetNullFromQueue = redisJobConsumer.moveJobInProcessingList();
 
         assertTrue(jobWithTargetNullFromQueue.isPresent(), "Job with null target submodel ID should be processed");
 
         assertDoesNotThrow(
-                () -> redisJobClient1.markJobAsProcessed(jobWithTargetNullFromQueue.get()),
+                () -> redisJobConsumer.markJobAsFinished(jobWithTargetNullFromQueue.get().getTransformationJob()),
                 "Marking job with null target submodel ID as processed should not throw an exception"
         );
     }
@@ -145,11 +151,11 @@ public class MultiClientLockTest {
                     tsSubmodel,
                     "targetSubmodelId" + i
             );
-            redisJobClient1.rightPushJob(new RedisTransformationJob(job));
+            redisJobProducer.pushJob(job);
         }
 
         // Check if we can still checkout jobs
-        Optional<RedisTransformationJob> optionalJob = redisJobClient1.moveNextJobIntoProcessingList();
-        assertTrue(optionalJob.isPresent(), "Client 2 should be able to checkout a job from a heavy loaded queue");
+        Optional<RedisTransformationJob> optionalJob = redisJobConsumer.moveJobInProcessingList();
+        assertTrue(optionalJob.isPresent(), "Client 1 should be able to checkout a job from a heavy loaded queue");
     }
 }

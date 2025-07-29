@@ -26,52 +26,46 @@ public class MultiJobTest {
 
     @Autowired
     RedisContainer redisContainer;
-
-    RedisJobClient redisJobClient;
-
-    @PostConstruct
-    public void init() {
-        Integer port = redisContainer.getFirstMappedPort();
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", port);
-        connectionFactory.start();
-        redisJobClient = new RedisJobClient(connectionFactory);
-    }
-
+    @Autowired
+    RedisJobProducer redisJobProducer;
+    @Autowired
+    RedisJobConsumer redisJobConsumer;
 
     private void assertListCounts(int expectedJobCount, int expectedProcJobCount) throws InterruptedException {
         for(int i = 0; i < 10; i++) {
-            int currentJobCount = redisJobClient.getJobCountInt();
-            int currentProcJobCount = redisJobClient.getProcJobCountInt();
+            int currentJobCount = redisJobConsumer.getJobCountInt();
+            int currentProcJobCount = redisJobConsumer.getProcJobCountInt();
 
             LOG.info("CurrentJobCount: {} | CurrentProcJobCount: {}", currentJobCount, currentProcJobCount);
             try {
                 assertEquals(
                         expectedJobCount,
-                        redisJobClient.getJobCountInt()
+                        redisJobConsumer.getJobCountInt()
                 );
 
                 assertEquals(
                         expectedProcJobCount,
-                        redisJobClient.getProcJobCountInt()
+                        redisJobConsumer.getProcJobCountInt()
                 );
                 break;
             } catch(AssertionError e) {
                 sleep(10);
             }
         }
-        assertEquals(expectedJobCount, redisJobClient.getJobCountInt());
-        assertEquals(expectedProcJobCount, redisJobClient.getProcJobCountInt());
+        assertEquals(expectedJobCount, redisJobConsumer.getJobCountInt());
+        assertEquals(expectedProcJobCount, redisJobConsumer.getProcJobCountInt());
     }
 
     @Test
     @Order(01)
     public void testContextLoaded() {
-        assertNotNull(redisJobClient);
+        assertNotNull(redisJobProducer);
+        assertNotNull(redisJobConsumer);
     }
 
     @Test
     @Order(10)
-    public void testMultiJobProduceConsumeExpectNoLeftoverJobs() throws SerializationException, InterruptedException {
+    public void testMultiJobProduceConsumeExpectNoLeftoverJobs() throws InterruptedException {
         int jobCount = 10;
 
         for(int i = 0; i < jobCount; i++) {
@@ -86,13 +80,16 @@ public class MultiJobTest {
                     null,
                     targetSubmodelId
             );
-            RedisTransformationJob redisJob = new RedisTransformationJob(job);
 
-            redisJobClient.rightPushJob(redisJob);
-            redisJobClient.moveJobInProcessingList();
+
+            redisJobProducer.pushJob(job);
+            redisJobConsumer.moveJobInProcessingList();
+//            redisJobClient.rightPushJob(redisJob);
+//            redisJobClient.moveJobInProcessingList();
             assertListCounts(0,1);
 
-            redisJobClient.markJobAsProcessed(redisJob);
+            redisJobConsumer.markJobAsFinished(job);
+//            redisJobClient.markJobAsProcessed(redisJob);
             assertListCounts(0,0);
         }
     }
