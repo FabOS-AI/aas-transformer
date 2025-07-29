@@ -1,0 +1,6 @@
+name: aas_transformer-management
+services:
+  api-spec-getter:
+    build: .
+    volumes:
+      - ./:/opt/swagger
