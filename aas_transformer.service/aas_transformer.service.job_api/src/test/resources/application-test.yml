@@ -1,0 +1,7 @@
+aas_transformer:
+  services:
+    job_api:
+      schema: http
+      host: localhost
+      port: 4040
+      base-url: ${aas_transformer.services.job_api.schema}://${aas_transformer.services.job_api.host}:${aas_transformer.services.job_api.port}
