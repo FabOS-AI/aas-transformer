@@ -13,7 +13,7 @@ import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 @SpringBootApplication(
         scanBasePackages = {
                 "de.fhg.ipa.aas_transformer.aas",
-                "de.fhg.ipa.aas_transformer.clients.redis",
+                "de.fhg.ipa.aas_transformer.clients.job_api",
                 "de.fhg.ipa.aas_transformer.clients.management",
                 "de.fhg.ipa.aas_transformer.service.executor",
                 "de.fhg.ipa.aas_transformer.transformation",

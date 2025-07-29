@@ -5,7 +5,6 @@ import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobClient;
 import de.fhg.ipa.aas_transformer.model.TransformationDescription;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
@@ -75,7 +74,7 @@ public class Executor {
                     job.getTransformerId()
             );
         else
-            executionService.execute(job, RedisJobClient.getConsumerId());
+            executionService.execute(job);
     }
 
     public List<Submodel> executeBatchOnRequest() {
@@ -104,8 +103,7 @@ public class Executor {
             return null;
         } else {
             return executionService.executeTransformationDescription(
-                    transformationDescription,
-                    RedisJobClient.getConsumerId()
+                    transformationDescription
             );
         }
     }

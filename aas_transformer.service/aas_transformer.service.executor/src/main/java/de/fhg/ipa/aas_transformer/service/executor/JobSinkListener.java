@@ -10,17 +10,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobSinkListener {
     private static final Logger LOG = LoggerFactory.getLogger(JobSinkListener.class);
-    private final RedisJobConsumer redisJobConsumer;
+    private final JobConsumer jobConsumer;
     private final Executor executor;
 
-    public JobSinkListener(RedisJobConsumer redisJobConsumer, Executor executor) {
-        this.redisJobConsumer = redisJobConsumer;
+    public JobSinkListener(JobConsumer jobConsumer, Executor executor) {
+        this.jobConsumer = jobConsumer;
         this.executor = executor;
     }
 
     @PostConstruct
     public void postConstruct() {
-        redisJobConsumer
+        jobConsumer
                 .getJobFlux()
                 .subscribe(this::handleNextJob);
     }
@@ -35,7 +35,7 @@ public class JobSinkListener {
 
         // Mark the job as processed:
         try {
-            redisJobConsumer.markJobAsProcessed();
+            jobConsumer.markJobAsProcessed();
         } catch (SerializationException e) {
             LOG.error("Failed to mark job as processed", e.getMessage());
         }

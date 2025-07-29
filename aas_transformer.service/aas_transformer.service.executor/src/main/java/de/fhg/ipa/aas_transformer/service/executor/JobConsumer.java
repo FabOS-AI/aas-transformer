@@ -1,35 +1,33 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
+import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import java.util.List;
-
-import static java.lang.Thread.sleep;
+import javax.annotation.Nullable;
 
 @Component
-public class RedisJobConsumer extends RedisJobClient implements Runnable, ApplicationListener<ContextClosedEvent> {
-    private static final Logger LOG = LoggerFactory.getLogger(RedisJobConsumer.class);
+public class JobConsumer implements Runnable, ApplicationListener<ContextClosedEvent> {
+    private static final Logger LOG = LoggerFactory.getLogger(JobConsumer.class);
+    private final JobApiClient jobApiClient;
     private boolean isShuttingDown = false;
 
-//    private Optional<RedisTransformationJob> optionalCurrentRedisJob = Optional.empty();
+    @Nullable
+    private TransformationJob optionalCurrentJob = null;
     private final Sinks.Many<TransformationJob> jobSink =
             Sinks.many().unicast().onBackpressureBuffer();
     private final Flux<TransformationJob> jobFlux = jobSink.asFlux();
     private Thread consumerThread = new Thread(this);
 
-    public RedisJobConsumer(RedisConnectionFactory redisConnectionFactory) {
-        super(redisConnectionFactory);
+    public JobConsumer(JobApiClient jobApiClient) {
+        this.jobApiClient = jobApiClient;
         consumerThread.start();
     }
 
@@ -46,21 +44,24 @@ public class RedisJobConsumer extends RedisJobClient implements Runnable, Applic
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        redisConnectionFactory.getConnection().close();
     }
 
     @Override
     public void run() {
         LOG.info("RedisJobConsumer started");
-        boolean isJobInProcessListEmitedToSink = false;
+        boolean isCurrentRedisJobEmitedToSink = false;
         while(!isShuttingDown) {
-            if(this.getProcJobCountInt() == 0) {
-                this.moveNextJobIntoProcessingList();
-                isJobInProcessListEmitedToSink = false;
+            if(optionalCurrentJob == null) {
+                try {
+                    optionalCurrentJob = jobApiClient.getNextJob().block(); //redisJobConsumer.moveJobInProcessingList();
+                    isCurrentRedisJobEmitedToSink = false;
+                } catch (NullPointerException e) {
+                    this.sleep();
+                }
             } else {
-                if(!isJobInProcessListEmitedToSink) {
+                if(!isCurrentRedisJobEmitedToSink) {
                     this.getAndEmitNextJobInProcessingList();
-                    isJobInProcessListEmitedToSink = true;
+                    isCurrentRedisJobEmitedToSink = true;
                 } else {
                     this.sleep();
                 }
@@ -71,15 +72,16 @@ public class RedisJobConsumer extends RedisJobClient implements Runnable, Applic
     }
 
     private void getAndEmitNextJobInProcessingList() {
-        List<RedisTransformationJob> nextProcJobList = this.lookupFirstInProcJobList();
-        if(nextProcJobList != null && nextProcJobList.size() > 0) {
-            TransformationJob job = nextProcJobList.get(0).getTransformationJob();
+//        List<RedisTransformationJob> nextProcJobList = this.lookupFirstInProcJobList();
+//        if(nextProcJobList != null && nextProcJobList.size() > 0) {
+            TransformationJob job = optionalCurrentJob;
             this.jobSink.tryEmitNext(job);
-            LOG.info("Put job in sink for processing | sourceSmId {} | TransformerID {}",
+            LOG.info("Put job in sink for processing | sourceSmId {} | targetSmId {} | TransformerID {}",
                     job.getSubmodelId(),
+                    job.getTargetSubmodelId(),
                     job.getTransformerId()
             );
-        }
+//        }
     }
 
     private void sleep() {
@@ -91,13 +93,16 @@ public class RedisJobConsumer extends RedisJobClient implements Runnable, Applic
     }
 
     public void markJobAsProcessed() throws SerializationException {
-        RedisTransformationJob redisJob = this.lookupFirstInProcJobList().get(0);
-        TransformationJob job = redisJob.getTransformationJob();
+//        RedisTransformationJob redisJob = this.lookupFirstInProcJobList().get(0);
+//        TransformationJob job = redisJob.getTransformationJob();
         LOG.info("Mark job as finished | sourceSmIdShort {} | TransformerID {}",
-                job.getSubmodelId(),
-                job.getTransformerId()
+                optionalCurrentJob.getSubmodelId(),
+                optionalCurrentJob.getTransformerId()
         );
 
-        this.markJobAsProcessed(redisJob);
+        jobApiClient.finishJob(optionalCurrentJob);
+//        redisJobConsumer.markJobAsFinished(job);
+        this.optionalCurrentJob = null;
+//        this.markJobAsProcessed(redisJob);
     }
 }
