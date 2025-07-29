@@ -98,11 +98,7 @@ public class MessageEventConsumer implements Runnable {
             LOG.info("No transformer found for submodel message event: {}", submodelMessageEvent);
 
         jobs.forEach(job -> {
-            try {
-                jobProducer.pushJob(job);
-            } catch (SerializationException e) {
-                throw new RuntimeException(e);
-            }
+            jobProducer.pushJob(job);
         });
 
         try {
