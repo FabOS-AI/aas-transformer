@@ -70,7 +70,7 @@ public class FirstTransformerThenAASSystemTest extends AbstractSystemTest {
         // Assert job count is 0:
         assertEquals(
                 0,
-                redisJobReader.getTotalJobCount()
+                redisJobConsumer.getTotalJobCount()
         );
         registerShellAndSubmodel(
                 aasRegistry,
@@ -81,7 +81,7 @@ public class FirstTransformerThenAASSystemTest extends AbstractSystemTest {
                 factsSubmodel
         );
 
-        assertExpectedJobCount(redisJobReader, 0);
+        assertExpectedJobCount(redisJobConsumer, 0);
 
         assertExpectedSubmodelCount(
                 aasRegistry,

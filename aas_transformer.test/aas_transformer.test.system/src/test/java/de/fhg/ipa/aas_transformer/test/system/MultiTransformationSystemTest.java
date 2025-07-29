@@ -38,7 +38,7 @@ public class MultiTransformationSystemTest extends AbstractSystemTest {
         registerAasObjectsFromTriples(aasRegistry, aasRepository, smRegistry, smRepository, triples);
 
         // Make sure all jobs are processed:
-        assertExpectedJobCount(redisJobReader, 0);
+        assertExpectedJobCount(redisJobConsumer, 0);
 
         for(List<Object> triple : triples) {
             assertExpectedSubmodelCount(
@@ -59,7 +59,7 @@ public class MultiTransformationSystemTest extends AbstractSystemTest {
         deleteSourceSubmodelsFromTriples(aasRegistry, aasRepository, smRepository, triples);
 
         // Make sure all jobs are processed:
-        assertExpectedJobCount(redisJobReader, 0);
+        assertExpectedJobCount(redisJobConsumer, 0);
 
         for(List<Object> triple : triples) {
             assertExpectedSubmodelCount(

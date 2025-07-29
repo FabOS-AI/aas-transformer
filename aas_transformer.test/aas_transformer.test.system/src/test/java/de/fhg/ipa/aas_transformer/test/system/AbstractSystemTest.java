@@ -7,7 +7,7 @@ import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.JobsClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobConsumer;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
 public class AbstractSystemTest {
@@ -26,7 +26,7 @@ public class AbstractSystemTest {
     AasRepository aasRepository;
     SubmodelRegistry smRegistry;
     SubmodelRepository smRepository;
-    RedisJobReader redisJobReader;
+    RedisJobConsumer redisJobConsumer;
 
     public AbstractSystemTest() {
         this.managementClient = new ManagementClient("http://localhost:" + transformerManagementPort);
@@ -41,6 +41,6 @@ public class AbstractSystemTest {
                 Integer.parseInt(System.getProperty("spring.data.redis.port"))
         );
         connFac.start();
-        this.redisJobReader = new RedisJobReader(connFac);
+        this.redisJobConsumer = new RedisJobConsumer(connFac);
     }
 }
