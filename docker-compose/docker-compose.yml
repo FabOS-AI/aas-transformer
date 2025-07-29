@@ -130,6 +130,30 @@ services:
     extra_hosts:
       - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
 
+  aas-transformer-job-api:
+    image: ghcr.io/fabos-ai/aas-transformer/job-api:${VERSION}
+    stop_grace_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-file: ${LOGGING_MAX_FILE}
+        max-size: ${LOGGING_MAX_SIZE}
+    networks:
+      default:
+        aliases:
+          - ${AAS_TRANSFORMER_SERVICES_JOB_API_HOST}
+      traefik_default:
+    extra_hosts:
+      - "${AAS_TRANSFORMER_HOST}:172.17.0.1"
+    healthcheck:
+      test: "curl -f http://localhost:${AAS_TRANSFORMER_SERVICES_JOB_API_PORT}/actuator || exit 1"
+    environment:
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_DATA_REDIS_USERNAME: ${REDIS_USERNAME}
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SERVER_PORT: ${AAS_TRANSFORMER_SERVICES_JOB_API_PORT}
+
   aas-transformer-init:
     image: ghcr.io/fabos-ai/aas-transformer/initializer:${VERSION}
     logging:
