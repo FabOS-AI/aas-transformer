@@ -3,7 +3,6 @@ package de.fhg.ipa.aas_transformer.clients.redis;
 import com.redis.testcontainers.RedisContainer;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import de.fhg.ipa.aas_transformer.model.TransformationJobAction;
-import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
@@ -11,7 +10,6 @@ import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,9 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class RedisJobClientTest {
+public class RedisJobProducerConsumerTest {
 
-    RedisJobClient redisJobClient = null;
+    @Autowired
+    RedisJobProducer redisJobProducer;
+    @Autowired
+    RedisJobConsumer redisJobConsumer;
 
     // Test Objects:
     static UUID transformerId = UUID.randomUUID();
@@ -36,7 +37,7 @@ public class RedisJobClientTest {
     @Autowired
     RedisContainer redisContainer;
 
-    public RedisJobClientTest() throws IOException, DeserializationException, SerializationException {
+    public RedisJobProducerConsumerTest() throws IOException, DeserializationException, SerializationException {
         redisJob = new RedisTransformationJob(new TransformationJob(
                 TransformationJobAction.EXECUTE,
                 transformerId,
@@ -55,43 +56,34 @@ public class RedisJobClientTest {
         return submodel;
     }
 
-    @PostConstruct
-    public void init() {
-        if(redisJobClient == null) {
-            Integer port = redisContainer.getFirstMappedPort();
-            LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory("localhost", port);
-            connectionFactory.start();
-            redisJobClient = new RedisJobClient(connectionFactory);
-        }
-    }
-
     @Test
     @Order(10)
     public void testContextLoaded() {
-        assertNotNull(redisJobClient);
+        assertNotNull(redisJobProducer);
+        assertNotNull(redisJobConsumer);
     }
 
     @Test
     @Order(20)
     public void getJobCountExpectZero() {
-        int jobCount = redisJobClient.getJobCountInt();
+        int jobCount = redisJobProducer.getJobCountInt();
         assertEquals(0, jobCount);
     }
 
     @Test
     @Order(30)
     public void createJobExpectOneJob() {
-        redisJobClient.rightPushJob(this.redisJob);
+        redisJobProducer.pushJob(this.redisJob.getTransformationJob());
         assertEquals(
                 1,
-                redisJobClient.getJobCountInt()
+                redisJobProducer.getJobCountInt()
         );
     }
 
     @Test
     @Order(40)
     public void popJobExpectJobBeingEqualToCreatedJob()  {
-        RedisTransformationJob poppedJob = redisJobClient.moveJobInProcessingList().get();
+        RedisTransformationJob poppedJob = redisJobConsumer.moveJobInProcessingList().get();
         assertEquals(
             this.redisJob,
             poppedJob
@@ -101,24 +93,24 @@ public class RedisJobClientTest {
     @Test
     @Order(60)
     public void getJobCountAfterPopExpectZero() {
-        int jobCount = redisJobClient.getJobCountInt();
+        int jobCount = redisJobConsumer.getJobCountInt();
         assertEquals(0, jobCount);
     }
 
     @Test
     @Order(70)
     public void getProcJobCountAfterPopExpectOne() {
-        int jobCount = redisJobClient.getProcJobCountInt();
+        int jobCount = redisJobConsumer.getProcJobCountInt();
         assertEquals(1, jobCount);
     }
 
     @Test
     @Order(80)
-    public void markProcJobAsProcessedExpectZeroProcJobs() throws SerializationException {
-        redisJobClient.markJobAsProcessed(this.redisJob);
+    public void markProcJobAsProcessedExpectZeroProcJobs() {
+        redisJobConsumer.markJobAsFinished(this.redisJob.getTransformationJob());
         assertEquals(
                 0,
-                redisJobClient.getProcJobCountInt()
+                redisJobConsumer.getProcJobCountInt()
         );
     }
 }
