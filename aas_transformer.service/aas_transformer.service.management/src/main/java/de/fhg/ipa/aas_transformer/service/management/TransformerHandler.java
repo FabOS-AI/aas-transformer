@@ -169,11 +169,7 @@ public class TransformerHandler {
                     })
                     .forEach(job -> {
                         // push job for each submodel being source of transformation
-                        try {
-                            this.redisJobProducer.pushJob(job);
-                        } catch (SerializationException e) {
-                            throw new RuntimeException(e);
-                        }
+                        this.redisJobProducer.pushJob(job);
                     });
         } catch (DeserializationException e) {
             LOG.error("Failed to get all submodels to push jobs for transformer: {} | {}", transformer.getId(), e.getMessage());
@@ -216,18 +212,14 @@ public class TransformerHandler {
         this.getDestinationSubmodelIds(t.getId())
                 // Create a TransformationJob for each destination submodel
                 .forEach(submodelId -> {
-                    try {
-                        // render target submodel ID:
-                        this.redisJobProducer.pushJob(new TransformationJob(
-                                DELETE,
-                                t.getId(),
-                                submodelId,
-                                null,
-                                null
-                        ));
-                    } catch (SerializationException e) {
-                        throw new RuntimeException(e);
-                    }
+                    // render target submodel ID:
+                    this.redisJobProducer.pushJob(new TransformationJob(
+                            DELETE,
+                            t.getId(),
+                            submodelId,
+                            null,
+                            null
+                    ));
                 });
     }
 
