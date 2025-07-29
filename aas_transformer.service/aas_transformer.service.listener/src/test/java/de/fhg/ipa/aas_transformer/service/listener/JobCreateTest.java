@@ -6,7 +6,7 @@ import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobConsumer;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import jakarta.annotation.PostConstruct;
@@ -113,9 +113,9 @@ public class JobCreateTest {
     @Autowired
     public SubmodelRepository submodelRepository;
     @Autowired
-    RedisJobReader redisJobProducer;
+    RedisJobConsumer redisJobProducer;
     @Autowired
-    RedisJobReader redisJobReader;
+    RedisJobConsumer redisJobConsumer;
 
     @Test
     @Order(10)
@@ -145,7 +145,7 @@ public class JobCreateTest {
         // TODO add create of shell and registering submodel in shell
 //        submodelRepository.createOrUpdateSubmodel(ansibleFactsSubmodel);
 
-        assertExpectedJobCount(redisJobReader, 1);
+        assertExpectedJobCount(redisJobConsumer, 1);
     }
 
     @Test
@@ -164,7 +164,7 @@ public class JobCreateTest {
                 newSubmodelElement
         );
 
-        assertExpectedJobCount(redisJobReader, expectedJobCount);
+        assertExpectedJobCount(redisJobConsumer, expectedJobCount);
     }
 
     @Test
@@ -181,7 +181,7 @@ public class JobCreateTest {
 
         submodelRepository.deleteSubmodel(ansibleFactsSubmodel.getId());
 
-        assertExpectedJobCount(redisJobReader, expectedJobCount);
+        assertExpectedJobCount(redisJobConsumer, expectedJobCount);
     }
 
     @Test
@@ -200,7 +200,7 @@ public class JobCreateTest {
 
         submodelRepository.createOrUpdateSubmodel(submodel);
 
-        assertExpectedJobCount(redisJobReader, expectedJobCount);
+        assertExpectedJobCount(redisJobConsumer, expectedJobCount);
     }
 
     @Test
@@ -217,12 +217,12 @@ public class JobCreateTest {
         // Create source submodel
         submodelRepository.createOrUpdateSubmodel(srcSubmodel);
         submodelRegistry.registerSubmodel(srcSubmodel);
-        assertExpectedJobCount(redisJobReader, expectedJobCount);
+        assertExpectedJobCount(redisJobConsumer, expectedJobCount);
 
         // Create destination submodel of source submodel:
         submodelRepository.createOrUpdateSubmodel(dstSubmodel);
         sleep(3000);
 
-        assertExpectedJobCount(redisJobReader, expectedJobCount);
+        assertExpectedJobCount(redisJobConsumer, expectedJobCount);
     }
 }
