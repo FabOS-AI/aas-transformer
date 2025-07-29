@@ -60,6 +60,11 @@ aas_transformer:
       base-url: ${aas_transformer.services.management.schema}://${aas_transformer.services.management.host}:${aas_transformer.services.management.port}
     executor:
       external_base_url: http://localhost:4030
+    job_api:
+      schema: http
+      host: localhost
+      port: 4040
+      base-url: ${aas_transformer.services.job_api.schema}://${aas_transformer.services.job_api.host}:${aas_transformer.services.job_api.port}
 
 ### AAS
 aas:
