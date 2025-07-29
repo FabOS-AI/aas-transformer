@@ -16,6 +16,7 @@
         <maven.compiler.target>18</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
     <dependencies>
         <!-- SPRING -->
         <dependency>
@@ -64,6 +65,7 @@
             <version>${revision}</version>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -118,5 +120,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
