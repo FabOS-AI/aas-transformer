@@ -140,8 +140,7 @@ public class TransformationExecutionService {
     }
 
     public Submodel executeTransformationDescription(
-            TransformationDescription transformationDescription,
-            UUID executorId
+            TransformationDescription transformationDescription
     ) {
         String sourceSubmodelId = transformationDescription.getSourceSubmodelId();
         Instant startLookupSource = Instant.now();
@@ -194,7 +193,7 @@ public class TransformationExecutionService {
                 destinationShells.get(0).getId(),
                 destinationSubmodelId,
                 sourceSubmodel.getId(),
-                executorId,
+                null,
                 Duration.between(startTransformation, endTransformation),
                 Duration.between(startLookupSource, endLookupSource),
                 Duration.ofMillis(0)
@@ -203,7 +202,7 @@ public class TransformationExecutionService {
         return destinationSubmodel;
     }
 
-    public void execute(TransformationJob job, UUID executorId) {
+    public void execute(TransformationJob job) {
         Submodel sourceSubmodel = null;
         Instant startLookupSource = Instant.now();
         if(job.getSubmodel() == null) {
@@ -271,7 +270,7 @@ public class TransformationExecutionService {
                     destinationShellId,
                     destinationSubmodelId,
                     sourceSubmodel.getId(),
-                    executorId,
+                    null,
                     Duration.between(startTransformation, endTransformation),
                     Duration.between(startLookupSource, endLookupSource),
                     Duration.between(startSaveDestination, endSaveDestination)
