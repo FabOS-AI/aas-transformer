@@ -4,7 +4,7 @@ import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisJobReader;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobConsumer;
 import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.model.TransformerActionCopy;
 import de.fhg.ipa.aas_transformer.model.TransformerActionType;
@@ -42,7 +42,7 @@ public class JobPushTest {
     static SubmodelRegistry smRegistry;
     static SubmodelRepository smRepository;
     @Autowired
-    private RedisJobReader redisJobReader;
+    private RedisJobConsumer redisJobConsumer;
 
     private static List<List<Object>> triple = getRandomAnsibleFactsTriples(1, false);
 
@@ -86,7 +86,7 @@ public class JobPushTest {
                 .createOrUpdateTransformer(getAnsibleFactsTransformer(false), true)
                 .block();
 
-        assertEquals(1, redisJobReader.getWaitingJobCount());
+        assertEquals(1, redisJobConsumer.getWaitingJobCount());
     }
 
     @Test
@@ -101,7 +101,7 @@ public class JobPushTest {
     @Test
     @Order(30)
     public void modifyTransformerExpectJobPush() throws InterruptedException {
-        int waitingJobCount0 = redisJobReader.getWaitingJobCount();
+        int waitingJobCount0 = redisJobConsumer.getWaitingJobCount();
         Transformer t = transformerHandler.getAllTransformer().blockFirst();
 
         t.setTransformerActions(
@@ -116,13 +116,13 @@ public class JobPushTest {
         );
         transformerHandler.createOrUpdateTransformer(t, true).block();
 
-        assertExpectedJobCount(redisJobReader, waitingJobCount0);
+        assertExpectedJobCount(redisJobConsumer, waitingJobCount0);
     }
 
     @Test
     @Order(40)
     public void deleteTransformerExpectJobPush() throws InterruptedException {
-        int waitingJobCount0 = redisJobReader.getWaitingJobCount();
+        int waitingJobCount0 = redisJobConsumer.getWaitingJobCount();
 
         transformerHandler.deleteTransformer(
                 transformerHandler
@@ -132,6 +132,6 @@ public class JobPushTest {
                 true
         );
 
-        assertExpectedJobCount(redisJobReader, waitingJobCount0+1);
+        assertExpectedJobCount(redisJobConsumer, waitingJobCount0+1);
     }
 }
