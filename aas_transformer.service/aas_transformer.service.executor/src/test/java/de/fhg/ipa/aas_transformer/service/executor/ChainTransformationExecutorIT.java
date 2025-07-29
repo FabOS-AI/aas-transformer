@@ -1,8 +1,9 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
 
+import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
+import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
@@ -17,26 +18,31 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
 import java.util.UUID;
 
-import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.assertInternalSegmentsEqual;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesSubmodel;
 
-@ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ChainTransformationExecutorIT extends AbstractIT {
+    @MockBean
+    MetricsClient metricsClient;
+    @MockBean
+    JobApiClient jobApiClient;
+
     // region Test vars
     // Test Transformer/AAS Objects:
     static AssetAdministrationShell testAas = getSimpleShell("", "");
@@ -109,6 +115,7 @@ public class ChainTransformationExecutorIT extends AbstractIT {
                     null
             )
     );
+    private int currentJobReturnIndex = 0;
     // endregion
 
     // Mocks ManagementClient; Client return testTransformer
@@ -138,10 +145,30 @@ public class ChainTransformationExecutorIT extends AbstractIT {
         }
     }
 
+    @PostConstruct
+    public void init() {
+        // Log Transformation:
+        Mockito
+                .when(metricsClient.addTransformationLog(Mockito.any()))
+                .thenReturn(Mono.just(new TransformationLog(
+                        "destinationAasId",
+                        "destinationSubmodelId",
+                        "sourceSubmodelId",
+                        null,
+                        null,
+                        null,
+                        null
+                )));
+    }
+
     @Test
     @Order(10)
     public void testExecute() throws InterruptedException, DeserializationException, ApiException {
         registerShellAndSubmodel(this.aasRegistry, this.aasRepository, this.smRegistry, this.smRepository, testAas, timeseriesSubmodel);
+
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenAnswer(invocationOnMock -> this.returnNextJob());
 
         // Assert Submodel count:
         assertExpectedSubmodelCount(
@@ -152,14 +179,6 @@ public class ChainTransformationExecutorIT extends AbstractIT {
                 1,
                 1
         );
-
-        // Push transformation jobs to Redis:
-        jobs.stream().forEach(job -> {
-            redisJobClient.rightPushJob(new RedisTransformationJob(job));
-        });
-
-        // Assert job count - make sure all transformations are done:
-        assertExpectedJobCount(redisJobReader, 0);
 
         // Assert Submodel count - make sure all submodels are created:
         assertExpectedSubmodelCount(
@@ -179,5 +198,11 @@ public class ChainTransformationExecutorIT extends AbstractIT {
                 submodelTakeEvery,
                 submodelAvgTakeEvery
         );
+    }
+
+    private Mono<TransformationJob> returnNextJob() {
+        if( this.currentJobReturnIndex >= jobs.size())
+            return Mono.empty();
+        return Mono.just(jobs.get(this.currentJobReturnIndex++));
     }
 }

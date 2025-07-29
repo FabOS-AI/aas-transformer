@@ -1,12 +1,11 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
+import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.MariaDbExtension;
-import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
@@ -27,19 +26,19 @@ import java.io.FileNotFoundException;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getDestinationSubmodelIdOfAnsibleFactsTransformer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MariaDbExtension.class)
-@ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FirstAASThenTransformerExecutorIT extends AbstractIT {
     @MockBean
     MetricsClient metricsClient;
+    @MockBean
+    JobApiClient jobApiClient;
 
     // Test Objects:
     static Submodel factsSubmodel = getAnsibleFactsSubmodel();
@@ -125,9 +124,13 @@ public class FirstAASThenTransformerExecutorIT extends AbstractIT {
 
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
 
-        redisJobClient.rightPushJob(new RedisTransformationJob(createdJob));
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenReturn(Mono.just(createdJob))
+                .thenReturn(Mono.empty());
+//        redisJobClient.rightPushJob(new RedisTransformationJob(createdJob));
+//        assertExpectedJobCount(redisJobConsumer, 0);
 
-        assertExpectedJobCount(redisJobReader, 0);
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 2, 2);
     }
 
@@ -152,9 +155,14 @@ public class FirstAASThenTransformerExecutorIT extends AbstractIT {
                 this.smRepository.getAllSubmodels().size()
         );
 
-        redisJobClient.rightPushJob(new RedisTransformationJob(deleteJob));
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenReturn(Mono.just(deleteJob))
+                .thenReturn(Mono.empty());
 
-        assertExpectedJobCount(redisJobReader, 0);
+//        redisJobClient.rightPushJob(new RedisTransformationJob(deleteJob));
+//
+//        assertExpectedJobCount(redisJobConsumer, 0);
         assertExpectedSubmodelCount(
                 aasRegistry,
                 aasRepository,

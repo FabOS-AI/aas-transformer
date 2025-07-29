@@ -1,7 +1,8 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
+import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
+import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
@@ -27,17 +29,17 @@ import java.util.stream.Stream;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesSubmodel;
-import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class StrictModeExecutorIT extends AbstractIT {
+    @MockBean
+    MetricsClient metricsClient;
+    @MockBean
+    JobApiClient jobApiClient;
 
     // region Test vars
     // Test Transformer/AAS Objects:
@@ -109,6 +111,22 @@ public class StrictModeExecutorIT extends AbstractIT {
         }
     }
 
+    @PostConstruct
+    public void init() {
+        // Log Transformation:
+        Mockito
+                .when(metricsClient.addTransformationLog(Mockito.any()))
+                .thenReturn(Mono.just(new TransformationLog(
+                        "destinationAasId",
+                        "destinationSubmodelId",
+                        "sourceSubmodelId",
+                        null,
+                        null,
+                        null,
+                        null
+                )));
+    }
+
     @ParameterizedTest
     @MethodSource("getTestTransformers")
     @Order(10)
@@ -121,9 +139,9 @@ public class StrictModeExecutorIT extends AbstractIT {
                 getTestSubmodel(transformer),
                 null
         );
-        RedisTransformationJob redisJob = new RedisTransformationJob(job);
+//        RedisTransformationJob redisJob = new RedisTransformationJob(job);
 
-        assertNotEquals("", redisJob.sourceSubmodel);
+        assertNotEquals("", job.getSubmodel());
 
         // Assert Submodel count before pushing job:
         int expectedSubmodelCount = 1+testTransformers.indexOf(transformer);
@@ -136,10 +154,15 @@ public class StrictModeExecutorIT extends AbstractIT {
                 expectedSubmodelCount
         );
 
-        redisJobClient.rightPushJob(redisJob);
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenReturn(Mono.just(job))
+                .thenReturn(Mono.empty());
+
+//        redisJobClient.rightPushJob(redisJob);
 
         // Assert job count:
-        assertExpectedJobCount(redisJobReader, 0);
+//        assertExpectedJobCount(redisJobConsumer, 0);
 
         // Assert Submodel count:
         expectedSubmodelCount++;

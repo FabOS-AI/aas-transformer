@@ -1,7 +1,8 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
+import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
+import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
@@ -10,7 +11,10 @@ import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -20,6 +24,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,14 +34,16 @@ import java.util.stream.Stream;
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesSubmodel;
-import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 
-@ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SingleTransformationExecutorIT extends AbstractIT {
+    @MockBean
+    MetricsClient metricsClient;
+    @MockBean
+    JobApiClient jobApiClient;
 
     // region Test vars
     // Test Transformer/AAS Objects:
@@ -134,28 +142,55 @@ public class SingleTransformationExecutorIT extends AbstractIT {
                     false
             )
     );
+    //endregion
 
     // Mocks ManagementClient; Client return testTransformer
     @TestConfiguration
     public static class TestConfig {
         @MockBean
         ManagementClient managementClient;
+        Sinks.Many<TransformerDTOListener> sinkTransformerDtoListener = Sinks.many().unicast().onBackpressureBuffer();
+        Sinks.Many<TransformerChangeEvent> sinkChangeEvent = Sinks.many().unicast().onBackpressureBuffer();
+        Sinks.Many<TransformerChangeEventDTOListener> sinkChangeEventDtoListener = Sinks.many().unicast().onBackpressureBuffer();
 
         @PostConstruct
         public void initMock() {
+            // Get All Endpoints:
             Mockito
                     .when(managementClient.getAllTransformer())
                     .thenReturn(Flux.fromStream(testTransformers.stream()));
             Mockito
                     .when(managementClient.getAllTransformerDTOListener())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(sinkTransformerDtoListener.asFlux());
+
+            // Get ChangeEvent Streams:
             Mockito
                     .when(managementClient.getTransformerChangeEventStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(sinkChangeEvent.asFlux());
             Mockito
                     .when(managementClient.getTransformerChangeEventDTOListenerStream())
-                    .thenReturn(Flux.empty());
+                    .thenReturn(sinkChangeEventDtoListener.asFlux());
         }
+    }
+
+    @PostConstruct
+    public void init() {
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenReturn(Mono.empty());
+
+        // Log Transformation:
+        Mockito
+                .when(metricsClient.addTransformationLog(Mockito.any()))
+                .thenReturn(Mono.just(new TransformationLog(
+                        "destinationAasId",
+                        "destinationSubmodelId",
+                        "sourceSubmodelId",
+                        null,
+                        null,
+                        null,
+                        null
+                )));
     }
 
     private static Stream<Arguments> getTestTransformers() {
@@ -216,10 +251,15 @@ public class SingleTransformationExecutorIT extends AbstractIT {
                 expectedCount
         );
 
-        redisJobClient.rightPushJob(new RedisTransformationJob(job));
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenReturn(Mono.just(job))
+                .thenReturn(Mono.empty());
 
-        // Assert job count:
-        assertExpectedJobCount(redisJobReader, 0);
+//        redisJobClient.rightPushJob(new RedisTransformationJob(job));
+//
+//        // Assert job count:
+//        assertExpectedJobCount(redisJobConsumer, 0);
 
         // Assert Submodel count:
         expectedCount++;

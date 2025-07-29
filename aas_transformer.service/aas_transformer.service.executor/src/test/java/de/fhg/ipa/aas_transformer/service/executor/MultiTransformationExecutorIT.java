@@ -1,11 +1,9 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
+import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
-import de.fhg.ipa.aas_transformer.model.TransformationJob;
-import de.fhg.ipa.aas_transformer.model.Transformer;
-import de.fhg.ipa.aas_transformer.model.TransformerChangeEvent;
-import de.fhg.ipa.aas_transformer.model.TransformerChangeEventDTOListener;
+import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
+import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
 import jakarta.annotation.PostConstruct;
@@ -14,26 +12,33 @@ import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.basyx.aasregistry.client.ApiException;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 
 @ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class MultiTransformationExecutorIT extends AbstractIT {
+    @MockBean
+    MetricsClient metricsClient;
+    @MockBean
+    JobApiClient jobApiClient;
 
     // region Test vars
     // Test triples:
@@ -47,6 +52,7 @@ public class MultiTransformationExecutorIT extends AbstractIT {
         }
     }
     static Transformer testTransformer = (Transformer)triples.get(0).get(2);
+    private int currentIndex = 0;
     // endregion
 
     // Mocks ManagementClient; Client return factsTransformer
@@ -76,26 +82,32 @@ public class MultiTransformationExecutorIT extends AbstractIT {
         }
     }
 
+    @PostConstruct
+    public void init() {
+        // Log Transformation:
+        Mockito
+                .when(metricsClient.addTransformationLog(Mockito.any()))
+                .thenReturn(Mono.just(new TransformationLog(
+                        "destinationAasId",
+                        "destinationSubmodelId",
+                        "sourceSubmodelId",
+                        null,
+                        null,
+                        null,
+                        null
+                )));
+    }
+
     @Test
     @Order(10)
-    public void testMultiTransformation() throws SerializationException, InterruptedException, DeserializationException, ApiException {
+    public void testMultiTransformation() throws InterruptedException, DeserializationException, ApiException {
         // Register AAS objects from triples:
         registerAasObjectsFromTriples(aasRegistry, aasRepository, smRegistry, smRepository, triples);
 
-        // Register jobs for transformation of triples:
-        for(List<Object>triple : triples) {
-            TransformationJob job = new TransformationJob(
-                EXECUTE,
-                testTransformer.getId(),
-                ((Submodel)triple.get(1)).getId(),
-                null,
-                null
-            );
-            redisJobClient.rightPushJob(new RedisTransformationJob(job));
-        }
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenAnswer(invocation -> this.getNextJob());
 
-        // Assert job count:
-        assertExpectedJobCount(redisJobReader, 0);
 
         // Assert submodel count:
         for(List<Object>triple : triples) {
@@ -108,5 +120,20 @@ public class MultiTransformationExecutorIT extends AbstractIT {
                     2
             );
         }
+    }
+
+    private Mono<TransformationJob> getNextJob() {
+        if(this.currentIndex >= triples.size())
+            return Mono.empty();
+
+        return Mono.just(
+                new TransformationJob(
+                        EXECUTE,
+                        testTransformer.getId(),
+                        ((Submodel)triples.get(this.currentIndex++).get(1)).getId(),
+                        null,
+                        null
+                )
+        );
     }
 }

@@ -8,7 +8,10 @@ import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.model.TransformerChangeEvent;
 import de.fhg.ipa.aas_transformer.model.TransformerChangeEventDTOListener;
+import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
+import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionServiceFactory;
+import de.fhg.ipa.aas_transformer.transformation.templating.AasTemplateRenderer;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import jakarta.annotation.PostConstruct;
 import org.junit.jupiter.api.*;
@@ -27,16 +30,21 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
         TransformationServiceFactory.class,
         ManagementClient.class,
         TemplateRenderer.class,
+        AasTemplateRenderer.class,
+        TransformationUtils.class,
         AasRegistry.class,
         AasRepository.class,
         SubmodelRegistry.class,
         SubmodelRepository.class,
         TransformerActionServiceFactory.class,
+        TransformationDescriptionJpaRepository.class,
         MetricsClient.class
 })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Disabled
 public class TransformationExecutionServiceCacheTest {
+    @MockBean
+    TransformationDescriptionJpaRepository transformationDescriptionJpaRepository;
     @Autowired
     TransformationExecutionServiceCache transformationExecutionServiceCache;
 

@@ -1,7 +1,8 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
+import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
-import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
+import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
@@ -19,22 +20,25 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
 
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
-import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getDestinationSubmodelIdOfAnsibleFactsTransformer;
-import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FirstTransformerThenAASExecutorIT extends AbstractIT {
+    @MockBean
+    MetricsClient metricsClient;
+    @MockBean
+    JobApiClient jobApiClient;
+
     // Test Objects:
     static Transformer factsTransformer = getAnsibleFactsTransformer(false);
     static DefaultAssetAdministrationShell shell = getSimpleShell("", "");
@@ -65,6 +69,22 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
                     .when(managementClient.getTransformerChangeEventDTOListenerStream())
                     .thenReturn(changeEventDtoListenerSink.asFlux());
         }
+    }
+
+    @PostConstruct
+    public void init() {
+        // Log Transformation:
+        Mockito
+                .when(metricsClient.addTransformationLog(Mockito.any()))
+                .thenReturn(Mono.just(new TransformationLog(
+                        "destinationAasId",
+                        "destinationSubmodelId",
+                        "sourceSubmodelId",
+                        null,
+                        null,
+                        null,
+                        null
+                )));
     }
 
     @BeforeEach
@@ -101,11 +121,13 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
         assertEquals(1, aasRepository.getAas(shell.getId()).getSubmodels().size());
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
 
-        redisJobClient.rightPushJob(new RedisTransformationJob(createdJob));
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenReturn(Mono.just(createdJob))
+                .thenReturn(Mono.empty());
 
         int expectedSubmodelCount = 2;
 
-        assertExpectedJobCount(redisJobReader,0);
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), expectedSubmodelCount, expectedSubmodelCount);
     }
 
@@ -119,17 +141,18 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
 
         TransformationJob deletedJob = new TransformationJob(
             TransformationJobAction.DELETE,
-            null,
+                factsTransformer.getId(),
                 destinationSubmodelId,
             null,
                 null
         );
 
-        redisJobClient.rightPushJob(new RedisTransformationJob(deletedJob));
+        Mockito
+                .when(jobApiClient.getNextJob())
+                .thenReturn(Mono.just(deletedJob))
+                .thenReturn(Mono.empty());
 
         int expectedSubmodelCount = 1;
-
-        assertExpectedJobCount(redisJobReader,0);
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), expectedSubmodelCount, expectedSubmodelCount);
     }
 }
