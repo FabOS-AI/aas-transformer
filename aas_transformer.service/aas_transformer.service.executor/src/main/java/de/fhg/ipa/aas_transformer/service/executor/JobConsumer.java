@@ -97,16 +97,12 @@ public class JobConsumer implements Runnable, ApplicationListener<ContextClosedE
     }
 
     public void markJobAsProcessed() throws SerializationException {
-//        RedisTransformationJob redisJob = this.lookupFirstInProcJobList().get(0);
-//        TransformationJob job = redisJob.getTransformationJob();
         LOG.info("Mark job as finished | sourceSmIdShort {} | TransformerID {}",
                 optionalCurrentJob.getSubmodelId(),
                 optionalCurrentJob.getTransformerId()
         );
 
-        jobApiClient.finishJob(optionalCurrentJob);
-//        redisJobConsumer.markJobAsFinished(job);
+        jobApiClient.finishJob(optionalCurrentJob).block();
         this.optionalCurrentJob = null;
-//        this.markJobAsProcessed(redisJob);
     }
 }
