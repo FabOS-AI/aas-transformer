@@ -14,9 +14,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
+import static de.fhg.ipa.aas_transformer.test.utils.GenericTestConfig.getSimpleSubmodel;
 import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -84,11 +86,19 @@ public class JobApiTest {
 
         // TODO: Get Proc Job Count
 
-
         assertEquals(
                 0,
                 redisJobProducer.getLockCount(),
                 "Expected the job to be removed from the processing list and unlocked"
         );
+    }
+
+    @Test
+    @Order(40)
+    void testPushJobInclSubmodelExpectNoErrors() {
+        newJob.setSubmodel(getSimpleSubmodel());
+        redisJobProducer.pushJob(newJob);
+        TransformationJob newJobInklSubmodel = jobApiClient.getNextJob().block();
+        return;
     }
 }
