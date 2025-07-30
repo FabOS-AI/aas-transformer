@@ -27,11 +27,7 @@ public class JobSinkListener {
 
     private void handleNextJob(TransformationJob job) {
         // Process the job:
-//        try {
-            executor.execute(job);
-//        } catch (Exception e) {
-//            LOG.error("Failed to execute job", e.getMessage());
-//        }
+        executor.execute(job);
 
         // Mark the job as processed:
         try {
