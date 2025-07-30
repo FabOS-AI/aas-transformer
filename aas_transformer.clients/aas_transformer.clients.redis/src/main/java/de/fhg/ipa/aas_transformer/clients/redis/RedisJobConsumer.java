@@ -69,6 +69,8 @@ public class RedisJobConsumer extends RedisJobClient implements Runnable {
         try {
             LOG.info("Unlocking id: {}", id);
             redisLockRegistry.obtain(id).unlock();
+        } catch (IllegalStateException e) {
+            LOG.warn(e.getMessage());
         } finally {
             idsToUnlock.remove(id);
         }
