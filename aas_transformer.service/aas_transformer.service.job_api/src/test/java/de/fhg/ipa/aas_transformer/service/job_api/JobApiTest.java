@@ -65,10 +65,11 @@ public class JobApiTest {
     void testCreateJobAndGetNextJobExpectJobAsResponse() throws InterruptedException {
         redisJobProducer.pushJob(newJob);
         TransformationJob result = jobApiClient.getNextJob().block();
-        sleep(100);
+        sleep(200);
         assertNotNull(result);
         assertEquals(newJob, result, "Expected the job returned by the API to match the one created");
-        assertEquals(1, redisJobProducer.getLockCount(),"Expected the job to be removed from the waiting list");
+        assertEquals(1, redisJobProducer.getLockCount(),"Expected the job to be locked in the processing list");
+        assertEquals(1, redisJobProducer.getProcJobCountInt(),"Expected the job to be in the processing list");
     }
 
     @Test
@@ -76,29 +77,33 @@ public class JobApiTest {
     void testFinishJobExpectNoJobInQueueAndNoLocks() throws InterruptedException {
         jobApiClient.finishJob(newJob).block();
 
-        assertEquals(
-                0,
-                redisJobProducer.getJobCountInt(),
-                "Expected the job to be removed from the waiting list"
-        );
+        assertEquals(0, redisJobProducer.getJobCountInt(),"Expected the job to be removed from the waiting list");
 
         sleep(100); // Wait for the job to be removed from the processing list
 
-        // TODO: Get Proc Job Count
-
-        assertEquals(
-                0,
-                redisJobProducer.getLockCount(),
-                "Expected the job to be removed from the processing list and unlocked"
-        );
+        assertEquals(0, redisJobProducer.getLockCount(),"Expected the job to be removed from the processing list and unlocked");
+        assertEquals(0, redisJobProducer.getProcJobCountInt(),"Expected the job to be removed from the processing list");
     }
 
     @Test
     @Order(40)
-    void testPushJobInclSubmodelExpectNoErrors() {
+    void testPushJobInclSubmodelExpectNoErrors() throws InterruptedException {
         newJob.setSubmodel(getSimpleSubmodel());
         redisJobProducer.pushJob(newJob);
         TransformationJob newJobInklSubmodel = jobApiClient.getNextJob().block();
+
+        TransformationJob result = jobApiClient.getNextJob().block();
+
+        assertEquals(1, redisJobProducer.getLockCount(),"Expected the job to be locked in the processing list");
+        assertEquals(1, redisJobProducer.getProcJobCountInt(),"Expected the job to be in the processing list");
+
+        jobApiClient.finishJob(newJobInklSubmodel).block();
+
+        sleep(100); // Wait for the job to be removed from the processing list
+
+        assertEquals(0, redisJobProducer.getLockCount(),"Expected the job to be removed from the processing list and unlocked");
+        assertEquals(0, redisJobProducer.getProcJobCountInt(),"Expected the job to be removed from the processing list");
+
         return;
     }
 }
