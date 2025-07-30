@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -55,15 +56,18 @@ public class JobConsumer implements Runnable, ApplicationListener<ContextClosedE
                 try {
                     optionalCurrentJob = jobApiClient.getNextJob().block(); //redisJobConsumer.moveJobInProcessingList();
                     isCurrentRedisJobEmitedToSink = false;
-                } catch (NullPointerException e) {
-                    this.sleep();
+                } catch (NullPointerException  e) {
+                    this.sleep(10);
+                } catch (WebClientRequestException e) {
+                    LOG.error("Failed to access Job API: {}", e.getMessage());
+                    this.sleep(1000);
                 }
             } else {
                 if(!isCurrentRedisJobEmitedToSink) {
                     this.getAndEmitNextJobInProcessingList();
                     isCurrentRedisJobEmitedToSink = true;
                 } else {
-                    this.sleep();
+                    this.sleep(10);
                 }
             }
         }
@@ -84,9 +88,9 @@ public class JobConsumer implements Runnable, ApplicationListener<ContextClosedE
 //        }
     }
 
-    private void sleep() {
+    private void sleep(int ms) {
         try {
-            Thread.sleep(10);
+            Thread.sleep(ms);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
