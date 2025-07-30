@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.fhg.ipa.aas_transformer.aas.serializer.SubmodelSerializer;
 import de.fhg.ipa.aas_transformer.clients.ApiClient;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -18,6 +20,7 @@ import reactor.netty.resources.ConnectionProvider;
 
 @Component
 public class ManagementClient extends TransformerRestControllerApi {
+    private static final Logger LOG = LoggerFactory.getLogger(ManagementClient.class);
     private static ObjectMapper objectMapper;
     private static WebClient webClient;
     private static ApiClient apiClient;
@@ -58,5 +61,6 @@ public class ManagementClient extends TransformerRestControllerApi {
 
     public ManagementClient(@Value("${aas_transformer.services.management.base-url}") String baseUrl) {
         super(apiClient.setBasePath(baseUrl));
+        LOG.info("Initializing ManagementClient with base URL: {}", baseUrl);
     }
 }
