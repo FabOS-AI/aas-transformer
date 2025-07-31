@@ -66,6 +66,9 @@ public class RedisJobConsumer extends RedisJobClient implements Runnable {
     }
 
     private void unlockId(String id) {
+        if(id == null)
+            return;
+
         try {
             LOG.info("Unlocking id: {}", id);
             redisLockRegistry.obtain(id).unlock();
