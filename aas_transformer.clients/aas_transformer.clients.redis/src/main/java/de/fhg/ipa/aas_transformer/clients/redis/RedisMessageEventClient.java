@@ -27,6 +27,10 @@ public class RedisMessageEventClient {
         template.afterPropertiesSet();
     }
 
+    public boolean isConnected() {
+        return redisConnectionFactory.getConnection().ping().toLowerCase().equals("pong");
+    }
+
     protected void leftPush(MessageEvent messageEvent) {
         listOps.leftPush(REDIS_MESSAGE_QUEUE_KEY, messageEvent);
     }
