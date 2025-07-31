@@ -52,15 +52,20 @@ public class Executor {
 
     public void execute(TransformationJob job) {
         printProcessingMsg(job);
-        switch (job.getTransformationJobAction()) {
-            case EXECUTE:
-                executeCreated(job);
-                break;
-            case DELETE:
-                executeDeleted(job);
-                break;
-            default:
-                LOG.error("Unknown transformation job type {}", job.getTransformationJobAction());
+        try {
+            switch (job.getTransformationJobAction()) {
+                case EXECUTE:
+                    executeCreated(job);
+                    break;
+                case DELETE:
+                    executeDeleted(job);
+                    break;
+                default:
+                    LOG.error("Unknown transformation job type {}", job.getTransformationJobAction());
+            }
+        } catch (Exception e) {
+            LOG.error("Error while executing transformation job: {}", e.getMessage(), e);
+            // Optionally, you can handle the exception further, e.g., by sending a failure notification.
         }
     }
 
