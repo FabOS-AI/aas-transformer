@@ -4,8 +4,12 @@ package de.fhg.ipa.aas_transformer.service.executor;
 import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobConsumer;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobProducer;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
+import de.fhg.ipa.aas_transformer.test.utils.extentions.MariaDbExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
@@ -19,6 +23,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -29,19 +34,26 @@ import reactor.core.publisher.Sinks;
 import java.util.List;
 import java.util.UUID;
 
+import static de.fhg.ipa.aas_transformer.clients.redis.RedisTestObjects.assertExpectedJobCount;
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.assertInternalSegmentsEqual;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesSubmodel;
 
+@ExtendWith(MariaDbExtension.class)
+@ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ChainTransformationExecutorIT extends AbstractIT {
     @MockBean
     MetricsClient metricsClient;
-    @MockBean
-    JobApiClient jobApiClient;
+//    @MockBean
+//    JobApiClient jobApiClient;
+    @Autowired
+    RedisJobProducer redisJobProducer;
+    @Autowired
+    RedisJobConsumer redisJobConsumer;
 
     // region Test vars
     // Test Transformer/AAS Objects:
@@ -166,9 +178,14 @@ public class ChainTransformationExecutorIT extends AbstractIT {
     public void testExecute() throws InterruptedException, DeserializationException, ApiException {
         registerShellAndSubmodel(this.aasRegistry, this.aasRepository, this.smRegistry, this.smRepository, testAas, timeseriesSubmodel);
 
-        Mockito
-                .when(jobApiClient.getNextJob())
-                .thenAnswer(invocationOnMock -> this.returnNextJob());
+//        Mockito
+//                .when(jobApiClient.getNextJob())
+//                .thenAnswer(invocationOnMock -> this.returnNextJob());
+        // Push transformation jobs to Redis:
+        jobs.stream().forEach(redisJobProducer::pushJob);
+
+        // Assert job count - make sure all transformations are done:
+        assertExpectedJobCount(redisJobConsumer, 0);
 
         // Assert Submodel count:
         assertExpectedSubmodelCount(
@@ -176,8 +193,8 @@ public class ChainTransformationExecutorIT extends AbstractIT {
                 aasRepository,
                 smRepository,
                 testAas.getId(),
-                1,
-                1
+                1+jobs.size(),
+                1+jobs.size()
         );
 
         // Assert Submodel count - make sure all submodels are created:
@@ -200,9 +217,9 @@ public class ChainTransformationExecutorIT extends AbstractIT {
         );
     }
 
-    private Mono<TransformationJob> returnNextJob() {
-        if( this.currentJobReturnIndex >= jobs.size())
-            return Mono.empty();
-        return Mono.just(jobs.get(this.currentJobReturnIndex++));
-    }
+//    private Mono<TransformationJob> returnNextJob() {
+//        if( this.currentJobReturnIndex >= jobs.size())
+//            return Mono.empty();
+//        return Mono.just(jobs.get(this.currentJobReturnIndex++));
+//    }
 }

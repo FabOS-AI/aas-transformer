@@ -3,8 +3,10 @@ package de.fhg.ipa.aas_transformer.service.executor;
 import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobProducer;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
+import de.fhg.ipa.aas_transformer.test.utils.extentions.MariaDbExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.RedisExtension;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
@@ -17,6 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -32,14 +35,18 @@ import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+@ExtendWith(MariaDbExtension.class)
+@ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class StrictModeExecutorIT extends AbstractIT {
     @MockBean
     MetricsClient metricsClient;
-    @MockBean
-    JobApiClient jobApiClient;
+//    @MockBean
+//    JobApiClient jobApiClient;
+    @Autowired
+    RedisJobProducer redisJobProducer;
 
     // region Test vars
     // Test Transformer/AAS Objects:
@@ -154,10 +161,11 @@ public class StrictModeExecutorIT extends AbstractIT {
                 expectedSubmodelCount
         );
 
-        Mockito
-                .when(jobApiClient.getNextJob())
-                .thenReturn(Mono.just(job))
-                .thenReturn(Mono.empty());
+//        Mockito
+//                .when(jobApiClient.getNextJob())
+//                .thenReturn(Mono.just(job))
+//                .thenReturn(Mono.empty());
+        redisJobProducer.pushJob(job);
 
 //        redisJobClient.rightPushJob(redisJob);
 

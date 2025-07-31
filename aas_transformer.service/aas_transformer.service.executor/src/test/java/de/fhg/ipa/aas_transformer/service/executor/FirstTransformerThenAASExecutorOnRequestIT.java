@@ -7,6 +7,7 @@ import de.fhg.ipa.aas_transformer.aas.serializer.SubmodelSerializer;
 import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobProducer;
 import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationDescriptionJpaRepository;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
@@ -48,14 +49,17 @@ import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MariaDbExtension.class)
+@ExtendWith(RedisExtension.class)
 @ExtendWith(AasITExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
     @LocalServerPort
     private int transformerExecutorPort;
-    @MockBean
-    JobApiClient jobApiClient;
+//    @MockBean
+//    JobApiClient jobApiClient;
+    @Autowired
+    RedisJobProducer redisJobProducer;
     private WebClient webclient;
     private ConnectedSubmodelRepository submodelRepository;
     // Test Objects:
@@ -158,11 +162,11 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
         assertEquals(1, aasRepository.getAas(shell.getId()).getSubmodels().size());
         assertExpectedSubmodelCount(aasRegistry, aasRepository, smRepository, shell.getId(), 1, 1);
 
-        Mockito
-                .when(jobApiClient.getNextJob())
-                .thenReturn(Mono.just(createdJob))
-                .thenReturn(Mono.empty());
-//        redisJobClient.rightPushJob(new RedisTransformationJob(createdJob));
+//        Mockito
+//                .when(jobApiClient.getNextJob())
+//                .thenReturn(Mono.just(createdJob))
+//                .thenReturn(Mono.empty());
+        redisJobProducer.pushJob(createdJob);
 
         waitForTransformationDescriptionCount(1);
 
@@ -228,11 +232,11 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
                 null
         );
 
-        Mockito
-                .when(jobApiClient.getNextJob())
-                .thenReturn(Mono.just(deleteJob))
-                .thenReturn(Mono.empty());
-//        redisJobClient.rightPushJob(new RedisTransformationJob(deleteJob));
+//        Mockito
+//                .when(jobApiClient.getNextJob())
+//                .thenReturn(Mono.just(deleteJob))
+//                .thenReturn(Mono.empty());
+        redisJobProducer.pushJob(deleteJob);
 
         waitForTransformationDescriptionCount(0);
 

@@ -1,6 +1,8 @@
 package de.fhg.ipa.aas_transformer.service.executor;
 
 import de.fhg.ipa.aas_transformer.clients.job_api.JobApiClient;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisJobConsumer;
+import de.fhg.ipa.aas_transformer.clients.redis.RedisTransformationJob;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.slf4j.Logger;
@@ -13,11 +15,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 
 @Component
 public class JobConsumer implements Runnable, ApplicationListener<ContextClosedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(JobConsumer.class);
-    private final JobApiClient jobApiClient;
+//    private final JobApiClient jobApiClient;
+    private final RedisJobConsumer redisJobConsumer;
     private boolean isShuttingDown = false;
 
     @Nullable
@@ -27,8 +31,9 @@ public class JobConsumer implements Runnable, ApplicationListener<ContextClosedE
     private final Flux<TransformationJob> jobFlux = jobSink.asFlux();
     private Thread consumerThread = new Thread(this);
 
-    public JobConsumer(JobApiClient jobApiClient) {
-        this.jobApiClient = jobApiClient;
+    public JobConsumer(RedisJobConsumer redisJobConsumer) {
+        this.redisJobConsumer = redisJobConsumer;
+//        this.jobApiClient = jobApiClient;
         consumerThread.start();
     }
 
@@ -54,7 +59,9 @@ public class JobConsumer implements Runnable, ApplicationListener<ContextClosedE
         while(!isShuttingDown) {
             if(optionalCurrentJob == null) {
                 try {
-                    optionalCurrentJob = jobApiClient.getNextJob().block(); //redisJobConsumer.moveJobInProcessingList();
+                    Optional<RedisTransformationJob> optionalJob = redisJobConsumer.moveJobInProcessingList();
+                    if(optionalJob.isPresent())
+                        optionalCurrentJob = optionalJob.get().getTransformationJob();
                     isCurrentRedisJobEmitedToSink = false;
                 } catch (NullPointerException  e) {
                     this.sleep(10);
@@ -88,21 +95,22 @@ public class JobConsumer implements Runnable, ApplicationListener<ContextClosedE
 //        }
     }
 
-    private void sleep(int ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public void markJobAsProcessed() throws SerializationException {
         LOG.info("Mark job as finished | sourceSmIdShort {} | TransformerID {}",
                 optionalCurrentJob.getSubmodelId(),
                 optionalCurrentJob.getTransformerId()
         );
 
-        jobApiClient.finishJob(optionalCurrentJob).block();
+        redisJobConsumer.markJobAsFinished(optionalCurrentJob);
+//        jobApiClient.finishJob(optionalCurrentJob).block();
         this.optionalCurrentJob = null;
+    }
+
+    private void sleep(int ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

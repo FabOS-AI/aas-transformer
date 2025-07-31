@@ -33,6 +33,12 @@
         </dependency>
         <dependency>
             <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.clients.redis</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
             <artifactId>aas_transformer.clients.job_api</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
