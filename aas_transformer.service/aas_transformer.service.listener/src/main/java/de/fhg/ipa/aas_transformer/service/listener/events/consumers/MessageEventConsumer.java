@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.List;
 
+import static java.lang.Thread.sleep;
+
 @Component
 public class MessageEventConsumer implements Runnable {
 
@@ -47,6 +49,14 @@ public class MessageEventConsumer implements Runnable {
 
     @PostConstruct
     public void init() {
+        // Wait until the Redis Message Event Consumer is connected:
+        while(!redisMessageEventConsumer.isConnected()) {
+            try {
+                sleep(10);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
         // Start processing events from the event cache:
         new Thread(this).start();
     }
