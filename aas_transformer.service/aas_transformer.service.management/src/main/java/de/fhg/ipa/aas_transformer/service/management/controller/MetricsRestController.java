@@ -33,6 +33,8 @@ public class MetricsRestController {
     private final Counter maxQueueJobCountCounter;
     private final Gauge isExecutorScalingGauge;
     private final Gauge isListenerScalingGauge;
+    private final Gauge replicaExecutorGauge;
+    private final Gauge replicaListenerGauge;
 
     public MetricsRestController(
             MqttListener mqttListener,
@@ -78,6 +80,16 @@ public class MetricsRestController {
                 })
                 .description("a flag indicating if the listener service is currently scaling")
                 .tag("name", "is_listener_scaling")
+                .register(meterRegistry);
+
+        this.replicaExecutorGauge = Gauge.builder("replica_count", () -> transformerServiceHandler.getRunningExecutorServiceTasks().size())
+                .description("a number of current replicas")
+                .tag("service", "executor")
+                .register(meterRegistry);
+
+        this.replicaListenerGauge = Gauge.builder("replica_count", () -> transformerServiceHandler.getRunningListenerServiceTasks().size())
+                .description("a number of current replicas")
+                .tag("service", "listener")
                 .register(meterRegistry);
     }
 
