@@ -20,63 +20,17 @@ import java.util.stream.Collectors;
 import static java.lang.Thread.sleep;
 
 @Component
-public class RedisJobConsumer extends RedisJobClient implements Runnable {
+public class RedisJobConsumer extends RedisJobClient {
     private static final Logger LOG = LoggerFactory.getLogger(RedisJobConsumer.class);
     private final static String REDIS_LOCK_REGISTRY_KEY = "executor_locks";
-    private final static int LOCK_TIMEOUT = 15000;
-    private Thread thread = new Thread(this);// 15 seconds
+    private final static int LOCK_TIMEOUT = 15*1000;
     private static boolean threadIsRunning = true;
 
     RedisLockRegistry redisLockRegistry;
-    List<String> idsToLock = new CopyOnWriteArrayList<>();
-    List<String> idsToUnlock = new CopyOnWriteArrayList<>();
 
     public RedisJobConsumer(RedisConnectionFactory connectionFactory) {
         super(connectionFactory);
         redisLockRegistry = new RedisLockRegistry(redisConnectionFactory, REDIS_LOCK_REGISTRY_KEY, LOCK_TIMEOUT);
-    }
-
-    @PostConstruct
-    public void init() {
-        this.thread.start();
-    }
-
-    @Override
-    public void run() {
-        LOG.info("Start RedisLockClient thread.");
-        while(threadIsRunning) {
-            idsToLock.forEach(this::lockId);
-            idsToUnlock.forEach(this::unlockId);
-            try {
-                sleep(5);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        LOG.info("Stop RedisLockClient thread.");
-    }
-
-    private void lockId(String id) {
-        try {
-            LOG.info("Locking id: {}", id);
-            redisLockRegistry.obtain(id).lock();
-        } finally {
-            idsToLock.remove(id);
-        }
-    }
-
-    private void unlockId(String id) {
-        if(id == null)
-            return;
-
-        try {
-            LOG.info("Unlocking id: {}", id);
-            redisLockRegistry.obtain(id).unlock();
-        } catch (IllegalStateException e) {
-            LOG.warn(e.getMessage());
-        } finally {
-            idsToUnlock.remove(id);
-        }
     }
 
     public Optional<RedisTransformationJob> moveJobInProcessingList() {
@@ -106,18 +60,24 @@ public class RedisJobConsumer extends RedisJobClient implements Runnable {
 
     @Nullable
     private RedisTransformationJob getNextTransformationJob() {
-        RedisJobPageList jobPageList = new RedisJobPageList(this);
+        int jobCount = getJobCountInt();
 
-        for( RedisJobPage jobPage : jobPageList) {
-            List<RedisTransformationJob> jobs = listOps.range(REDIS_JOBS_LIST_KEY, jobPage.getStartIndex(), jobPage.getEndIndex());
-            for(RedisTransformationJob job : jobs) {
-                if(!isJobLocked(job)) {
-                    if(job.targetSubmodelId != null) {
-                        idsToLock.add(job.targetSubmodelId);
-                    }
+        for(int i = 0; i < jobCount; i++) {
+            RedisTransformationJob job = listOps.index(REDIS_JOBS_LIST_KEY, i);
+            if (job == null)
+                continue; // Skip if job is null
+            try {
+                if (redisLockRegistry.obtain(job.targetSubmodelId).tryLock())
                     return job;
-                }
+            } catch (IllegalArgumentException e) {
+                // This means the job has no targetSubmodelId, so we skip it
+                LOG.warn("Job has no target submodel id => Skip locking submodel | {}", job.toStringShort());
+                return job;
+            } catch (Exception e) {
+                LOG.error("Error while trying to lock job {}: {}", job.toStringShort(), e.getMessage(), e);
+                return job;
             }
+
         }
         return null;
     }
@@ -129,8 +89,8 @@ public class RedisJobConsumer extends RedisJobClient implements Runnable {
 
         // Release the lock for submodel based on targetSubmodelId
         try {
-//            Lock lock = redisLockRegistry.obtain(job.targetSubmodelId);
-            idsToUnlock.add(redisJob.targetSubmodelId);
+            redisLockRegistry.obtain(redisJob.targetSubmodelId).unlock();
+//            idsToUnlock.add(redisJob.targetSubmodelId);
         } catch (IllegalArgumentException e) {
             LOG.warn("Job has no target submodel id => No lock to release | {}", redisJob.toStringShort());
         } catch (IllegalStateException e) {
