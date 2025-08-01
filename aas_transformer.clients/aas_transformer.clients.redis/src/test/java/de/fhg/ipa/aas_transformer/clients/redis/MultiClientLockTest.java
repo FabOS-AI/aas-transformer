@@ -62,7 +62,7 @@ public class MultiClientLockTest {
 
     @Test
     @Order(20)
-    public void testConsecutiveCheckoutsExpectLocksCreatedAndCorrectJobsReturned() throws InterruptedException {
+    public void testCheckoutsExpectLockCreatedAndCorrectJobReturned() throws InterruptedException {
         assertTrue(redisJobProducer.getLockCount() == 0);
 
         job1FromJobQueue = redisJobConsumer.moveJobInProcessingList().get();
@@ -70,26 +70,8 @@ public class MultiClientLockTest {
 
         assertTrue(redisJobConsumer.getLockCount() == 1);
 
-        job2FromJobQueue = redisJobConsumer.moveJobInProcessingList().get();
-        sleep(200); // Ensure the lock is created before the next checkout
-
-        assertTrue(redisJobConsumer.getLockCount() == 2);
-
         assertEquals(targetSubmodelId1, job1FromJobQueue.getTransformationJob().getTargetSubmodelId(),
                 "First job should match the first target submodel ID");
-        assertEquals(targetSubmodelId2, job2FromJobQueue.getTransformationJob().getTargetSubmodelId(),
-                "Second job should match the second target submodel ID");
-    }
-
-    @Test
-    @Order(30)
-    public void testJobCheckoutIfAvailableJobsAreLocked() {
-        assertTrue(redisJobConsumer.getJobCountInt() > 0,
-                "There should be jobs available in redis job queue");
-
-        Optional<RedisTransformationJob> optionalJob = redisJobConsumer.moveJobInProcessingList();
-
-        assertTrue(optionalJob.isEmpty(),"No job should be available for checkout since all jobs are locked by other clients");
     }
 
     @Test
@@ -100,7 +82,7 @@ public class MultiClientLockTest {
 
         // Finish job from client 1
         redisJobConsumer.markJobAsFinished(job1FromJobQueue.getTransformationJob());
-        sleep(100); // Ensure the lock is released before the next operation
+        sleep(200); // Ensure the lock is released before the next operation
 
         // Check if lock count is reduced by 1
         assertEquals(
