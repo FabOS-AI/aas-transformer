@@ -73,9 +73,13 @@ abstract class DockerHandler {
     }
 
     protected List<Task> getTasksOfServiceFilteredByState(Service service, TaskState state) {
-        return dockerClient.listTasksCmd().withServiceFilter(service.getId()).exec().stream()
-                .filter(task -> task.getStatus().getState().equals(state))
-                .toList();
+        try {
+            return dockerClient.listTasksCmd().withServiceFilter(service.getId()).exec().stream()
+                    .filter(task -> task.getStatus().getState().equals(state))
+                    .toList();
+        } catch (NullPointerException e) {
+            return List.of();
+        }
     }
 
     protected void waitScaleToFinish(Service service) throws WaitForScaleTimeoutException {
