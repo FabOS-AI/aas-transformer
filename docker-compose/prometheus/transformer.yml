@@ -29,3 +29,13 @@ groups:
         action: %%EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_ACTION_NAME%%
       annotations:
         summary: Count of executors is greater than the number of jobs in progress
+- name: listener-scale-up
+  rules:
+    - alert: Listener/HighOpenSubmodelCount
+      expr: %%HIGH_OPEN_SUBMODEL_COUNT_EXPR%%
+      for: %%HIGH_OPEN_SUBMODEL_COUNT_FOR%%
+      keep_firing_for: %%HIGH_OPEN_SUBMODEL_COUNT_KEEP_FIRING_FOR%%
+      labels:
+        action: %%HIGH_OPEN_SUBMODEL_COUNT_ACTION_NAME%%
+      annotations:
+        summary: High open submodel count in queue
