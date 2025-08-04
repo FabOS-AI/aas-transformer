@@ -7,6 +7,7 @@ groups:
     keep_firing_for: %%HIGH_JOB_COUNT_KEEP_FIRING_FOR%%
     labels:
       action: %%HIGH_JOB_COUNT_ACTION_NAME%%
+      service: executor
     annotations:
       summary: High job count in queue
 - name: executor-scale-to-minimum
@@ -17,6 +18,7 @@ groups:
       keep_firing_for: %%NO_RUNNING_TRANSFORMATIONS_KEEP_FIRING_FOR%%
       labels:
         action: %%NO_RUNNING_TRANSFORMATIONS_ACTION_NAME%%
+        service: executor
       annotations:
         summary: In-Queue and In-Progress jobs are empty while more than one executor is running
 - name: executor-scale-down
@@ -27,6 +29,7 @@ groups:
       keep_firing_for: %%EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_KEEP_FIRING_FOR%%
       labels:
         action: %%EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_ACTION_NAME%%
+        service: executor
       annotations:
         summary: Count of executors is greater than the number of jobs in progress
 - name: listener-scale-up
@@ -37,5 +40,6 @@ groups:
       keep_firing_for: %%HIGH_OPEN_SUBMODEL_COUNT_KEEP_FIRING_FOR%%
       labels:
         action: %%HIGH_OPEN_SUBMODEL_COUNT_ACTION_NAME%%
+        service: listener
       annotations:
         summary: High open submodel count in queue
