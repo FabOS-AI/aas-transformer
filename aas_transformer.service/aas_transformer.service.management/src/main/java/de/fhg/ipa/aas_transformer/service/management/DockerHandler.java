@@ -45,7 +45,6 @@ abstract class DockerHandler {
         try {
             return service.getSpec().getMode().getReplicated().getReplicas();
         } catch (NullPointerException e) {
-            LOG.warn("Service '{}' is not in replicated mode. Returning 0 replicas.", service.getSpec().getName());
             return 0L;
         }
     }
