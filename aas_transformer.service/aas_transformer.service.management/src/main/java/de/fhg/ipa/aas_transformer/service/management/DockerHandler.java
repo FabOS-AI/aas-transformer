@@ -42,7 +42,12 @@ abstract class DockerHandler {
     }
 
     protected long getReplicasOfService(Service service) {
-        return service.getSpec().getMode().getReplicated().getReplicas();
+        try {
+            return service.getSpec().getMode().getReplicated().getReplicas();
+        } catch (NullPointerException e) {
+            LOG.warn("Service '{}' is not in replicated mode. Returning 0 replicas.", service.getSpec().getName());
+            return 0L;
+        }
     }
 
     protected void scaleService(Service service, long replicas) {
