@@ -43,3 +43,14 @@ groups:
         service: listener
       annotations:
         summary: High open submodel count in queue
+- name: listener-scale-to-minimum
+  rules:
+    - alert: Listener/NoIncomingSubmodels
+      expr: %%NO_INCOMING_SUBMODELS_EXPR%%
+      for: %%NO_INCOMING_SUBMODELS_FOR%%
+      keep_firing_for: %%NO_INCOMING_SUBMODELS_KEEP_FIRING_FOR%%
+      labels:
+        action: %%NO_INCOMING_SUBMODELS_ACTION_NAME%%
+        service: listener
+      annotations:
+        summary: High open submodel count in queue
