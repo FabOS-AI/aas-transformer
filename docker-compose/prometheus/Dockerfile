@@ -33,7 +33,7 @@ ENV EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_FOR=1m
 ENV EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_KEEP_FIRING_FOR=0s
 ENV EXECUTOR_COUNTER_GREATER_INPROCESS_JOBS_ACTION_NAME=scale-down
 
-ENV HIGH_OPEN_SUBMODEL_COUNT_EXPR='((sum(aas_submodel_change_count_total)-sum(aas_processed_submodel_change_count_total)) > 5)' # and (sum(is_executor_scaling) == 0)
+ENV HIGH_OPEN_SUBMODEL_COUNT_EXPR='((sum(aas_submodel_change_count_total)-sum(aas_processed_submodel_change_count_total)) > 5)'
 ENV HIGH_OPEN_SUBMODEL_COUNT_FOR=10s
 ENV HIGH_OPEN_SUBMODEL_COUNT_KEEP_FIRING_FOR=0s
 ENV HIGH_OPEN_SUBMODEL_COUNT_ACTION_NAME=scale-up
