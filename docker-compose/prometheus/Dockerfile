@@ -38,6 +38,11 @@ ENV HIGH_OPEN_SUBMODEL_COUNT_FOR=10s
 ENV HIGH_OPEN_SUBMODEL_COUNT_KEEP_FIRING_FOR=0s
 ENV HIGH_OPEN_SUBMODEL_COUNT_ACTION_NAME=scale-up
 
+ENV LOW_MQTT_MESSAGE_QUEUE_EXPR='(avg(delta(aas_submodel_change_count_total[1s])) > 0) and (avg(redis_key_size{db="db0",key="mqtt_message_queue"}) < 5)'
+ENV LOW_MQTT_MESSAGE_QUEUE_FOR=10s
+ENV LOW_MQTT_MESSAGE_QUEUE_KEEP_FIRING_FOR=0s
+ENV LOW_MQTT_MESSAGE_QUEUE_ACTION_NAME=scale-down
+
 COPY prometheus.yml /etc/prometheus/prometheus.yml
 COPY transformer.yml /etc/prometheus/rules/transformer.yml
 COPY startup.sh /etc/prometheus/startup.sh

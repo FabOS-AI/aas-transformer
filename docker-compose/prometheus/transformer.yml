@@ -54,3 +54,14 @@ groups:
         service: listener
       annotations:
         summary: High open submodel count in queue
+- name: listener-scale-down
+  rules:
+    - alert: Listener/LowMqttMessageQueue
+      expr: %%LOW_MQTT_MESSAGE_QUEUE_EXPR%%
+      for: %%LOW_MQTT_MESSAGE_QUEUE_FOR%%
+      keep_firing_for: %%LOW_MQTT_MESSAGE_QUEUE_KEEP_FIRING_FOR%%
+      labels:
+        action: %%LOW_MQTT_MESSAGE_QUEUE_ACTION_NAME%%
+        service: listener
+      annotations:
+        summary: High open submodel count in queue
