@@ -8,11 +8,13 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 import de.fhg.ipa.aas_transformer.service.management.exceptions.WaitForScaleTimeoutException;
+import jakarta.validation.constraints.Null;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 import static java.lang.Thread.sleep;
@@ -49,12 +51,15 @@ abstract class DockerHandler {
         }
     }
 
-    protected void scaleService(Service service, long replicas) {
+    protected void scaleService(@Nullable Service service, long replicas) {
         if(replicas < 1) {
             LOG.warn("Desired replica count must be greater than 0. Scaling aborted.");
             return;
         }
-
+        if(service == null) {
+            LOG.warn("Service is null. Aborting scaling operation.");
+            return;
+        }
         ServiceSpec serviceSpec = service.getSpec();
         ServiceModeConfig serviceModeConfig = service.getSpec().getMode();
         ServiceReplicatedModeOptions replicationOptions = service.getSpec().getMode().getReplicated().withReplicas((int) replicas);
