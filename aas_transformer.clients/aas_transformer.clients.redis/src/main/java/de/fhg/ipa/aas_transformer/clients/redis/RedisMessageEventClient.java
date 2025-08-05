@@ -10,9 +10,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.util.UUID;
 
 public class RedisMessageEventClient {
-    private final static String REDIS_MESSAGE_QUEUE_KEY_PREFIX = "message_queue";
-    private final static UUID CONSUMER_ID = UUID.randomUUID();
-    private final static String REDIS_MESSAGE_QUEUE_KEY = REDIS_MESSAGE_QUEUE_KEY_PREFIX + "_" + CONSUMER_ID;
+//    private final static String REDIS_MESSAGE_QUEUE_KEY_PREFIX = "message_queue";
+//    private final static UUID CONSUMER_ID = UUID.randomUUID();
+    private final static String REDIS_MESSAGE_QUEUE_KEY = "mqtt_message_queue";
 
     protected final RedisConnectionFactory redisConnectionFactory;
     private final ListOperations<String, MessageEvent> listOps;
