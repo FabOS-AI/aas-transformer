@@ -39,10 +39,11 @@ public class TransformerServiceHandler extends DockerHandler {
         if(alertMessage.getAlerts().size() > 0) {
             Alert alert = alertMessage.getAlerts().get(0);
             String action = alert.getLabels().get("action");
+            String service = alert.getLabels().get("service");
             ScaleDirection scaleDirection;
 
             if(action.equals("scale-to-minimum")) {
-                scaleExecutorService(1,false);
+                scaleService(service, 1, false);
                 return;
             }
 
@@ -55,7 +56,7 @@ public class TransformerServiceHandler extends DockerHandler {
                 return;
             }
 
-            scaleExecutorServiceByOne(scaleDirection, false);
+            scaleServiceByOne(service, scaleDirection, false);
         }
     }
 
@@ -64,6 +65,32 @@ public class TransformerServiceHandler extends DockerHandler {
             scaleExecutorService(getReplicaCountOfExecutorService()+1, wait);
         else
             scaleExecutorService(getReplicaCountOfExecutorService()-1, wait);
+    }
+
+    public void scaleService(String serviceName, long replicas, boolean wait) throws WaitForScaleTimeoutException {
+        switch(serviceName) {
+            case "executor":
+                scaleExecutorService(replicas, wait);
+                break;
+            case "listener":
+                scaleListenerService(replicas, wait);
+                break;
+            default:
+                LOG.warn("Unknown service name: {}. Scaling aborted.", serviceName);
+        }
+    }
+
+    public void scaleServiceByOne(String serviceName, ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
+        switch(serviceName) {
+            case "executor":
+                scaleExecutorServiceByOne(scaleDirection, wait);
+                break;
+            case "listener":
+                scaleListenerServiceByOne(scaleDirection, wait);
+                break;
+            default:
+                LOG.warn("Unknown service name: {}. Scaling aborted.", serviceName);
+        }
     }
 
     public void scaleExecutorService(long replicas, boolean wait) throws WaitForScaleTimeoutException {
