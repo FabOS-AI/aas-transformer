@@ -59,15 +59,11 @@ public class MqttListener implements Runnable, MqttCallback {
     public void run() { connectAndSubscribe();}
 
     private void connectAndSubscribe() {
-        try {
-            mqttClient.connect(mqttConnectOptions);
-        } catch (MqttException e) {
-            LOG.error("MQTT client failed to connect: " + e.getMessage());
-        }
 
         // Subscribe to all topics; break while loop if successful:
         while(true) {
             try {
+                mqttClient.connect(mqttConnectOptions);
                 for (String topic : this.topics) {
                     LOG.info("Subscribing to MQTT topic: " + topic);
                     this.mqttClient.subscribe(topic, MQTT_QOS);
@@ -76,12 +72,12 @@ public class MqttListener implements Runnable, MqttCallback {
                 LOG.info("MQTT topic subscriptions are successful.");
                 break;
             } catch(MqttException e) {
+                LOG.error("MQTT client for broker '" + this.mqttClient.getServerURI() + "' failed to subscribe... sleeping and retry: " + e.getMessage());
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
                     throw new RuntimeException(ex);
                 }
-                LOG.error("MQTT client for broker '" + this.mqttClient.getServerURI() + "' failed to subscribe... sleeping and retry: " + e.getMessage());
             } catch (Exception e) {
                 LOG.error(e.getMessage());
                 e.printStackTrace();
