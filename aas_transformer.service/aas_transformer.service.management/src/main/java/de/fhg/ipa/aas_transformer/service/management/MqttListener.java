@@ -63,11 +63,15 @@ public class MqttListener implements Runnable, MqttCallback {
         // Subscribe to all topics; break while loop if successful:
         while(true) {
             try {
-                mqttClient.connect(mqttConnectOptions);
+                // Connect
+                if(!mqttClient.isConnected())
+                    mqttClient.connect(mqttConnectOptions);
+                // Subscribe
                 for (String topic : this.topics) {
                     LOG.info("Subscribing to MQTT topic: " + topic);
                     this.mqttClient.subscribe(topic, MQTT_QOS);
                 }
+                // Set Callback
                 this.mqttClient.setCallback(this);
                 LOG.info("MQTT topic subscriptions are successful.");
                 break;
