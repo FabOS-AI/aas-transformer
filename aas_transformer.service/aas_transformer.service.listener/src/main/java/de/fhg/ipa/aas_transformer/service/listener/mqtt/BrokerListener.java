@@ -76,22 +76,23 @@ public class BrokerListener implements Runnable, MqttCallback, ApplicationListen
     }
 
     @Override
-    public void run() {
-        try {
-            mqttClient.connect(mqttConnectOptions);
-        } catch (MqttException e) {
-            LOG.error("MQTT client failed to connect: " + e.getMessage());
-        }
+    public void run() { connectAndSubscribe(); }
 
-        // Subscribe to all topics; break while loop if successful:
+    private void connectAndSubscribe() {
+        // Connect and Subscribe to all topics; break while loop if successful:
         while(!isShuttingDown) {
             try {
+                // Connect
+                if(!mqttClient.isConnected())
+                    mqttClient.connect(mqttConnectOptions);
+                //Subscribe
                 for (var listener : this.listeners) {
                     for (var topic : listener.getTopics()) {
                         LOG.info("Subscribing to MQTT topic: " + topic);
                         this.mqttClient.subscribe(topic, MQTT_QOS, listener);
                     }
                 }
+                // Set Callback
                 this.mqttClient.setCallback(this);
                 LOG.info("MQTT topic subscriptions are successful.");
                 break;
@@ -109,10 +110,14 @@ public class BrokerListener implements Runnable, MqttCallback, ApplicationListen
         }
         if (isShuttingDown)
             LOG.info("BrokerListener is shutting down, not subscribing to topics.");
+
     }
 
     @Override
-    public void connectionLost(Throwable throwable) { }
+    public void connectionLost(Throwable throwable) {
+        LOG.error("Connection to MQTT broker lost: " + throwable.getMessage());
+        connectAndSubscribe();
+    }
 
     @Override
     public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
