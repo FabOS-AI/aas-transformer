@@ -56,7 +56,9 @@ public class MqttListener implements Runnable, MqttCallback {
     }
 
     @Override
-    public void run() {
+    public void run() { connectAndSubscribe();}
+
+    private void connectAndSubscribe() {
         try {
             mqttClient.connect(mqttConnectOptions);
         } catch (MqttException e) {
@@ -85,12 +87,12 @@ public class MqttListener implements Runnable, MqttCallback {
                 e.printStackTrace();
             }
         }
-
     }
 
     @Override
     public void connectionLost(Throwable cause) {
         LOG.error("MQTT connection lost: " + cause.getMessage());
+        connectAndSubscribe();
     }
 
     @Override
