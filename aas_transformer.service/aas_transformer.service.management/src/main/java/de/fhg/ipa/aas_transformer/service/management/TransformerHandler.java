@@ -160,6 +160,7 @@ public class TransformerHandler {
 
                         // create TransformationJob
                         return new TransformationJob(
+                                UUID.randomUUID(),
                                 EXECUTE,
                                 transformer.getId(),
                                 submodel.getId(),
@@ -214,6 +215,7 @@ public class TransformerHandler {
                 .forEach(submodelId -> {
                     // render target submodel ID:
                     this.redisJobProducer.pushJob(new TransformationJob(
+                            UUID.randomUUID(),
                             DELETE,
                             t.getId(),
                             submodelId,

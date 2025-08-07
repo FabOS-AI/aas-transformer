@@ -26,6 +26,7 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -128,6 +129,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
                         sourceSubmodel
                 );
                 return List.of(new TransformationJob(
+                        UUID.randomUUID(),
                         TransformationJobAction.EXECUTE,
                         service.getTransformerDTOListener().getId(),
                         event.getSubmodel().getId(),
@@ -137,6 +139,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
             case DELETED:
                 if(service.getTransformerDTOListener().getTransformOnRequest())
                     return List.of(new TransformationJob(
+                            UUID.randomUUID(),
                             TransformationJobAction.DELETE,
                             transformer.getId(),
                             event.getSubmodel().getId(),
@@ -152,6 +155,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
                             .block()
                             .stream()
                             .map(smId -> new TransformationJob(
+                                    UUID.randomUUID(),
                                     TransformationJobAction.DELETE,
                                     service.getTransformerDTOListener().getId(),
                                     smId,
