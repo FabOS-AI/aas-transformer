@@ -106,6 +106,7 @@ public class ChainTransformationExecutorIT extends AbstractIT {
     );
     static List<TransformationJob> jobs = List.of(
             new TransformationJob(
+                    UUID.randomUUID(),
                     EXECUTE,
                     oneStepTransformerAvg.getId(),
                     timeseriesSubmodel.getId(),
@@ -113,6 +114,7 @@ public class ChainTransformationExecutorIT extends AbstractIT {
                     null
             ),
             new TransformationJob(
+                    UUID.randomUUID(),
                     EXECUTE,
                     oneStepTransformerTakeEvery.getId(),
                     timeseriesSubmodel.getId()+"_avg",
@@ -120,6 +122,7 @@ public class ChainTransformationExecutorIT extends AbstractIT {
                     null
             ),
             new TransformationJob(
+                    UUID.randomUUID(),
                     EXECUTE,
                     twoStepTransformer.getId(),
                     timeseriesSubmodel.getId(),
