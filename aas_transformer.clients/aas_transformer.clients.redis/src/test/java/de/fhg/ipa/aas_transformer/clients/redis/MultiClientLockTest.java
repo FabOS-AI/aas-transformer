@@ -37,9 +37,9 @@ public class MultiClientLockTest {
     String targetSubmodelId2 = "targetSubmodelId2";
 
     List<TransformationJob> jobList = List.of(
-            new TransformationJob(TransformationJobAction.EXECUTE, UUID.randomUUID(), "submodelId1", null, targetSubmodelId1),
-            new TransformationJob(TransformationJobAction.EXECUTE, UUID.randomUUID(), "submodelId1", null, targetSubmodelId1),
-            new TransformationJob(TransformationJobAction.EXECUTE, UUID.randomUUID(), "submodelId2", null, targetSubmodelId2)
+            new TransformationJob(UUID.randomUUID(), TransformationJobAction.EXECUTE, UUID.randomUUID(), "submodelId1", null, targetSubmodelId1),
+            new TransformationJob(UUID.randomUUID(), TransformationJobAction.EXECUTE, UUID.randomUUID(), "submodelId1", null, targetSubmodelId1),
+            new TransformationJob(UUID.randomUUID(), TransformationJobAction.EXECUTE, UUID.randomUUID(), "submodelId2", null, targetSubmodelId2)
     );
 
     RedisTransformationJob job1FromJobQueue;
@@ -100,6 +100,7 @@ public class MultiClientLockTest {
     @Order(50)
     public void testTargetSubmodelIdOfJobBeingNull() {
         TransformationJob jobWithTargetNull = new TransformationJob(
+                UUID.randomUUID(),
                 TransformationJobAction.EXECUTE,
                 UUID.randomUUID(),
                 "submodelId1",
@@ -127,6 +128,7 @@ public class MultiClientLockTest {
         // Simulate a heavy loaded queue by adding more jobs
         for (int i = 0; i < 1000; i++) {
             TransformationJob job = new TransformationJob(
+                    UUID.randomUUID(),
                     TransformationJobAction.EXECUTE,
                     UUID.randomUUID(),
                     "submodelId" + i,

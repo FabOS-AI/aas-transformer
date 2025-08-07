@@ -74,6 +74,7 @@ public class MultiJobTest {
             String targetSubmodelId = "targetSubmodelId"+i;
 
             TransformationJob job = new TransformationJob(
+                    UUID.randomUUID(),
                     TransformationJobAction.EXECUTE,
                     UUID.randomUUID(),
                     sourceSubmodelId,

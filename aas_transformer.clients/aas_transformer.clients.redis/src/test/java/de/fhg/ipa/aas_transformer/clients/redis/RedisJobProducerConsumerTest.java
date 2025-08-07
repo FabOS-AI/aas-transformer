@@ -39,6 +39,7 @@ public class RedisJobProducerConsumerTest {
 
     public RedisJobProducerConsumerTest() throws IOException, DeserializationException, SerializationException {
         redisJob = new RedisTransformationJob(new TransformationJob(
+                UUID.randomUUID(),
                 TransformationJobAction.EXECUTE,
                 transformerId,
                 getSimpleSubmodel().getId(),

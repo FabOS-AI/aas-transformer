@@ -104,7 +104,7 @@ public class BrokerListenerTest {
 //            Mockito.verify(brokerListener, Mockito.atLeast(1)).messageArrived(argumentTopic.capture(), Mockito.any());
         assertThat(argumentTopic.getAllValues())
                 .contains("sm-repository/sm-repo/submodels/created");
-        sleep(100);
+        sleep(500);
         assertThat(redisMessageEventConsumer.getMessageEventCount()).isEqualTo(1);
         SubmodelMessageEvent submodelMessageEvent = (SubmodelMessageEvent)redisMessageEventConsumer.popMessage();
         assertThat(submodelMessageEvent.getSubmodelChangeEventType()).isEqualTo(SubmodelChangeEventType.CREATED);

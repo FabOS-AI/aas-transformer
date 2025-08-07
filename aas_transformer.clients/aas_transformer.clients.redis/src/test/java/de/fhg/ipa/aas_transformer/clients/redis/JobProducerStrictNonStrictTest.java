@@ -22,6 +22,7 @@ public class JobProducerStrictNonStrictTest {
     RedisJobProducer redisJobProducer;
 
     public static TransformationJob jobNonStrict = new TransformationJob(
+            UUID.randomUUID(),
             EXECUTE,
             UUID.randomUUID(),
             UUID.randomUUID().toString(),
@@ -30,6 +31,7 @@ public class JobProducerStrictNonStrictTest {
     );
 
     public static TransformationJob jobStrict = new TransformationJob(
+            UUID.randomUUID(),
             EXECUTE,
             UUID.randomUUID(),
             UUID.randomUUID().toString(),

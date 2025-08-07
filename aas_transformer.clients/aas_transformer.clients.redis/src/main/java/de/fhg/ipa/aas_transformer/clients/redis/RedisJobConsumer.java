@@ -1,9 +1,6 @@
 package de.fhg.ipa.aas_transformer.clients.redis;
 
-import de.fhg.ipa.aas_transformer.clients.redis.model.RedisJobPage;
-import de.fhg.ipa.aas_transformer.clients.redis.model.RedisJobPageList;
 import de.fhg.ipa.aas_transformer.model.TransformationJob;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.QueryTimeoutException;
@@ -14,10 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
-
-import static java.lang.Thread.sleep;
 
 @Component
 public class RedisJobConsumer extends RedisJobClient {
@@ -42,8 +36,10 @@ public class RedisJobConsumer extends RedisJobClient {
             Optional<RedisTransformationJob> optionalNextJob = Optional.of(nextJob);
 
             // Move job into processing list:
+            RedisTransformationJob nextJobWoSm = new RedisTransformationJob(nextJob.getTransformationJob());
+            nextJobWoSm.sourceSubmodel = ""; // Clear source submodel to avoid serialization issues
             this.listOps.remove(REDIS_JOBS_LIST_KEY, 1, optionalNextJob.get());
-            this.listOps.rightPush(REDIS_PROC_JOBS_LIST_KEY_PREFIX, optionalNextJob.get());
+            this.listOps.rightPush(REDIS_PROC_JOBS_LIST_KEY_PREFIX, nextJobWoSm);
 
             if (optionalNextJob.isPresent())
                 LOG.info("Move job into processing list | {}", optionalNextJob.get().toStringShort());
@@ -84,15 +80,13 @@ public class RedisJobConsumer extends RedisJobClient {
 
     public void markJobAsFinished(TransformationJob job) {
         RedisTransformationJob redisJob = new RedisTransformationJob(job);
-        // Remove Job from processing list
-        long removeCount = listOps.remove(REDIS_PROC_JOBS_LIST_KEY_PREFIX, 1, redisJob);
-        if (removeCount == 0)
-            LOG.warn("Job not found in processing list | Skip removal from list: {} | Job: {}", REDIS_PROC_JOBS_LIST_KEY_PREFIX, redisJob.toStringShort());
+        redisJob.sourceSubmodel = "";
+        // Remove job from processing list
+        listOps.remove(REDIS_PROC_JOBS_LIST_KEY_PREFIX, 1, redisJob);
 
         // Release the lock for submodel based on targetSubmodelId
         try {
             redisLockRegistry.obtain(redisJob.targetSubmodelId).unlock();
-//            idsToUnlock.add(redisJob.targetSubmodelId);
         } catch (IllegalArgumentException e) {
             LOG.warn("Job has no target submodel id => No lock to release | {}", redisJob.toStringShort());
         } catch (IllegalStateException e) {

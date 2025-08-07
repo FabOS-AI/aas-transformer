@@ -31,7 +31,6 @@ public class RedisJobClient {
     protected final ListOperations<String, RedisTransformationJob> listOps;
     private final RedisTemplate<String, RedisTransformationJob> jobTemplate = new RedisTemplate<>();
     private final RedisTemplate<String, String> stringTemplate = new RedisTemplate<>();
-    private final RedisTemplate<String, String> scriptTemplate = new RedisTemplate<>();
 
     public RedisJobClient(RedisConnectionFactory connectionFactory) {
         this.redisConnectionFactory = connectionFactory;
@@ -45,11 +44,6 @@ public class RedisJobClient {
         stringTemplate.setKeySerializer(new StringRedisSerializer());
         stringTemplate.setValueSerializer(new StringRedisSerializer());
         stringTemplate.afterPropertiesSet();
-
-        scriptTemplate.setConnectionFactory(connectionFactory);
-        scriptTemplate.setKeySerializer(new StringRedisSerializer());
-        scriptTemplate.setValueSerializer(new StringRedisSerializer());
-        scriptTemplate.afterPropertiesSet();
     }
 
     public int getJobCountInt() {

@@ -26,6 +26,7 @@ public class RedisTransformationJob implements Serializable {
     private static final JsonDeserializer jsonDeserializer = new JsonDeserializer();
 
     public TransformationJobAction transformationJobAction;
+    public UUID id;
     public UUID transformerId;
     public String sourceSubmodelId;
     public String sourceSubmodel = null;
@@ -36,6 +37,7 @@ public class RedisTransformationJob implements Serializable {
 
     public RedisTransformationJob(@NotNull TransformationJob transformationJob) {
         this.transformationJobAction = transformationJob.getTransformationJobAction();
+        this.id = transformationJob.getId();
         this.transformerId = transformationJob.getTransformerId();
         this.sourceSubmodelId = transformationJob.getSubmodelId();
         this.targetSubmodelId = transformationJob.getTargetSubmodelId();
@@ -65,6 +67,7 @@ public class RedisTransformationJob implements Serializable {
         }
 
         return new TransformationJob(
+                this.id,
                 this.transformationJobAction,
                 this.transformerId,
                 this.sourceSubmodelId,
@@ -84,7 +87,8 @@ public class RedisTransformationJob implements Serializable {
 
     public String toStringShort() {
         return "RedisTransformationJob{" +
-                "transformationJobAction=" + transformationJobAction +
+                "id=" + id +
+                ", transformationJobAction=" + transformationJobAction +
                 ", transformerId=" + transformerId +
                 ", sourceSubmodelId='" + sourceSubmodelId + '\'' +
                 ", targetSubmodelId='" + targetSubmodelId + '\'' +

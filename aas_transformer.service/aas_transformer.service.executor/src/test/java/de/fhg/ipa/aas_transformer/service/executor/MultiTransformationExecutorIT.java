@@ -29,6 +29,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
+import java.util.UUID;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
@@ -41,8 +42,6 @@ import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
 public class MultiTransformationExecutorIT extends AbstractIT {
     @MockBean
     MetricsClient metricsClient;
-//    @MockBean
-//    JobApiClient jobApiClient;
     @Autowired
     RedisJobProducer redisJobProducer;
 
@@ -115,6 +114,7 @@ public class MultiTransformationExecutorIT extends AbstractIT {
 //                .thenAnswer(invocation -> this.getNextJob());
         triples.forEach(triple -> {redisJobProducer.pushJob(
                 new TransformationJob(
+                        UUID.randomUUID(),
                         EXECUTE,
                         testTransformer.getId(),
                         ((Submodel) triple.get(1)).getId(),
@@ -135,6 +135,8 @@ public class MultiTransformationExecutorIT extends AbstractIT {
                     2
             );
         }
+
+        return;
     }
 
     private Mono<TransformationJob> getNextJob() {
@@ -143,6 +145,7 @@ public class MultiTransformationExecutorIT extends AbstractIT {
 
         return Mono.just(
                 new TransformationJob(
+                        UUID.randomUUID(),
                         EXECUTE,
                         testTransformer.getId(),
                         ((Submodel)triples.get(this.currentIndex++).get(1)).getId(),

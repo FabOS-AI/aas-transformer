@@ -4,13 +4,14 @@ import org.eclipse.digitaltwin.aas4j.v3.model.Submodel
 import java.util.UUID
 
 data class TransformationJob(
+    val id: UUID?,
     var transformationJobAction: TransformationJobAction?,
     var transformerId: UUID?,
     var submodelId: String?,
     var submodel: Submodel?,
     var targetSubmodelId: String?
 ) {
-    constructor() : this(null, null, null, null, null)
+    constructor() : this(null, null, null, null, null, null)
 
     override fun toString(): String {
         return "TransformationJob(transformationJobAction=$transformationJobAction, transformerId=$transformerId, submodelId=$submodelId, targetSubmodelId=$targetSubmodelId)"
