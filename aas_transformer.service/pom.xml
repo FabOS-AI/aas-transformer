@@ -13,7 +13,6 @@
         <module>aas_transformer.service.listener</module>
         <module>aas_transformer.service.executor</module>
         <module>aas_transformer.service.management</module>
-        <module>aas_transformer.service.job_api</module>
     </modules>
 
     <properties>
