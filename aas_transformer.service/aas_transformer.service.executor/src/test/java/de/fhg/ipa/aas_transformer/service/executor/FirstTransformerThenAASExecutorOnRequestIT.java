@@ -42,6 +42,7 @@ import reactor.core.publisher.Sinks;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
@@ -152,6 +153,7 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
                 .thenReturn(Mono.empty());
 
         TransformationJob createdJob = new TransformationJob(
+                UUID.randomUUID(),
                 TransformationJobAction.EXECUTE,
                 factsTransformer.getId(),
                 factsSubmodel.getId(),
@@ -225,6 +227,7 @@ public class FirstTransformerThenAASExecutorOnRequestIT extends AbstractIT {
     @Order(50)
     public void testSendDeleteTransformationJobExpectNoDestinationSubmodel() throws InterruptedException {
         TransformationJob deleteJob = new TransformationJob(
+                UUID.randomUUID(),
                 TransformationJobAction.DELETE,
                 factsTransformer.getId(),
                 factsSubmodel.getId(),

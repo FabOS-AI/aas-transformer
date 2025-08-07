@@ -28,6 +28,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
@@ -140,6 +141,7 @@ public class StrictModeExecutorIT extends AbstractIT {
     public void testExecute(Transformer transformer) throws InterruptedException, DeserializationException, ApiException {
         // if submodel in job is not null, executor will take submodel instead of looking it up (strict-mode)
         TransformationJob job = new TransformationJob(
+                UUID.randomUUID(),
                 EXECUTE,
                 transformer.getId(),
                 getTestSubmodel(transformer).getId(),

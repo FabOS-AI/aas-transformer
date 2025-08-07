@@ -240,6 +240,7 @@ public class SingleTransformationExecutorIT extends AbstractIT {
             isInitialAasSetupDone = true;
         }
         TransformationJob job = new TransformationJob(
+                UUID.randomUUID(),
                 EXECUTE,
                 transformer.getId(),
                 getTestSubmodel(transformer).getId(),

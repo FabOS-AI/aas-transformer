@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.io.FileNotFoundException;
+import java.util.UUID;
 
 import static de.fhg.ipa.aas_transformer.model.TransformationJobAction.EXECUTE;
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
@@ -121,6 +122,7 @@ public class FirstAASThenTransformerExecutorIT extends AbstractIT {
                 .thenReturn(Mono.empty());
 
         TransformationJob createdJob = new TransformationJob(
+                UUID.randomUUID(),
                 EXECUTE,
                 factsTransformer.getId(),
                 factsSubmodel.getId(),
@@ -150,6 +152,7 @@ public class FirstAASThenTransformerExecutorIT extends AbstractIT {
         );
 
         TransformationJob deleteJob = new TransformationJob(
+                UUID.randomUUID(),
                 TransformationJobAction.DELETE,
                 factsTransformer.getId(),
                 destinationSubmodelId,

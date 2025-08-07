@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.List;
+import java.util.UUID;
 
 import static de.fhg.ipa.aas_transformer.test.utils.AasTestObjects.*;
 import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getAnsibleFactsTransformer;
@@ -115,6 +116,7 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
     @Order(20)
     public void testCreateTransformationJobExpectTwoSubmodelsAndNoJobs() throws DeserializationException, SerializationException, InterruptedException, ApiException {
         TransformationJob createdJob = new TransformationJob(
+                UUID.randomUUID(),
                 TransformationJobAction.EXECUTE,
                 factsTransformer.getId(),
                 factsSubmodel.getId(),
@@ -145,10 +147,11 @@ public class FirstTransformerThenAASExecutorIT extends AbstractIT {
         );
 
         TransformationJob deletedJob = new TransformationJob(
+                UUID.randomUUID(),
             TransformationJobAction.DELETE,
                 factsTransformer.getId(),
                 destinationSubmodelId,
-            null,
+                null,
                 null
         );
 
