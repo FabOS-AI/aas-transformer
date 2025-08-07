@@ -45,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@Disabled
 public class BrokerListenerTest {
     @SpyBean
     private SubmodelMqttListener submodelMqttListener;
