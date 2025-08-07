@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class Executor {
@@ -73,12 +74,19 @@ public class Executor {
         TransformationExecutionService executionService = this.transformationExecutionServiceCache
                 .getTransformationExecutionServiceByTransformerId(job.getTransformerId());
 
-        if(executionService == null)
+        if(executionService == null) {
             LOG.error("No TransformationExecutionService found for {} job with transformerId {}",
                     job.getTransformationJobAction(),
                     job.getTransformerId()
             );
-        else
+            LOG.debug("Known TransformerIds: {}",
+                    this.transformationExecutionServiceCache
+                            .getTransformerIds()
+                            .stream()
+                            .map(Object::toString)
+                            .collect(Collectors.joining(" "))
+            );
+        } else
             executionService.execute(job);
     }
 
