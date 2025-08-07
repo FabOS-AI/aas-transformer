@@ -253,6 +253,10 @@ public class TransformerHandler {
 
     public List<Submodel> getOrphanDestinationSubmodelsTransformerId(UUID transformerId, Submodel sourceSubmodel) throws DeserializationException {
         Transformer t = this.transformerJpaRepository.findById(transformerId).retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))).block();
+        if (t == null) {
+            LOG.error("Transformer with ID {} not found", transformerId);
+            return List.of();
+        }
         List<Submodel> orphanDestinationSubmodels = new ArrayList<>();
         String destinationShellId = null;
 
