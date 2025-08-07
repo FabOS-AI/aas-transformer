@@ -85,7 +85,9 @@ public class RedisJobConsumer extends RedisJobClient {
     public void markJobAsFinished(TransformationJob job) {
         RedisTransformationJob redisJob = new RedisTransformationJob(job);
         // Remove Job from processing list
-        listOps.remove(REDIS_PROC_JOBS_LIST_KEY_PREFIX, 1, redisJob);
+        long removeCount = listOps.remove(REDIS_PROC_JOBS_LIST_KEY_PREFIX, 1, redisJob);
+        if (removeCount == 0)
+            LOG.warn("Job not found in processing list | Skip removal from list: {} | Job: {}", REDIS_PROC_JOBS_LIST_KEY_PREFIX, redisJob.toStringShort());
 
         // Release the lock for submodel based on targetSubmodelId
         try {
