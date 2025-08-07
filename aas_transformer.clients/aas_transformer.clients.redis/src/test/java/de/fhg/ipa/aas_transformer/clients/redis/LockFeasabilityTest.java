@@ -9,19 +9,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.connection.DataType;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.KeyScanOptions;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.integration.redis.util.RedisLockRegistry;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesSubmodel;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -31,25 +36,30 @@ public class LockFeasabilityTest {
 
     private final String REDIS_JOB_LIST_KEY = "jobs";
     private final String REDIS_PROC_JOB_LIST_KEY = "proc_jobs";
-    private final String REDIS_LOCK_REGISTRY_KEY = "aas_transformer_lock";
+    private final String REDIS_LOCK_REGISTRY_KEY = "executor_locks";
 
     @Autowired
     RedisConnectionFactory redisConnectionFactory;
     @Autowired
     RedisContainer redisContainer;
+    @Autowired
+    RedisJobConsumer redisJobConsumer;
 
     RedisLockRegistry redisLockRegistry1;
     RedisLockRegistry redisLockRegistry2;
     ListOperations<String, RedisTransformationJob> listOps;
     RedisTemplate<String, RedisTransformationJob> template = new RedisTemplate<>();
 
+
+    int jobCount = 2000; // Number of jobs to be created for testing
+    int lockFirstNJobs = 10; // Number of jobs to lock for testing
     List<RedisTransformationJob> testJobs = List.of(
-            new RedisTransformationJob(getJob("1")),
-            new RedisTransformationJob(getJob("1")),
-            new RedisTransformationJob(getJob("2")),
-            new RedisTransformationJob(getJob("2")),
-            new RedisTransformationJob(getJob("3")),
-            new RedisTransformationJob(getJob("3"))
+            new RedisTransformationJob(getJob("s1", "t1")),
+            new RedisTransformationJob(getJob("s1", "t1")),
+            new RedisTransformationJob(getJob("s2", "t2")),
+            new RedisTransformationJob(getJob("s2", "t2")),
+            new RedisTransformationJob(getJob("s3", "t3")),
+            new RedisTransformationJob(getJob("s3", "t3"))
     );
 
     @Bean
@@ -58,20 +68,23 @@ public class LockFeasabilityTest {
         return new RedisContainer(DockerImageName.parse("redis:7"));
     }
 
-    private TransformationJob getJob(String submodelId) {
+    private TransformationJob getJob(String sourceSubmodelId, String targetSubmodelId) {
         return new TransformationJob(
+                UUID.randomUUID(),
                 TransformationJobAction.EXECUTE,
                 UUID.randomUUID(),
-                submodelId,
-                null,
-                "targetSubmodelId"
+                sourceSubmodelId,
+                getRandomTimeseriesSubmodel(5, 50),
+                targetSubmodelId
         );
     }
 
     @BeforeAll
     void setUp() {
-        redisLockRegistry1 = new RedisLockRegistry(redisConnectionFactory, REDIS_LOCK_REGISTRY_KEY);
-        redisLockRegistry2 = new RedisLockRegistry(redisConnectionFactory, REDIS_LOCK_REGISTRY_KEY);
+        redisLockRegistry1 = new RedisLockRegistry(redisConnectionFactory, REDIS_LOCK_REGISTRY_KEY, 15*1000);
+        redisLockRegistry1.setRedisLockType(RedisLockRegistry.RedisLockType.SPIN_LOCK);
+        redisLockRegistry2 = new RedisLockRegistry(redisConnectionFactory, REDIS_LOCK_REGISTRY_KEY, 15*1000);
+        redisLockRegistry2.setRedisLockType(RedisLockRegistry.RedisLockType.SPIN_LOCK);
         this.listOps = template.opsForList();
         template.setConnectionFactory(redisConnectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
@@ -86,79 +99,112 @@ public class LockFeasabilityTest {
         this.listOps.trim(REDIS_PROC_JOB_LIST_KEY, 1, 0);
 
         // Load Job List
-        testJobs.forEach(job -> listOps.rightPush(REDIS_JOB_LIST_KEY, job));
+//        testJobs.forEach(job -> listOps.rightPush(REDIS_JOB_LIST_KEY, job));
+        IntStream.rangeClosed(1,jobCount).forEach(i ->
+                listOps.rightPush(REDIS_JOB_LIST_KEY, new RedisTransformationJob(getJob(String.valueOf(i), String.valueOf(i))))
+        );
+
+        ScanOptions so = KeyScanOptions.scanOptions(DataType.STRING)
+                .match("*")
+                .build();
+        this.template.scan(so).stream().forEach(key -> this.template.delete(key));
     }
 
-    @Test
-    @Order(10)
-    public void testMoveSpecificItemFromListToList() {
-        List<RedisTransformationJob> jobsAtStart = this.listOps.range(REDIS_JOB_LIST_KEY, 0, -1);
-
-        RedisTransformationJob firstJobWithIdTwo = jobsAtStart.stream()
-                .filter(job -> job.sourceSubmodelId.equals("2"))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("No job with submodelId '2' found"));
-
-        this.listOps.remove(REDIS_JOB_LIST_KEY, 1, firstJobWithIdTwo);
-        this.listOps.rightPush(REDIS_PROC_JOB_LIST_KEY, firstJobWithIdTwo);
-
-        List<RedisTransformationJob> jobsAtEnd = this.listOps.range(REDIS_JOB_LIST_KEY, 0, -1);
-        RedisTransformationJob procJobFromRedis = this.listOps.leftPop(REDIS_PROC_JOB_LIST_KEY);
-
-
-        assertEquals(jobsAtStart.size() - 1, jobsAtEnd.size(), "Job list size should decrease by 1");
-        assertEquals(firstJobWithIdTwo, procJobFromRedis, "The moved job should match the one we removed from the job list");
-    }
+//region disabled tests
+//    @Test
+//    @Order(10)
+//    @Disabled
+//    public void testIterateOverAllPerformance() {
+//        assertEquals(jobCount, listOps.size(REDIS_JOB_LIST_KEY));
+//
+//        Instant start = Instant.now();
+//        Optional<RedisTransformationJob> nextJob = checkoutByIterateOverAllJobs();
+//        Instant end = Instant.now();
+//
+//        assertTrue(nextJob.isPresent(), "Expected to find a job to process");
+//
+//        System.out.println("Duration: " + (end.toEpochMilli() - start.toEpochMilli()) + " ms");
+//    }
+//endregion
 
     @Test
     @Order(20)
-    public void testGetNextJobBasedOnLocks() {
-        // Get Job queue at start
-        List<RedisTransformationJob> jobsAtStart = this.listOps.range(REDIS_JOB_LIST_KEY, 0, -1);
-        List<RedisTransformationJob> procJobsAtStart = this.listOps.range(REDIS_PROC_JOB_LIST_KEY, 0, -1);
+    public void testIterateOverPages() {
+        this.lockFirstNJobs(lockFirstNJobs);
+        assertEquals(jobCount, listOps.size(REDIS_JOB_LIST_KEY));
 
-        assertEquals(0, procJobsAtStart.size(), "Proc Job list should should be empty at start");
+        Instant start = Instant.now();
+        Optional<RedisTransformationJob> nextJob = redisJobConsumer.moveJobInProcessingList();
+        Instant end = Instant.now();
 
-        // Set Lock for submodel with ID "1" with Registry 1
-        String idToGetLocked = jobsAtStart.get(0).sourceSubmodelId;
-        redisLockRegistry1.obtain(idToGetLocked).lock();
-        System.out.println("RedisPort: " +redisContainer.getMappedPort(6379));
+        assertTrue(nextJob.isPresent(), "Expected to find a job to process");
 
-        // Get next job with Registry 2 based on existing locks
-        Optional<RedisTransformationJob> optionalNextJob = moveNextJobIntoProcessingList();
+        System.out.println("Job: " + nextJob.get().toStringShort());
 
-        RedisTransformationJob nextJob = null;
-
-        if (optionalNextJob.isPresent())
-            nextJob = optionalNextJob.get();
-
-        assertNotNull(nextJob, "Next job should not be null");
-        assertEquals(
-                jobsAtStart.stream().filter(j -> !j.sourceSubmodelId.equals(idToGetLocked)).findFirst().get(),
-                nextJob,
-                "Next job should be the second job in the queue"
-        );
-
-        // Check that the job was moved to processing list:
-        List<RedisTransformationJob> jobsAtProcessing = this.listOps.range(REDIS_JOB_LIST_KEY, 0, -1);
-        List<RedisTransformationJob> procJobsAtProcessing = this.listOps.range(REDIS_PROC_JOB_LIST_KEY, 0, -1);
-
-        assertEquals(jobsAtStart.size() - 1, jobsAtProcessing.size(), "Job list size should decrease by 1 after moving to processing");
-        assertEquals(procJobsAtStart.size() + 1, procJobsAtProcessing.size(), "Proc Job list size should increase by 1 after moving to processing");
-
-        // ... do Transformation with nextJob ...
-
-        // Remove Job from processing list
-        markJobAsProcessed(nextJob);
-
-        List<RedisTransformationJob> jobsAtEnd = this.listOps.range(REDIS_JOB_LIST_KEY, 0, -1);
-        List<RedisTransformationJob> procJobsAtEnd = this.listOps.range(REDIS_PROC_JOB_LIST_KEY, 0, -1);
-
-        assertEquals(jobsAtStart.size() - 1, jobsAtEnd.size(), "Job list size should be the same as before processing");
-        assertEquals(0, procJobsAtEnd.size(), "Proc Job list size should be empty after removing the job from processing");
+        System.out.println("Duration: " + (end.toEpochMilli() - start.toEpochMilli()) + " ms");
     }
 
-    private Optional<RedisTransformationJob> moveNextJobIntoProcessingList() {
+    @Test
+    @Order(30)
+    public void testIterateOverItems() {
+        this.lockFirstNJobs(lockFirstNJobs);
+
+        assertEquals(jobCount, listOps.size(REDIS_JOB_LIST_KEY));
+        assertEquals(lockFirstNJobs, getLockCount());
+
+        Instant start = Instant.now();
+        Optional<RedisTransformationJob> nextJob = this.checkoutByIterateOverJobByJob();
+        Instant end = Instant.now();
+
+        assertTrue(nextJob.isPresent(), "Expected to find a job to process");
+
+        System.out.println("Job: " + nextJob.get().toStringShort());
+
+        System.out.println("Duration: " + (end.toEpochMilli() - start.toEpochMilli()) + " ms");
+    }
+
+    private void lockFirstNJobs(int n) {
+        // Lock the first n jobs in the job list
+        List<RedisTransformationJob> jobsToLock = listOps.range(REDIS_JOB_LIST_KEY, 0, n - 1);
+        if (jobsToLock != null) {
+            jobsToLock.forEach(job -> {
+                redisLockRegistry1.obtain(job.targetSubmodelId).lock();
+//                System.out.println("Locked job: " + job.toStringShort());
+            });
+        }
+    }
+
+    private Optional<RedisTransformationJob> checkoutByIterateOverJobByJob() {
+        int size = listOps.size(REDIS_JOB_LIST_KEY).intValue();
+        System.out.println("Job list size: " + size);
+        int sizeLocks = getLockCount();
+        System.out.println("Lock registry size: " + sizeLocks);
+
+        for(int i = 0; i < size; i++) {
+            RedisTransformationJob job = listOps.index(REDIS_JOB_LIST_KEY, i);
+            if (job == null) {
+                continue; // Skip if job is null
+            }
+
+            // Check if job is locked
+            if (!isJobLockedByTryLock(job)) {
+                // Lock the job
+                redisLockRegistry2.obtain(job.targetSubmodelId).lock();
+
+                // Move job into processing list:
+                this.listOps.remove(REDIS_JOB_LIST_KEY, 1, job);
+                this.listOps.rightPush(REDIS_PROC_JOB_LIST_KEY, job);
+
+                return Optional.of(job);
+            }
+        }
+        sizeLocks = getLockCount();
+        System.out.println("Lock registry size: " + sizeLocks);
+
+        return Optional.empty(); // No unlocked job found
+    }
+
+    private Optional<RedisTransformationJob> checkoutByIterateOverAllJobs() {
         // Find next unlocked job and lock it
         Optional<RedisTransformationJob> optionalNextJob = this.listOps.range(REDIS_JOB_LIST_KEY, 0, -1)
                 .stream()
@@ -174,12 +220,19 @@ public class LockFeasabilityTest {
         return optionalNextJob;
     }
 
-    private void markJobAsProcessed(RedisTransformationJob job) {
-        // Remove Job from processing list
-        listOps.remove(REDIS_PROC_JOB_LIST_KEY, 1, job);
+    private boolean isJobLockedByTryLock(RedisTransformationJob job) {
+        try {
+            return !redisLockRegistry2.obtain(job.targetSubmodelId).tryLock();
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
 
-        // Release the lock for submodel with ID "1"
-        redisLockRegistry2.obtain(job.sourceSubmodelId).unlock();
     }
 
+    private int getLockCount() {
+        ScanOptions so = KeyScanOptions.scanOptions(DataType.STRING)
+                .match("*")
+                .build();
+        return (int) this.template.scan(so).stream().count();
+    }
 }
