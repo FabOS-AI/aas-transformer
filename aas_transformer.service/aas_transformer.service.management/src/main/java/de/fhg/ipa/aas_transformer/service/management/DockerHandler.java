@@ -52,8 +52,8 @@ abstract class DockerHandler {
     }
 
     protected void scaleService(@Nullable Service service, long replicas) {
-        if(replicas < 1) {
-            LOG.warn("Desired replica count must be greater than 0. Scaling aborted.");
+        if(replicas < 0) {
+            LOG.warn("Desired replica count must be positive integer. Scaling aborted.");
             return;
         }
         if(service == null) {
