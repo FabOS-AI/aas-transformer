@@ -1,5 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.management.controller;
 
+import de.fhg.ipa.aas_transformer.model.ServiceType;
 import de.fhg.ipa.aas_transformer.model.TransformationLog;
 import de.fhg.ipa.aas_transformer.persistence.api.TransformationLogJpaRepository;
 import de.fhg.ipa.aas_transformer.service.management.MqttListener;
@@ -69,25 +70,25 @@ public class MetricsRestController {
         this.maxQueueJobCountCounter.increment(maxQueueJobCount);
 
         this.isExecutorScalingGauge = Gauge.builder("is_executor_scaling", () -> {
-                    return transformerServiceHandler.isExecutorScaling() ? 1 : 0;
+                    return transformerServiceHandler.isServiceTypeScaling(ServiceType.EXECUTOR) ? 1 : 0;
                 })
                 .description("a flag indicating if the executor service is currently scaling")
                 .tag("name", "is_executor_scaling")
                 .register(meterRegistry);
 
         this.isListenerScalingGauge = Gauge.builder("is_listener_scaling", () -> {
-                    return transformerServiceHandler.isListenerScaling() ? 1 : 0;
+                    return transformerServiceHandler.isServiceTypeScaling(ServiceType.LISTENER) ? 1 : 0;
                 })
                 .description("a flag indicating if the listener service is currently scaling")
                 .tag("name", "is_listener_scaling")
                 .register(meterRegistry);
 
-        this.replicaExecutorGauge = Gauge.builder("replica_count", () -> transformerServiceHandler.getRunningExecutorServiceTasks().size())
+        this.replicaExecutorGauge = Gauge.builder("replica_count", () -> transformerServiceHandler.getRunningServiceTasksOfServiceType(ServiceType.EXECUTOR).size())
                 .description("a number of current replicas")
                 .tag("service", "executor")
                 .register(meterRegistry);
 
-        this.replicaListenerGauge = Gauge.builder("replica_count", () -> transformerServiceHandler.getRunningListenerServiceTasks().size())
+        this.replicaListenerGauge = Gauge.builder("replica_count", () -> transformerServiceHandler.getRunningServiceTasksOfServiceType(ServiceType.LISTENER).size())
                 .description("a number of current replicas")
                 .tag("service", "listener")
                 .register(meterRegistry);

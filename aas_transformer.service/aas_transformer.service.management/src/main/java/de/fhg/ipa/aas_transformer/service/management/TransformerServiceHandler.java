@@ -7,6 +7,7 @@ import de.fhg.ipa.aas_transformer.model.ScaleDirection;
 import de.fhg.ipa.aas_transformer.model.alertmanager.Alert;
 import de.fhg.ipa.aas_transformer.model.alertmanager.AlertMessage;
 import de.fhg.ipa.aas_transformer.service.management.exceptions.WaitForScaleTimeoutException;
+import de.fhg.ipa.aas_transformer.model.ServiceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,10 +41,23 @@ public class TransformerServiceHandler extends DockerHandler {
             Alert alert = alertMessage.getAlerts().get(0);
             String action = alert.getLabels().get("action");
             String service = alert.getLabels().get("service");
+            ServiceType serviceType = null;
             ScaleDirection scaleDirection;
 
+            switch(service) {
+                case "executor":
+                    serviceType = ServiceType.EXECUTOR;
+                    break;
+                case "listener":
+                    serviceType = ServiceType.LISTENER;
+                    break;
+                default:
+                    LOG.warn("Unknown service: {}. Scaling aborted.", service);
+                    return;
+            }
+
             if(action.equals("scale-to-minimum")) {
-                scaleService(service, 1, false);
+                scaleServiceType(serviceType, 1, false);
                 return;
             }
 
@@ -56,83 +70,60 @@ public class TransformerServiceHandler extends DockerHandler {
                 return;
             }
 
-            scaleServiceByOne(service, scaleDirection, false);
+            scaleServiceTypeByOne(serviceType, scaleDirection, false);
         }
     }
 
-    public void scaleExecutorServiceByOne(ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
-        if(scaleDirection == ScaleDirection.SCALE_UP)
-            scaleExecutorService(getReplicaCountOfExecutorService()+1, wait);
-        else
-            scaleExecutorService(getReplicaCountOfExecutorService()-1, wait);
+    public void scaleServiceTypeByOne(ServiceType serviceType, ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
+        long currentReplicas = getReplicaCountOfServiceType(serviceType);
+        long desiredScale = (scaleDirection.equals(ScaleDirection.SCALE_UP)) ? ++currentReplicas : --currentReplicas;
+        scaleServiceType(serviceType, desiredScale, wait);
     }
 
-    public void scaleService(String serviceName, long replicas, boolean wait) throws WaitForScaleTimeoutException {
-        switch(serviceName) {
-            case "executor":
-                scaleExecutorService(replicas, wait);
+    public void scaleServiceType(ServiceType serviceType, long replicas, boolean wait) throws WaitForScaleTimeoutException {
+        Service service = null;
+
+        switch(serviceType) {
+            case EXECUTOR:
+                service = getExecutorService();
                 break;
-            case "listener":
-                scaleListenerService(replicas, wait);
+            case LISTENER:
+                service = getListenerService();
                 break;
             default:
-                LOG.warn("Unknown service name: {}. Scaling aborted.", serviceName);
+                LOG.warn("Unknown service type: {}. Scaling aborted.", serviceType);
+                return;
         }
-    }
 
-    public void scaleServiceByOne(String serviceName, ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
-        switch(serviceName) {
-            case "executor":
-                scaleExecutorServiceByOne(scaleDirection, wait);
-                break;
-            case "listener":
-                scaleListenerServiceByOne(scaleDirection, wait);
-                break;
-            default:
-                LOG.warn("Unknown service name: {}. Scaling aborted.", serviceName);
-        }
-    }
-
-    public void scaleExecutorService(long replicas, boolean wait) throws WaitForScaleTimeoutException {
         if(replicas<=MAX_REPLICAS_EXEUCTOR) {
-            scaleService(getExecutorService(), replicas);
+            scaleService(service, replicas);
             if (wait)
                 waitExecutorScaleToFinish();
         } else
             LOG.warn("Replica count must be less or equal {}. Scaling aborted.", MAX_REPLICAS_EXEUCTOR);
     }
 
-    public void scaleListenerServiceByOne(ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
-        if(scaleDirection == ScaleDirection.SCALE_UP)
-            scaleListenerService(getReplicaCountOfListenerService()+1, wait);
-        else
-            scaleListenerService(getReplicaCountOfListenerService()-1, wait);
-    }
-
-    public void scaleListenerService(long replicas, boolean wait) throws WaitForScaleTimeoutException {
-        if(replicas<=MAX_REPLICAS_LISTENER) {
-            scaleService(getListenerService(), replicas);
-            if(wait)
-                waitListenerScaleToFinish();
+    public boolean isServiceTypeScaling(ServiceType serviceType) {
+        switch(serviceType) {
+            case EXECUTOR:
+            case LISTENER:
+                return getReplicaCountOfServiceType(serviceType) != getRunningServiceTasksOfServiceType(serviceType).size();
+            default:
+                LOG.warn("Unknown service type: {}. Returning false.", serviceType);
+                return false;
         }
-        else
-            LOG.warn("Replica count must be less or equal {}. Scaling aborted.", MAX_REPLICAS_LISTENER);
     }
 
-    public boolean isExecutorScaling() {
-        return getReplicaCountOfExecutorService() != getRunningExecutorServiceTasks().size();
-    }
-
-    public boolean isListenerScaling() {
-        return getReplicaCountOfListenerService() != getRunningListenerServiceTasks().size();
-    }
-
-    public List<Task> getRunningExecutorServiceTasks() {
-        return getTasksOfServiceFilteredByState(getExecutorService(), TaskState.RUNNING);
-    }
-
-    public List<Task> getRunningListenerServiceTasks() {
-        return getTasksOfServiceFilteredByState(getListenerService(), TaskState.RUNNING);
+    public List<Task> getRunningServiceTasksOfServiceType(ServiceType serviceType) {
+        switch(serviceType) {
+            case EXECUTOR:
+                return getTasksOfServiceFilteredByState(getExecutorService(), TaskState.RUNNING);
+            case LISTENER:
+                return getTasksOfServiceFilteredByState(getListenerService(), TaskState.RUNNING);
+            default:
+                LOG.warn("Unknown service type: {}. Returning empty list.", serviceType);
+                return List.of();
+        }
     }
 
     public Service getExecutorService() {
@@ -143,12 +134,16 @@ public class TransformerServiceHandler extends DockerHandler {
         return getServiceByName(LISTENER_SERVICE_NAME);
     }
 
-    public long getReplicaCountOfExecutorService() {
-        return getReplicasOfService(getExecutorService());
-    }
-
-    public long getReplicaCountOfListenerService() {
-        return getReplicasOfService(getListenerService());
+    public long getReplicaCountOfServiceType(ServiceType serviceType) {
+        switch (serviceType) {
+            case EXECUTOR:
+                return getReplicasOfService(getExecutorService());
+            case LISTENER:
+                return getReplicasOfService(getListenerService());
+            default:
+                LOG.warn("Unknown service type: {}. Returning 0.", serviceType);
+                return 0;
+        }
     }
 
     public void waitExecutorScaleToFinish() throws WaitForScaleTimeoutException {

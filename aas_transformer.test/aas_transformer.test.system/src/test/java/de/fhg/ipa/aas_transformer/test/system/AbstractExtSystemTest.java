@@ -24,39 +24,39 @@ public class AbstractExtSystemTest {
 
     //region Test Vars
     // IP addresses/hostnames:
-    String host = "aas-transformer.local";
+    static String host = "aas-transformer.local";
 
     // Subdomains
-    String transformerManagementSubdomain = "management";
-    String transformerExecutorSubdomain = "executor";
-    String transformerListenerSubdomain = "listener";
-    String grafanaSubdomain = "grafana";
+    static String transformerManagementSubdomain = "management";
+    static String transformerExecutorSubdomain = "executor";
+    static String transformerListenerSubdomain = "listener";
+    static String grafanaSubdomain = "grafana";
 
     // Service Ports:
-    String transformerManagementPort = "80";
-    String transformerExecutorPort = "80";
-    String transformerListenerPort = "80";
-    String grafanaPort = "80";
-    String aasRegistryPort = "80";
-    String aasRegistryPath = "/shell-registry";
-    String aasRepositoryPort = "80";
-    String aasRepositoryPath = "";
-    String smRegistryPort = "80";
-    String smRegistryPath = "/sm-registry";
-    String smRepositoryPort = "80";
-    String smRepositoryPath = "";
+    static String transformerManagementPort = "80";
+    static String transformerExecutorPort = "80";
+    static String transformerListenerPort = "80";
+    static String grafanaPort = "80";
+    static String aasRegistryPort = "80";
+    static String aasRegistryPath = "/shell-registry";
+    static String aasRepositoryPort = "80";
+    static String aasRepositoryPath = "";
+    static String smRegistryPort = "80";
+    static String smRegistryPath = "/sm-registry";
+    static String smRepositoryPort = "80";
+    static String smRepositoryPath = "";
 
     // Transformer Service Urls:
-    String transformerManagementUrl = "http://" + transformerManagementSubdomain + "." + host +":" + transformerManagementPort;
-    String transformerExecutorUrl = "http://" + transformerExecutorSubdomain + "." + host + ":" + transformerExecutorPort;
-    String transformerListenerUrl = "http://" + transformerListenerSubdomain + "." + host + ":" + transformerListenerPort;
-    String grafanaUrl = "http://"+ grafanaSubdomain + "." + host +":" + grafanaPort;
+    static String transformerManagementUrl = "http://" + transformerManagementSubdomain + "." + host +":" + transformerManagementPort;
+    static String transformerExecutorUrl = "http://" + transformerExecutorSubdomain + "." + host + ":" + transformerExecutorPort;
+    static String transformerListenerUrl = "http://" + transformerListenerSubdomain + "." + host + ":" + transformerListenerPort;
+    static String grafanaUrl = "http://"+ grafanaSubdomain + "." + host +":" + grafanaPort;
 
     // AAS Service Urls:
-    String aasRegistryUrl = "http://"+host+":"+aasRegistryPort+aasRegistryPath;
-    String aasRepoUrl = "http://"+host+":"+aasRepositoryPort+aasRepositoryPath;
-    String smRegistryUrl = "http://"+host+":"+smRegistryPort+smRegistryPath;
-    String smRepoUrl = "http://"+host+":"+smRepositoryPort+smRepositoryPath;
+    static String aasRegistryUrl = "http://"+host+":"+aasRegistryPort+aasRegistryPath;
+    static String aasRepoUrl = "http://"+host+":"+aasRepositoryPort+aasRepositoryPath;
+    static String smRegistryUrl = "http://"+host+":"+smRegistryPort+smRegistryPath;
+    static String smRepoUrl = "http://"+host+":"+smRepositoryPort+smRepositoryPath;
 
     // Service Clients:
     protected static ManagementClient managementClient;
@@ -75,10 +75,7 @@ public class AbstractExtSystemTest {
     static String grafanaUsername = "admin";
     static String grafanaPassword = "admin";
 
-    // endregion
-
-
-    public AbstractExtSystemTest() {
+    static {
         managementClient = new ManagementClient(transformerManagementUrl);
         executorWebclient = getWebclient(transformerExecutorUrl);
         listenerWebclient = getWebclient(transformerListenerUrl);
@@ -91,9 +88,12 @@ public class AbstractExtSystemTest {
         aasRepository = new AasRepository(aasRepoUrl);
         smRegistry = new SubmodelRegistry(smRegistryUrl, smRepoUrl);
         smRepository = new SubmodelRepository(smRepoUrl);
-    }
 
-    private WebClient getWebclient(String baseUrl) {
+    }
+    // endregion
+
+
+    private static WebClient getWebclient(String baseUrl) {
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule simpleModule = new SimpleModule();
         // SubmodelDescriptors:

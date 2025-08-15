@@ -1,10 +1,15 @@
-package de.fhg.ipa.aas_transformer.test.system.performance;
+package de.fhg.ipa.aas_transformer.test.system.performance.system;
 
+import de.fhg.ipa.aas_transformer.model.ServiceType;
 import de.fhg.ipa.aas_transformer.model.Transformer;
+import de.fhg.ipa.aas_transformer.test.system.performance.watcher.AlertWatcher;
+import de.fhg.ipa.aas_transformer.test.system.performance.ExtAbstractPerformanceTest;
+import de.fhg.ipa.aas_transformer.test.utils.creator.HistoricDataCreator;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.junit.jupiter.api.*;
 
-import java.util.function.Predicate;
+import java.util.ArrayList;
+import java.util.List;
 
 import static de.fhg.ipa.aas_transformer.test.utils.AasTimeseriesObjects.getRandomTimeseriesTriples;
 import static java.lang.Thread.sleep;
@@ -44,12 +49,16 @@ public class ExtScalingTest extends ExtAbstractPerformanceTest {
         alertWatcher.start();
 
         System.out.println("Scale executor to 1 replica");
-        scalingClient.scaleExecutorService(1L, false).block();
+        scalingClient.scaleServiceType(ServiceType.EXECUTOR, 1L, false).block();
         assertTrue(managementClient.getAllTransformer().collectList().block().size() == 1);
 
         // Start Submodel Creator:
-        TimeSeriesSubmodelCreator smCreatorThread = new TimeSeriesSubmodelCreator(0,15);
-        smCreatorThread.start();
+        int submodelCreatorCount = 5;
+        List<HistoricDataCreator> smCreatorThreads = new ArrayList<>();
+        for(int i = 0; i < submodelCreatorCount; i++)
+            smCreatorThreads.add(createHistoricDataCreator(0, 1));
+
+        smCreatorThreads.forEach(t -> t.start());
 
         // Wait for scale up:
         int expectedCount = 2;
@@ -59,14 +68,14 @@ public class ExtScalingTest extends ExtAbstractPerformanceTest {
 
         // Do overscaling:
         long overscaleCount = 5;
-        scalingClient.scaleExecutorService(overscaleCount, true).block();
+        scalingClient.scaleServiceType(ServiceType.EXECUTOR, overscaleCount, true).block();
 
         // Wait for scale down:
-        runningExecutorCount = waitForExecutorCount(count -> count == overscaleCount);
+        runningExecutorCount = waitForExecutorCount(count -> count >= overscaleCount);
         assertEquals(overscaleCount-1, runningExecutorCount);
 
-        // Stop Submodel Creator:
-        smCreatorThread.stop();
+        // Stop Submodel Creators:
+        smCreatorThreads.forEach(t -> t.stop());
 
         // Wait for Transformations are finished
         waitForWaitingJobCount(count -> count > 0);
@@ -88,9 +97,9 @@ public class ExtScalingTest extends ExtAbstractPerformanceTest {
         );
         alertWatcher.start();
         System.out.println("Scale executor to 1 replica");
-        scalingClient.scaleExecutorService(1L, true).block();
+        scalingClient.scaleServiceType(ServiceType.EXECUTOR, 1L, true).block();
 
-        TimeSeriesSubmodelCreator smCreatorThread = new TimeSeriesSubmodelCreator(0,0);
+        HistoricDataCreator smCreatorThread = createHistoricDataCreator(0, 0);
         smCreatorThread.start();
 
         waitForExecutorCount(count -> count < 2);
@@ -116,11 +125,11 @@ public class ExtScalingTest extends ExtAbstractPerformanceTest {
         waitForExecutorCount(count -> count > 1);
 
         System.out.println("Scale executor to 5 replicas");
-        scalingClient.scaleExecutorService(5L, true).block();
+        scalingClient.scaleServiceType(ServiceType.EXECUTOR, 5L, true).block();
 
         assertTrue(managementClient.getAllTransformer().collectList().block().size() == 1);
 
-        TimeSeriesSubmodelCreator smCreatorThread = new TimeSeriesSubmodelCreator(0,100);
+        HistoricDataCreator smCreatorThread = createHistoricDataCreator(0, 100);
         smCreatorThread.start();
 
         sleep(1000);
@@ -128,31 +137,9 @@ public class ExtScalingTest extends ExtAbstractPerformanceTest {
         waitForExecutorCount(count -> count > 3);
 
         smCreatorThread.stop();
-        smCreatorThread.thread.join();
 
         // finish remaining jobs:
         waitForWaitingJobCount(count -> count != 0);
         alertWatcher.stop();
-    }
-
-    private int waitForExecutorCount(Predicate<Integer> condition) throws InterruptedException {
-        int runningCount = scalingClient.getExecutorCurrentRunningTasks().block();
-        while(condition.test(runningCount)) {
-            System.out.println("Running executor count: " + runningCount);
-            sleep(1000);
-            runningCount = scalingClient.getExecutorCurrentRunningTasks().block();
-        }
-        System.out.println("Running executor count: " + runningCount);
-        return runningCount;
-    }
-
-    private long waitForWaitingJobCount(Predicate<Integer> condition) throws InterruptedException {
-        long waitingJobCount = jobsClient.getWaitingJobCount().block();
-        while(condition.test((int)waitingJobCount)) {
-            System.out.println("Remaining open Jobs: " + waitingJobCount);
-            sleep(1000);
-            waitingJobCount = jobsClient.getWaitingJobCount().block();
-        }
-        return waitingJobCount;
     }
 }

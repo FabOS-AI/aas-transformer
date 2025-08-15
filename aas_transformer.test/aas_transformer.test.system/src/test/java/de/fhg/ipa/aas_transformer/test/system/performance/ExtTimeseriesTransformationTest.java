@@ -1,5 +1,6 @@
 package de.fhg.ipa.aas_transformer.test.system.performance;
 
+import de.fhg.ipa.aas_transformer.model.ServiceType;
 import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.AggregatedTestResult;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TestResult;
@@ -55,7 +56,7 @@ public class ExtTimeseriesTransformationTest extends ExtAbstractPerformanceTest 
         aggregatedTestResult = new AggregatedTestResult(testResults);
         TestResult.toFile(testResults, FILE_PREFIX);
         aggregatedTestResult.toFile(FILE_PREFIX);
-        scalingClient.scaleExecutorService(1L, false).block();
+        scalingClient.scaleServiceType(ServiceType.EXECUTOR, 1L, false).block();
     }
 
     private static Stream<Arguments> getExecutorCounts() {
@@ -75,12 +76,12 @@ public class ExtTimeseriesTransformationTest extends ExtAbstractPerformanceTest 
 
     private void scaleExecutor(int desiredCount) {
         System.out.println("Scaling executor to " + desiredCount);
-        Integer currentTaskCount = scalingClient.getExecutorCurrentRunningTasks().block();
+        Integer currentTaskCount = scalingClient.getRunningTasksOfServiceType(ServiceType.EXECUTOR).block();
         int deltaTaskCount = desiredCount - currentTaskCount;
 
         if(deltaTaskCount != 0) {
             Instant startScale = Instant.now();
-            scalingClient.scaleExecutorService(Long.valueOf(desiredCount), false).block();
+            scalingClient.scaleServiceType(ServiceType.EXECUTOR,Long.valueOf(desiredCount), false).block();
             waitForScaleUp(desiredCount);
             System.out.println("Executor scaled to " + desiredCount);
             Instant endScale = Instant.now();
@@ -99,7 +100,7 @@ public class ExtTimeseriesTransformationTest extends ExtAbstractPerformanceTest 
     private void waitForScaleUp(int desiredCount) {
         int tryCount = 0;
         int maxTries = 100;
-        while(scalingClient.getExecutorCurrentRunningTasks().block() != desiredCount) {
+        while(scalingClient.getRunningTasksOfServiceType(ServiceType.EXECUTOR).block() != desiredCount) {
             tryCount++;
             if(tryCount > maxTries)
                 throw new RuntimeException("Scaling up to " + desiredCount + " failed");

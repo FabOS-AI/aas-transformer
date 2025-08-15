@@ -26,11 +26,11 @@ public class AasTimeseriesObjects {
         return getRandomTimeseriesSubmodel(sensorCount, sensorValueCount, "");
     }
 
-    public static Submodel getRandomTimeseriesSubmodel(int sensorCount, int sensorValueCount, String idShort){
+    public static Submodel getRandomTimeseriesSubmodel(int sensorCount, int sensorValueCount, String idShort) {
         DefaultSubmodel submodel = new DefaultSubmodel();
         // IDs
         submodel.setId(UUID.randomUUID().toString());
-        if(idShort == null || idShort.equals("")) {
+        if (idShort == null || idShort.equals("")) {
             submodel.setIdShort(UUID.randomUUID().toString().split("-")[0]);
         } else {
             submodel.setIdShort(idShort);
@@ -45,12 +45,16 @@ public class AasTimeseriesObjects {
     }
 
     public static List<List<Object>> getRandomTimeseriesTriples(int length) {
+        return getRandomTimeseriesTriples(length, 5, 100);
+    }
+
+    public static List<List<Object>> getRandomTimeseriesTriples(int length, int sensorCount, int sensorValueCount) {
         String sourceIdShort = "test_timeseries";
         List<List<Object>> triples = new ArrayList<>();
         for(int i = 0; i < length; i++) {
             List<Object> triple = new ArrayList<>();
             triple.add(getSimpleShell("", ""));
-            triple.add(getRandomTimeseriesSubmodel(5, 100, "test_timeseries"));
+            triple.add(getRandomTimeseriesSubmodel(sensorCount, sensorValueCount, "test_timeseries"));
             triple.add(getTimeseriesTransformer(sourceIdShort));
             triples.add(triple);
         }
