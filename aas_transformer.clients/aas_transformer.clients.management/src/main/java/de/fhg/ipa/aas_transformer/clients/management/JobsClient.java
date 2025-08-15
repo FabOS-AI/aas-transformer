@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class JobsClient extends JobRestControllerApi {
+public class JobsClient extends JobMetricsRestControllerApi {
     private static final Logger LOG = LoggerFactory.getLogger(JobsClient.class);
 
     public JobsClient(@Value("${aas_transformer.services.management.base-url}") String baseUrl) {
