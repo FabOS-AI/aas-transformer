@@ -22,6 +22,9 @@ public class TransformerServiceHandler extends DockerHandler {
     @Value("${scaling.alert-enabled}")
     public boolean alertEnabled;
 
+    private boolean listenerScalingEnabled = true;
+    private boolean executorScalingEnabled = true;
+
     @Value("${scaling.max-replicas.executor: #{5}}")
     public long MAX_REPLICAS_EXEUCTOR;
     @Value("${scaling.max-replicas.listener: #{2}}")
@@ -74,6 +77,22 @@ public class TransformerServiceHandler extends DockerHandler {
         }
     }
 
+    public void enableServiceType(ServiceType serviceType, Boolean enabled) {
+        switch(serviceType) {
+            case EXECUTOR:
+                executorScalingEnabled = enabled;
+                break;
+            case LISTENER:
+                listenerScalingEnabled = enabled;
+                break;
+            default:
+                LOG.warn("Unknown service type: {}. Scaling not changed.", serviceType);
+                return;
+        }
+
+        LOG.info("{} scaling is now {}", serviceType.name(), enabled ? "enabled" : "disabled");
+    }
+
     public void scaleServiceTypeByOne(ServiceType serviceType, ScaleDirection scaleDirection, boolean wait) throws WaitForScaleTimeoutException {
         long currentReplicas = getReplicaCountOfServiceType(serviceType);
         long desiredScale = (scaleDirection.equals(ScaleDirection.SCALE_UP)) ? ++currentReplicas : --currentReplicas;
@@ -82,25 +101,43 @@ public class TransformerServiceHandler extends DockerHandler {
 
     public void scaleServiceType(ServiceType serviceType, long replicas, boolean wait) throws WaitForScaleTimeoutException {
         Service service = null;
+        int maxReplicas = 0;
+
+        if(!isScalingOfServiceTypeEnabled(serviceType))
+            return;
 
         switch(serviceType) {
             case EXECUTOR:
                 service = getExecutorService();
+                maxReplicas = (int) MAX_REPLICAS_EXEUCTOR;
                 break;
             case LISTENER:
                 service = getListenerService();
+                maxReplicas = (int) MAX_REPLICAS_LISTENER;
                 break;
             default:
                 LOG.warn("Unknown service type: {}. Scaling aborted.", serviceType);
                 return;
         }
 
-        if(replicas<=MAX_REPLICAS_EXEUCTOR) {
+        if(replicas<=maxReplicas) {
             scaleService(service, replicas);
             if (wait)
                 waitExecutorScaleToFinish();
         } else
             LOG.warn("Replica count must be less or equal {}. Scaling aborted.", MAX_REPLICAS_EXEUCTOR);
+    }
+
+    private boolean isScalingOfServiceTypeEnabled(ServiceType serviceType) {
+        switch(serviceType) {
+            case EXECUTOR:
+                return executorScalingEnabled;
+            case LISTENER:
+                return listenerScalingEnabled;
+            default:
+                LOG.warn("Unknown service type: {}. Scaling is not enabled.", serviceType);
+                return false;
+        }
     }
 
     public boolean isServiceTypeScaling(ServiceType serviceType) {

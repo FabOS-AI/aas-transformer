@@ -5,6 +5,7 @@ import de.fhg.ipa.aas_transformer.model.alertmanager.AlertMessage;
 import de.fhg.ipa.aas_transformer.service.management.TransformerServiceHandler;
 import de.fhg.ipa.aas_transformer.service.management.exceptions.WaitForScaleTimeoutException;
 import de.fhg.ipa.aas_transformer.model.ServiceType;
+import jakarta.ws.rs.QueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,14 @@ public class ScalingRestController {
     public void receiveAlert(@RequestBody AlertMessage alertMessage) throws WaitForScaleTimeoutException {
         // handle alert
         transformerServiceHandler.handleScaleAlert(alertMessage);
+    }
+
+    @RequestMapping(path = "/{serviceType}/enable", method = RequestMethod.POST)
+    public void enableServiceType(
+            @PathVariable(name = "serviceType") ServiceType serviceType,
+            @RequestParam(name = "enabled") Boolean enabled
+    ) {
+        transformerServiceHandler.enableServiceType(serviceType, enabled);
     }
 
     @RequestMapping(path = "/{serviceType}/current-desired-scale", method = RequestMethod.GET)
