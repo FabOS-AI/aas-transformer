@@ -103,8 +103,10 @@ public class TransformerServiceHandler extends DockerHandler {
         Service service = null;
         int maxReplicas = 0;
 
-        if(!isScalingOfServiceTypeEnabled(serviceType))
+        if(!isScalingOfServiceTypeEnabled(serviceType)) {
+            LOG.warn("Scaling for service type {} is not enabled. Scaling aborted.", serviceType);
             return;
+        }
 
         switch(serviceType) {
             case EXECUTOR:
