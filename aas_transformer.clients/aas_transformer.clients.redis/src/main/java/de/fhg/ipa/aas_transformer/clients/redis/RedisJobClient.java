@@ -30,7 +30,6 @@ public class RedisJobClient {
     protected final RedisConnectionFactory redisConnectionFactory;
     protected final ListOperations<String, RedisTransformationJob> listOps;
     private final RedisTemplate<String, RedisTransformationJob> jobTemplate = new RedisTemplate<>();
-    private final RedisTemplate<String, String> stringTemplate = new RedisTemplate<>();
 
     public RedisJobClient(RedisConnectionFactory connectionFactory) {
         this.redisConnectionFactory = connectionFactory;
@@ -39,11 +38,6 @@ public class RedisJobClient {
         jobTemplate.setKeySerializer(new StringRedisSerializer());
         jobTemplate.setValueSerializer(new TransformationJob2RedisSerializer());
         jobTemplate.afterPropertiesSet();
-
-        stringTemplate.setConnectionFactory(connectionFactory);
-        stringTemplate.setKeySerializer(new StringRedisSerializer());
-        stringTemplate.setValueSerializer(new StringRedisSerializer());
-        stringTemplate.afterPropertiesSet();
     }
 
     public int getJobCountInt() {
@@ -58,27 +52,22 @@ public class RedisJobClient {
         return listOps.range(REDIS_JOBS_LIST_KEY, 0, getJobCountInt());
     }
 
+    public void deleteWaitingJobs() {
+        listOps.trim(REDIS_JOBS_LIST_KEY, 1, -1);
+    }
+
     protected List<RedisTransformationJob> lookupAllProcJobs() {
         return listOps.range(REDIS_PROC_JOBS_LIST_KEY_PREFIX, 0, getProcJobCountInt());
     }
 
-    protected List<RedisTransformationJob> lookupFirstInProcJobList() {
-        return listOps.range(REDIS_PROC_JOBS_LIST_KEY_PREFIX, 0, 0);
+    public void deleteProcJobs() {
+        listOps.trim(REDIS_PROC_JOBS_LIST_KEY_PREFIX, 1, -1);
     }
 
     public void rightPushJob(RedisTransformationJob value) {
         listOps.rightPush(REDIS_JOBS_LIST_KEY, value);
     }
 
-
-    protected boolean isJobLocked(RedisTransformationJob job) {
-        ScanOptions so = KeyScanOptions.scanOptions(DataType.STRING)
-                .match("*" + job.targetSubmodelId)
-                .count(1)
-                .build();
-
-        return this.jobTemplate.scan(so).hasNext();
-    }
 
     public List<String> getLocks() {
         ScanOptions so = KeyScanOptions.scanOptions(DataType.STRING)
