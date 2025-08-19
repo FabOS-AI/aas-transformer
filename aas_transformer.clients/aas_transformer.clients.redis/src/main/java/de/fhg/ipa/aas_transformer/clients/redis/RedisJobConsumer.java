@@ -18,7 +18,6 @@ public class RedisJobConsumer extends RedisJobClient {
     private static final Logger LOG = LoggerFactory.getLogger(RedisJobConsumer.class);
     private final static String REDIS_LOCK_REGISTRY_KEY = "executor_locks";
     private final static int LOCK_TIMEOUT = 15*1000;
-    private static boolean threadIsRunning = true;
 
     RedisLockRegistry redisLockRegistry;
 
