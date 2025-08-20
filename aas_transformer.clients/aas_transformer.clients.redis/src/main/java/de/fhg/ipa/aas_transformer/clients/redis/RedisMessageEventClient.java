@@ -7,19 +7,19 @@ import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class RedisMessageEventClient {
-//    private final static String REDIS_MESSAGE_QUEUE_KEY_PREFIX = "message_queue";
-//    private final static UUID CONSUMER_ID = UUID.randomUUID();
     private final static String REDIS_MESSAGE_QUEUE_KEY = "mqtt_message_queue";
 
     protected final RedisConnectionFactory redisConnectionFactory;
     private final ListOperations<String, MessageEvent> listOps;
-    private final RedisTemplate<String, MessageEvent> template = new RedisTemplate<>();
 
     public RedisMessageEventClient(RedisConnectionFactory connectionFactory) {
         this.redisConnectionFactory = connectionFactory;
+        RedisTemplate<String, MessageEvent> template = new RedisTemplate<>();
         this.listOps = template.opsForList();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
@@ -28,7 +28,7 @@ public class RedisMessageEventClient {
     }
 
     public boolean isConnected() {
-        return redisConnectionFactory.getConnection().ping().toLowerCase().equals("pong");
+        return Objects.requireNonNull(redisConnectionFactory.getConnection().ping()).equalsIgnoreCase("pong");
     }
 
     protected void leftPush(MessageEvent messageEvent) {
@@ -39,7 +39,15 @@ public class RedisMessageEventClient {
         return listOps.rightPop(REDIS_MESSAGE_QUEUE_KEY);
     }
 
+    public List<MessageEvent> getMessageEvents() {
+        return listOps.range(REDIS_MESSAGE_QUEUE_KEY, 0, getMessageEventCount());
+    }
+
     public int getMessageEventCount() {
-        return listOps.size(REDIS_MESSAGE_QUEUE_KEY).intValue();
+        return Objects.requireNonNull(listOps.size(REDIS_MESSAGE_QUEUE_KEY)).intValue();
+    }
+
+    public void deleteMessageEvents() {
+        listOps.trim(REDIS_MESSAGE_QUEUE_KEY, 0, getMessageEventCount());
     }
 }
