@@ -53,7 +53,7 @@ public class RedisJobClient {
     }
 
     public void deleteWaitingJobs() {
-        listOps.trim(REDIS_JOBS_LIST_KEY, 1, -1);
+        listOps.trim(REDIS_JOBS_LIST_KEY, 1, getJobCountInt());
     }
 
     protected List<RedisTransformationJob> lookupAllProcJobs() {
