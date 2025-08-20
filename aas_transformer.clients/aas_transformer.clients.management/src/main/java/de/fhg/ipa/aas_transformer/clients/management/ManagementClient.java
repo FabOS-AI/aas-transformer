@@ -21,9 +21,9 @@ import reactor.netty.resources.ConnectionProvider;
 @Component
 public class ManagementClient extends TransformerRestControllerApi {
     private static final Logger LOG = LoggerFactory.getLogger(ManagementClient.class);
-    private static ObjectMapper objectMapper;
-    private static WebClient webClient;
-    private static ApiClient apiClient;
+    private static final ObjectMapper objectMapper;
+    private static final WebClient webClient;
+    private static final ApiClient apiClient;
     static {
         objectMapper = new ObjectMapper();
         SimpleModule simpleModule = new SimpleModule();
