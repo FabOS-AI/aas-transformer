@@ -40,7 +40,7 @@ public class RedisMessageEventClient {
     }
 
     public List<MessageEvent> getMessageEvents() {
-        return listOps.range(REDIS_MESSAGE_QUEUE_KEY, 0, getMessageEventCount());
+        return listOps.range(REDIS_MESSAGE_QUEUE_KEY, 0, -1);
     }
 
     public int getMessageEventCount() {
@@ -48,6 +48,6 @@ public class RedisMessageEventClient {
     }
 
     public void deleteMessageEvents() {
-        listOps.trim(REDIS_MESSAGE_QUEUE_KEY, 0, getMessageEventCount());
+        listOps.trim(REDIS_MESSAGE_QUEUE_KEY, 0, -1);
     }
 }
