@@ -15,7 +15,6 @@ import de.fhg.ipa.aas_transformer.transformation.TransformationDetectionService;
 import de.fhg.ipa.aas_transformer.transformation.TransformationUtils;
 import de.fhg.ipa.aas_transformer.transformation.templating.AasTemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
-import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.eclipse.digitaltwin.aas4j.v3.model.*;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
