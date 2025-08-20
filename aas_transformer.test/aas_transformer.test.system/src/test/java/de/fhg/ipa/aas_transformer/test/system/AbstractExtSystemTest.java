@@ -63,7 +63,7 @@ public class AbstractExtSystemTest {
     protected static WebClient executorWebclient;
     protected static WebClient listenerWebclient;
     protected static MetricsClient metricsClient;
-    protected static JobsClient jobsClient;
+    protected static RedisControllerClient redisControllerClient;
     protected static ScalingClient scalingClient;
     protected static AasRegistry aasRegistry;
     protected static AasRepository aasRepository;
@@ -80,7 +80,7 @@ public class AbstractExtSystemTest {
         executorWebclient = getWebclient(transformerExecutorUrl);
         listenerWebclient = getWebclient(transformerListenerUrl);
         metricsClient = new MetricsClient(transformerManagementUrl);
-        jobsClient = new JobsClient(transformerManagementUrl);
+        redisControllerClient = new RedisControllerClient(transformerManagementUrl);
         scalingClient = new ScalingClient(transformerManagementUrl);
         grafanaClient = new GrafanaClient(grafanaUrl, grafanaUsername, grafanaPassword);
 

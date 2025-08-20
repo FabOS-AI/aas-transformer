@@ -4,7 +4,7 @@ import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.clients.management.JobsClient;
+import de.fhg.ipa.aas_transformer.clients.management.RedisControllerClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobConsumer;
@@ -21,7 +21,7 @@ public class AbstractSystemTest {
     // Clients:
     ManagementClient managementClient;
     MetricsClient metricsClient;
-    JobsClient jobsClient;
+    RedisControllerClient redisControllerClient;
     AasRegistry aasRegistry;
     AasRepository aasRepository;
     SubmodelRegistry smRegistry;
@@ -31,7 +31,7 @@ public class AbstractSystemTest {
     public AbstractSystemTest() {
         this.managementClient = new ManagementClient("http://localhost:" + transformerManagementPort);
         this.metricsClient = new MetricsClient("http://localhost:" + transformerManagementPort);
-        this.jobsClient = new JobsClient("http://localhost:" + transformerManagementPort);
+        this.redisControllerClient = new RedisControllerClient("http://localhost:" + transformerManagementPort);
         this.aasRegistry = new AasRegistry("http://host.docker.internal:" + aasRegistryPort, "http://host.docker.internal:" + aasRepositoryPort);
         this.aasRepository = new AasRepository("http://host.docker.internal:" + aasRepositoryPort);
         this.smRegistry = new SubmodelRegistry("http://host.docker.internal:" + smRegistryPort, "http://host.docker.internal:" + smRepositoryPort);

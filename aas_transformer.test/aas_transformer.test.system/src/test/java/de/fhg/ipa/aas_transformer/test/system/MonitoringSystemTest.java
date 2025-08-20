@@ -86,7 +86,7 @@ public class MonitoringSystemTest extends AbstractSystemTest {
 
         int tryCount = 0;
         int tryLimit = 100;
-        while(jobsClient.getTotalJobCount().block() != 0) {
+        while(redisControllerClient.getTotalJobCount().block() != 0) {
             if(tryCount > tryLimit)
                 break;
             tryCount++;

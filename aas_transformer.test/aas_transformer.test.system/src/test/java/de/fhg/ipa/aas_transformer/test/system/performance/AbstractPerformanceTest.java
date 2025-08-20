@@ -4,14 +4,13 @@ import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.clients.management.JobsClient;
+import de.fhg.ipa.aas_transformer.clients.management.RedisControllerClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.model.TransformationLog;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.AggregatedTestResult;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TestResult;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TransformationDurations;
-import de.fhg.ipa.aas_transformer.test.utils.extentions.AasITExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.AasTransformerExtension;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.PrometheusExtension;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
@@ -47,7 +46,7 @@ public abstract class AbstractPerformanceTest {
     // Service Clients:
     static ManagementClient managementClient;
     static MetricsClient metricsClient;
-    static JobsClient jobsClient;
+    static RedisControllerClient redisControllerClient;
     static AasRegistry aasRegistry;
     static AasRepository aasRepository;
     static SubmodelRegistry smRegistry;
@@ -62,7 +61,7 @@ public abstract class AbstractPerformanceTest {
     public AbstractPerformanceTest() {
         managementClient = new ManagementClient("http://localhost:" + transformerManagementPort);
         metricsClient = new MetricsClient("http://localhost:" + transformerManagementPort);
-        jobsClient = new JobsClient("http://localhost:" + transformerManagementPort);
+        redisControllerClient = new RedisControllerClient("http://localhost:" + transformerManagementPort);
 
         aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort + aasRepositoryPath);
         aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort + aasRepositoryPath);

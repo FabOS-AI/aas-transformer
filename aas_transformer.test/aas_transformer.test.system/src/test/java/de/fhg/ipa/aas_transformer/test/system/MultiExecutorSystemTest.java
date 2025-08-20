@@ -4,7 +4,7 @@ import de.fhg.ipa.aas_transformer.aas.AasRegistry;
 import de.fhg.ipa.aas_transformer.aas.AasRepository;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.clients.management.JobsClient;
+import de.fhg.ipa.aas_transformer.clients.management.RedisControllerClient;
 import de.fhg.ipa.aas_transformer.clients.management.ManagementClient;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.model.Transformer;
@@ -42,7 +42,7 @@ public class MultiExecutorSystemTest {
     // Service Clients:
     static ManagementClient managementClient;
     static MetricsClient metricsClient;
-    static JobsClient jobsClient;
+    static RedisControllerClient redisControllerClient;
     static AasRegistry aasRegistry;
     static AasRepository aasRepository;
     static SubmodelRegistry smRegistry;
@@ -64,7 +64,7 @@ public class MultiExecutorSystemTest {
     void setUp() {
         managementClient = new ManagementClient("http://localhost:" + transformerManagementPort);
         metricsClient = new MetricsClient("http://localhost:" + transformerManagementPort);
-        jobsClient = new JobsClient("http://localhost:" + transformerManagementPort);
+        redisControllerClient = new RedisControllerClient("http://localhost:" + transformerManagementPort);
 
         aasRegistry = new AasRegistry("http://localhost:" + aasRegistryPort, "http://localhost:" + aasRepositoryPort);
         aasRepository = new AasRepository("http://localhost:" + aasRepositoryPort);
@@ -85,7 +85,7 @@ public class MultiExecutorSystemTest {
     public void testMultiExecutorSetup() {
         registerAasObjectsFromTriples(aasRegistry, aasRepository, smRegistry, smRepository, triples);
 
-        Long inProgressJobCount = jobsClient.getInProgressJobCount().block();
+        Long inProgressJobCount = redisControllerClient.getInProgressJobCount().block();
 
         return;
     }

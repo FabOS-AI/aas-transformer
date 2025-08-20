@@ -8,7 +8,6 @@ import de.fhg.ipa.aas_transformer.test.system.performance.model.TestResult;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TransformationDurations;
 import de.fhg.ipa.aas_transformer.test.utils.creator.HistoricDataCreator;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
-import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -202,11 +201,11 @@ public abstract class ExtAbstractPerformanceTest extends AbstractExtSystemTest {
     }
 
     protected long waitForWaitingJobCount(Predicate<Integer> condition) throws InterruptedException {
-        long waitingJobCount = jobsClient.getWaitingJobCount().block();
+        long waitingJobCount = redisControllerClient.getWaitingJobCount().block();
         while(condition.test((int)waitingJobCount)) {
             System.out.println("Remaining open Jobs: " + waitingJobCount);
             sleep(1000);
-            waitingJobCount = jobsClient.getWaitingJobCount().block();
+            waitingJobCount = redisControllerClient.getWaitingJobCount().block();
         }
         return waitingJobCount;
     }
