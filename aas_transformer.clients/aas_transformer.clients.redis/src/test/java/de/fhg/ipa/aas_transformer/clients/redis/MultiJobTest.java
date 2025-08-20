@@ -85,13 +85,38 @@ public class MultiJobTest {
 
             redisJobProducer.pushJob(job);
             redisJobConsumer.moveJobInProcessingList();
-//            redisJobClient.rightPushJob(redisJob);
-//            redisJobClient.moveJobInProcessingList();
             assertListCounts(0,1);
 
             redisJobConsumer.markJobAsFinished(job);
-//            redisJobClient.markJobAsProcessed(redisJob);
             assertListCounts(0,0);
         }
+    }
+
+    @Test
+    @Order(20)
+    public void testJobDeleteExpectNoLeftoverJobs() throws InterruptedException, SerializationException {
+        int jobCount = 10;
+
+        for(int i = 0; i < jobCount; i++) {
+            LOG.info("Pushing job {}", i);
+            String sourceSubmodelId = "submodelId"+i;
+            String targetSubmodelId = "targetSubmodelId"+i;
+
+            TransformationJob job = new TransformationJob(
+                    UUID.randomUUID(),
+                    TransformationJobAction.EXECUTE,
+                    UUID.randomUUID(),
+                    sourceSubmodelId,
+                    null,
+                    targetSubmodelId
+            );
+
+            redisJobProducer.pushJob(job);
+        }
+
+        assertListCounts(jobCount, 0);
+
+        redisJobConsumer.deleteWaitingJobs();
+        assertListCounts(0, 0);
     }
 }
