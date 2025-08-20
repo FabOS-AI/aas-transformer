@@ -16,10 +16,11 @@ public class RedisMessageEventClient {
 
     protected final RedisConnectionFactory redisConnectionFactory;
     private final ListOperations<String, MessageEvent> listOps;
+    private final RedisTemplate<String, MessageEvent> template;
 
     public RedisMessageEventClient(RedisConnectionFactory connectionFactory) {
         this.redisConnectionFactory = connectionFactory;
-        RedisTemplate<String, MessageEvent> template = new RedisTemplate<>();
+        template = new RedisTemplate<>();
         this.listOps = template.opsForList();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
@@ -48,6 +49,6 @@ public class RedisMessageEventClient {
     }
 
     public void deleteMessageEvents() {
-        listOps.trim(REDIS_MESSAGE_QUEUE_KEY, 0, -1);
+        template.delete(REDIS_MESSAGE_QUEUE_KEY);
     }
 }

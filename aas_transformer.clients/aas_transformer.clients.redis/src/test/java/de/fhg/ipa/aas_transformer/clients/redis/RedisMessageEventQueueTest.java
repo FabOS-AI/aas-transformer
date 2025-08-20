@@ -13,9 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static de.fhg.ipa.aas_transformer.test.utils.GenericTestConfig.getSimpleSubmodel;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -97,5 +95,14 @@ public class RedisMessageEventQueueTest {
         // Check the count after popping one message event
         long count = redisMessageEventConsumer.getMessageEventCount();
         assertEquals(submodels.size()-1, count);
+    }
+
+    @Test
+    @Order(60)
+    public void testDeleteMessageEventsExpectCountZero() {
+        redisMessageEventConsumer.deleteMessageEvents();
+        long count = redisMessageEventConsumer.getMessageEventCount();
+        // Expect no message event
+        assertEquals(0, count);
     }
 }

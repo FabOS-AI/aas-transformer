@@ -53,7 +53,7 @@ public class RedisJobClient {
     }
 
     public void deleteWaitingJobs() {
-        listOps.trim(REDIS_JOBS_LIST_KEY, 0, -1);
+        jobTemplate.delete(REDIS_JOBS_LIST_KEY);
     }
 
     protected List<RedisTransformationJob> lookupAllProcJobs() {
