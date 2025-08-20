@@ -71,7 +71,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.10.0</version>
+                <version>7.14.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -79,7 +79,7 @@
                         </goals>
                         <configuration>
 <!--                            <inputSpec>http://localhost:4010/v3/api-docs</inputSpec>-->
-                            <inputSpec>${project.basedir}/src/main/resources/swagger.yml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/swagger.json</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
@@ -97,10 +97,14 @@
                                 <importMapping>Destination=de.fhg.ipa.aas_transformer.model.Destination</importMapping>
                                 <importMapping>DestinationAAS=de.fhg.ipa.aas_transformer.model.DestinationAAS</importMapping>
                                 <importMapping>DestinationSubmodel=de.fhg.ipa.aas_transformer.model.DestinationSubmodel</importMapping>
+                                <importMapping>MessageEvent=de.fhg.ipa.aas_transformer.model.message_event.MessageEvent</importMapping>
                                 <importMapping>ServiceType=de.fhg.ipa.aas_transformer.model.ServiceType</importMapping>
                                 <importMapping>ScaleDirection=de.fhg.ipa.aas_transformer.model.ScaleDirection</importMapping>
                                 <importMapping>Submodel=org.eclipse.digitaltwin.aas4j.v3.model.Submodel</importMapping>
+                                <importMapping>SubmodelChangeEventType=de.fhg.ipa.aas_transformer.model.SubmodelChangeEventType</importMapping>
                                 <importMapping>SubmodelId=de.fhg.ipa.aas_transformer.model.SubmodelId</importMapping>
+                                <importMapping>SubmodelMessageEvent=de.fhg.ipa.aas_transformer.model.message_event.SubmodelMessageEvent</importMapping>
+                                <importMapping>SubmodelElementMessageEvent=de.fhg.ipa.aas_transformer.model.message_event.SubmodelElementMessageEvent</importMapping>
                                 <importMapping>TransformationJob=de.fhg.ipa.aas_transformer.model.TransformationJob</importMapping>
                                 <importMapping>TransformationJobAction=de.fhg.ipa.aas_transformer.model.TransformationJobAction</importMapping>
                                 <importMapping>TransformationLog=de.fhg.ipa.aas_transformer.model.TransformationLog</importMapping>
