@@ -38,6 +38,7 @@ abstract public class AbstractListenerTest extends ExtAbstractPerformanceTest {
     public void testExecutorIsNotRunning() {
         int expectCount = 0;
 
+        scalingClient.enableServiceType(ServiceType.EXECUTOR, true).block();
         scalingClient.scaleServiceType(ServiceType.EXECUTOR, (long) expectCount, false).block();
         waitForExecutorCount(c -> c != expectCount);
 
@@ -51,7 +52,7 @@ abstract public class AbstractListenerTest extends ExtAbstractPerformanceTest {
     @Order(01)
     public void testListenerIsRunning() {
         int expectCount = 1;
-
+        scalingClient.enableServiceType(ServiceType.LISTENER, true).block();
         scalingClient.scaleServiceType(ServiceType.LISTENER, (long) expectCount, false).block();
         waitForListenerCount(count -> count != expectCount);
 
