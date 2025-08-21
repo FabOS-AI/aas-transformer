@@ -33,6 +33,13 @@
         <!-- TEST -->
         <dependency>
             <groupId>de.fhg.ipa</groupId>
+            <artifactId>aas_transformer.model</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>de.fhg.ipa</groupId>
             <artifactId>aas_transformer.test.utils</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -77,6 +84,13 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>de.vandermeer</groupId>
+            <artifactId>asciitable</artifactId>
+            <version>0.3.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
