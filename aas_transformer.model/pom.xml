@@ -7,7 +7,6 @@
         <version>${revision}</version>
     </parent>
 
-    <groupId>de.fhg.ipa</groupId>
     <artifactId>aas_transformer.model</artifactId>
     <packaging>jar</packaging>
 
