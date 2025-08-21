@@ -3,12 +3,15 @@ package de.fhg.ipa.aas_transformer.test.system.performance.listener;
 import de.fhg.ipa.aas_transformer.model.ServiceType;
 import de.fhg.ipa.aas_transformer.test.utils.creator.HistoricDataCreator;
 import de.fhg.ipa.aas_transformer.test.utils.creator.TimeSeriesSubmodelCreator;
+import de.vandermeer.asciitable.AsciiTable;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 
@@ -68,10 +71,91 @@ class HistoricDataListenerTest extends AbstractListenerTest {
         // Getters for the fields can be added here if needed
     }
 
+    class AggregatedTestResult {
+        private final List<TestResult> testResults;
+
+        public AggregatedTestResult(List<TestResult> testResults) {
+            this.testResults = testResults;
+        }
+
+        private List<TestResult> filterTestResultsByListenerCount(int listenerCount) {
+            return testResults.stream()
+                    .filter(r -> r.listenerCount == listenerCount)
+                    .collect(Collectors.toList());
+        }
+
+        public Set<Integer> getListenerCounts() {
+            return testResults.stream()
+                    .map(r -> r.listenerCount)
+                    .collect(Collectors.toSet());
+        }
+
+        public Double getAverageCreatedJobsPerSecond(int listenerCount) {
+            return filterTestResultsByListenerCount(listenerCount)
+                    .stream()
+                    .collect(Collectors.averagingDouble(TestResult::getAverageCreatedJobsPerSecond));
+        }
+
+        public Double getStdDevOfCreatedJobsPerSecond(int listenerCount) {
+            return filterTestResultsByListenerCount(listenerCount)
+                    .stream()
+                    .mapToDouble(result -> Math.pow(result.getAverageCreatedJobsPerSecond() - getAverageCreatedJobsPerSecond(listenerCount), 2))
+                    .average()
+                    .orElse(0.0);
+        }
+
+        public Double getAverageCreatedJobsPerListenerInstance(int listenerCount) {
+            return filterTestResultsByListenerCount(listenerCount)
+                    .stream()
+                    .collect(Collectors.averagingDouble(TestResult::getAverageCreatedJobsPerListener));
+        }
+
+        public Double getStdDevOfCreatedJobsPerInstance(int listenerCount) {
+            return filterTestResultsByListenerCount(listenerCount)
+                    .stream()
+                    .mapToDouble(result -> Math.pow(result.getAverageCreatedJobsPerListener() - getAverageCreatedJobsPerListenerInstance(listenerCount), 2))
+                    .average()
+                    .orElse(0.0);
+        }
+
+        public String toString(int listenerCount) {
+            return "listenerCount = " + listenerCount + ", " +
+                    "Average Created Jobs per Second: " + getAverageCreatedJobsPerSecond(listenerCount) + ", " +
+                    "Standard Deviation of Created Jobs per Second: " + getStdDevOfCreatedJobsPerSecond(listenerCount) + ", " +
+                    "Average Created Jobs per Listener Instance: " + getAverageCreatedJobsPerListenerInstance(listenerCount) + ", " +
+                    "Standard Deviation of Created Jobs per Instance: " + getStdDevOfCreatedJobsPerInstance(listenerCount);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder result = new StringBuilder();
+            for (int listenerCount : getListenerCounts()) {
+                result.append(toString(listenerCount))
+                        .append("\n");
+            }
+            return result.toString();
+        }
+
+        public String toTable() {
+            AsciiTable table = new AsciiTable();
+            table.addRow("", "Jobs/s", "", "Jobs/Listener", "");
+            table.addRow("Listener Count", "Avg.", "StdDev", "Avg.", "StdDev");
+            for (int listenerCount : getListenerCounts())
+                table.addRow(
+                        listenerCount,
+                        String.format("%.2f", getAverageCreatedJobsPerSecond(listenerCount)),
+                        String.format("%.2f", getStdDevOfCreatedJobsPerSecond(listenerCount)),
+                        String.format("%.2f", getAverageCreatedJobsPerListenerInstance(listenerCount)),
+                        String.format("%.2f", getStdDevOfCreatedJobsPerInstance(listenerCount))
+                );
+            return table.render();
+        }
+    }
+
 
     @Order(10)
     @ParameterizedTest
-    @ValueSource(ints = {1, 1, 1, 2, 2, 2, 3, 3, 3 })
+    @ValueSource(ints = {1, 1, 1 })//, 2, 2, 2, 3, 3, 3 })
     public void testScaleUpOfListener(int listenerCount) throws InterruptedException {
         int submodelCreatorCount = 6;
         int testDurationInMs = 30 * 1000;
@@ -128,6 +212,13 @@ class HistoricDataListenerTest extends AbstractListenerTest {
     @Order(20)
     public void testResults() {
         testResults.forEach(r -> System.out.println(r.toString()));
+    }
+
+    @Test
+    @Order(30)
+    public void testAggregatedResults() {
+        AggregatedTestResult result = new AggregatedTestResult(testResults);
+        System.out.println(result.toTable());
     }
 
     private void clearRedis() {
