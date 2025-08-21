@@ -90,6 +90,21 @@ class HistoricDataListenerTest extends AbstractListenerTest {
                     .collect(Collectors.toSet());
         }
 
+        public long getTestCount(int listenerCount) {
+            return testResults.stream()
+                    .filter(r -> r.listenerCount == listenerCount)
+                    .count();
+        }
+
+        private Double calculateStandardDeviation(List<Float> results, Double average) {
+            return Math.sqrt(
+                    results.stream()
+                    .mapToDouble(result -> Math.pow(result - average, 2))
+                    .average()
+                    .orElse(0.0)
+            );
+        }
+
         public Double getAverageCreatedJobsPerSecond(int listenerCount) {
             return filterTestResultsByListenerCount(listenerCount)
                     .stream()
@@ -97,32 +112,30 @@ class HistoricDataListenerTest extends AbstractListenerTest {
         }
 
         public Double getStdDevOfCreatedJobsPerSecond(int listenerCount) {
-            return filterTestResultsByListenerCount(listenerCount)
-                    .stream()
-                    .mapToDouble(result -> Math.pow(result.getAverageCreatedJobsPerSecond() - getAverageCreatedJobsPerSecond(listenerCount), 2))
-                    .average()
-                    .orElse(0.0);
+            return calculateStandardDeviation(
+                    filterTestResultsByListenerCount(listenerCount).stream().map(TestResult::getAverageCreatedJobsPerSecond).toList(),
+                    getAverageCreatedJobsPerSecond(listenerCount)
+            );
         }
 
-        public Double getAverageCreatedJobsPerListenerInstance(int listenerCount) {
+        public Double getAverageCreatedJobsPerInstance(int listenerCount) {
             return filterTestResultsByListenerCount(listenerCount)
                     .stream()
                     .collect(Collectors.averagingDouble(TestResult::getAverageCreatedJobsPerListener));
         }
 
         public Double getStdDevOfCreatedJobsPerInstance(int listenerCount) {
-            return filterTestResultsByListenerCount(listenerCount)
-                    .stream()
-                    .mapToDouble(result -> Math.pow(result.getAverageCreatedJobsPerListener() - getAverageCreatedJobsPerListenerInstance(listenerCount), 2))
-                    .average()
-                    .orElse(0.0);
+            return calculateStandardDeviation(
+                    filterTestResultsByListenerCount(listenerCount).stream().map(TestResult::getAverageCreatedJobsPerListener).toList(),
+                    getAverageCreatedJobsPerInstance(listenerCount)
+            );
         }
 
-        public String toString(int listenerCount) {
+        private String toString(int listenerCount) {
             return "listenerCount = " + listenerCount + ", " +
                     "Average Created Jobs per Second: " + getAverageCreatedJobsPerSecond(listenerCount) + ", " +
                     "Standard Deviation of Created Jobs per Second: " + getStdDevOfCreatedJobsPerSecond(listenerCount) + ", " +
-                    "Average Created Jobs per Listener Instance: " + getAverageCreatedJobsPerListenerInstance(listenerCount) + ", " +
+                    "Average Created Jobs per Listener Instance: " + getAverageCreatedJobsPerInstance(listenerCount) + ", " +
                     "Standard Deviation of Created Jobs per Instance: " + getStdDevOfCreatedJobsPerInstance(listenerCount);
         }
 
@@ -138,14 +151,17 @@ class HistoricDataListenerTest extends AbstractListenerTest {
 
         public String toTable() {
             AsciiTable table = new AsciiTable();
-            table.addRow("", "Jobs/s", "", "Jobs/Listener", "");
-            table.addRow("Listener Count", "Avg.", "StdDev", "Avg.", "StdDev");
+            table.addRow("", "", "Jobs/s", "", "Jobs/Instance", "");
+            table.addRule();
+            table.addRow("Listener Count", "Test Count", "Avg.", "StdDev", "Avg.", "StdDev");
+            table.addRule();
             for (int listenerCount : getListenerCounts())
                 table.addRow(
                         listenerCount,
+                        getTestCount(listenerCount),
                         String.format("%.2f", getAverageCreatedJobsPerSecond(listenerCount)),
                         String.format("%.2f", getStdDevOfCreatedJobsPerSecond(listenerCount)),
-                        String.format("%.2f", getAverageCreatedJobsPerListenerInstance(listenerCount)),
+                        String.format("%.2f", getAverageCreatedJobsPerInstance(listenerCount)),
                         String.format("%.2f", getStdDevOfCreatedJobsPerInstance(listenerCount))
                 );
             return table.render();
@@ -155,7 +171,11 @@ class HistoricDataListenerTest extends AbstractListenerTest {
 
     @Order(10)
     @ParameterizedTest
-    @ValueSource(ints = {1, 1, 1 })//, 2, 2, 2, 3, 3, 3 })
+    @ValueSource(ints = {
+            1, 1, 1,
+            2, 2, 2,
+            3, 3, 3
+    })
     public void testScaleUpOfListener(int listenerCount) throws InterruptedException {
         int submodelCreatorCount = 6;
         int testDurationInMs = 30 * 1000;
