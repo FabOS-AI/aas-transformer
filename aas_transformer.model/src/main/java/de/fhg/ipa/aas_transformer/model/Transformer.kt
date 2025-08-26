@@ -1,5 +1,6 @@
 package de.fhg.ipa.aas_transformer.model
 
+import de.fhg.ipa.aas_transformer.model.actions.TransformerAction
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
