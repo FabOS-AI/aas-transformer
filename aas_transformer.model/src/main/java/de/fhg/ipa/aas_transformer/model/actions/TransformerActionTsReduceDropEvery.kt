@@ -1,4 +1,4 @@
-package de.fhg.ipa.aas_transformer.model
+package de.fhg.ipa.aas_transformer.model.actions
 
 import com.fasterxml.jackson.annotation.JsonProperty
 

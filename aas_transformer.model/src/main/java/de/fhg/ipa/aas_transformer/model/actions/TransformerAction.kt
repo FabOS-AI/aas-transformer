@@ -1,6 +1,5 @@
-package de.fhg.ipa.aas_transformer.model
+package de.fhg.ipa.aas_transformer.model.actions
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -9,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 @JsonSubTypes(
     JsonSubTypes.Type(value = TransformerActionCopy::class, name = "COPY"),
     JsonSubTypes.Type(value = TransformerActionSmCopy::class, name = "SM_COPY"),
+    JsonSubTypes.Type(value = TransformerActionSmeRename::class, name = "SME_RENAME"),
     JsonSubTypes.Type(value = TransformerActionSubmodelTemplate::class, name = "SUBMODEL_TEMPLATE"),
     JsonSubTypes.Type(value = TransformerActionSubmodelElementTemplate::class, name = "SUBMODEL_ELEMENT_TEMPLATE"),
     JsonSubTypes.Type(value = TransformerActionTsAvg::class, name = "TS_AVG"),
