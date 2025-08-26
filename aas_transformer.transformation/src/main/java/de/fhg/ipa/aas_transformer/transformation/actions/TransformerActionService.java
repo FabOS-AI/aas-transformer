@@ -1,10 +1,7 @@
 package de.fhg.ipa.aas_transformer.transformation.actions;
 
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.model.TransformerAction;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerAction;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
-import org.eclipse.digitaltwin.basyx.submodelrepository.client.ConnectedSubmodelRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

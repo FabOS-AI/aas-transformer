@@ -1,7 +1,7 @@
 package de.fhg.ipa.aas_transformer.transformation.actions;
 
-import de.fhg.ipa.aas_transformer.model.TransformerAction;
-import de.fhg.ipa.aas_transformer.model.TransformerActionSubmodelTemplate;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerAction;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerActionSubmodelTemplate;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;

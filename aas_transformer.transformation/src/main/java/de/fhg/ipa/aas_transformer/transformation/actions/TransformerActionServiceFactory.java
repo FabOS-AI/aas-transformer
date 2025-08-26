@@ -1,8 +1,8 @@
 package de.fhg.ipa.aas_transformer.transformation.actions;
 
 import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.model.*;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
+import de.fhg.ipa.aas_transformer.model.actions.*;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
@@ -29,49 +29,35 @@ public class TransformerActionServiceFactory {
 
     public TransformerActionService create(TransformerAction transformerAction) {
         var actionType = transformerAction.getActionType();
-        switch (actionType) {
-            case COPY:
-                return new TransformerActionCopyService((TransformerActionCopy) transformerAction);
-
-            case SM_COPY:
-                return new TransformerActionSmCopyService(
-                        this.submodelRegistry,
-                        this.submodelRepository,
-                        this.templateRenderer,
-                        (TransformerActionSmCopy) transformerAction
-                );
-
-            case SUBMODEL_TEMPLATE:
-                return new TransformerActionSubmodelTemplateService(
-                        (TransformerActionSubmodelTemplate) transformerAction,
-                        this.templateRenderer
-                );
-
-            case SUBMODEL_ELEMENT_TEMPLATE:
-                return new TransformerActionSubmodelElementTemplateService(
-                        (TransformerActionSubmodelElementTemplate) transformerAction,
-                        templateRenderer
-                );
-
-            case TS_AVG:
-                return new TransformerActionTsAvgService(
-                        (TransformerActionTsAvg) transformerAction
-                );
-
-            case TS_MDN:
-                return new TransformerActionTsMdnService(
-                        (TransformerActionTsMdn) transformerAction
-                );
-
-            case TS_TAKE_EVERY:
-            case TS_DROP_EVERY:
-                return new TransformerActionTsReduceService(
-                        (TransformerActionTsReduce) transformerAction
-                );
-
-            default:
-                throw new NotImplementedException("Unknown TransformerActionType '" + actionType + "' => Skipping TransformerAction");
-        }
+        return switch (actionType) {
+            case COPY -> new TransformerActionCopyService((TransformerActionCopy) transformerAction);
+            case SME_RENAME -> new TransformerActionSmeRenameService((TransformerActionSmeRename) transformerAction);
+            case SM_COPY -> new TransformerActionSmCopyService(
+                    this.submodelRegistry,
+                    this.submodelRepository,
+                    this.templateRenderer,
+                    (TransformerActionSmCopy) transformerAction
+            );
+            case SUBMODEL_TEMPLATE -> new TransformerActionSubmodelTemplateService(
+                    (TransformerActionSubmodelTemplate) transformerAction,
+                    this.templateRenderer
+            );
+            case SUBMODEL_ELEMENT_TEMPLATE -> new TransformerActionSubmodelElementTemplateService(
+                    (TransformerActionSubmodelElementTemplate) transformerAction,
+                    templateRenderer
+            );
+            case TS_AVG -> new TransformerActionTsAvgService(
+                    (TransformerActionTsAvg) transformerAction
+            );
+            case TS_MDN -> new TransformerActionTsMdnService(
+                    (TransformerActionTsMdn) transformerAction
+            );
+            case TS_TAKE_EVERY, TS_DROP_EVERY -> new TransformerActionTsReduceService(
+                    (TransformerActionTsReduce) transformerAction
+            );
+            default ->
+                    throw new NotImplementedException("Unknown TransformerActionType '" + actionType + "' => Skipping TransformerAction");
+        };
     }
 
 }

@@ -2,10 +2,8 @@ package de.fhg.ipa.aas_transformer.transformation.actions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.fhg.ipa.aas_transformer.model.TransformerAction;
-import de.fhg.ipa.aas_transformer.model.TransformerActionSubmodelElementTemplate;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerAction;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerActionSubmodelElementTemplate;
 import de.fhg.ipa.aas_transformer.transformation.templating.TemplateRenderer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;

@@ -1,7 +1,7 @@
 package de.fhg.ipa.aas_transformer.transformation;
 
 import de.fhg.ipa.aas_transformer.model.Transformer;
-import de.fhg.ipa.aas_transformer.model.TransformerActionCopy;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerActionCopy;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionCopyService;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultProperty;

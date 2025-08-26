@@ -1,23 +1,18 @@
 package de.fhg.ipa.aas_transformer.transformation.actions;
 
-import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
-import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
-import de.fhg.ipa.aas_transformer.model.TransformerAction;
-import de.fhg.ipa.aas_transformer.model.TransformerActionTsAvg;
-import de.fhg.ipa.aas_transformer.model.TransformerActionTsFilterAbstract;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerAction;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerActionTsFilterAbstract;
 import org.eclipse.digitaltwin.aas4j.v3.model.DataTypeDefXsd;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElementCollection;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultProperty;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodelElementCollection;
-import org.eclipse.digitaltwin.basyx.submodelservice.pathparsing.HierarchicalSubmodelElementParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static de.fhg.ipa.aas_transformer.aas.AasUtils.createClone;
 import static de.fhg.ipa.aas_transformer.aas.TimeseriesUtils.*;

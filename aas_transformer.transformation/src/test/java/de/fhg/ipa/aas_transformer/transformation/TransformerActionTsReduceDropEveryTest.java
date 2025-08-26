@@ -1,8 +1,6 @@
 package de.fhg.ipa.aas_transformer.transformation;
 
-import de.fhg.ipa.aas_transformer.model.SubmodelId;
-import de.fhg.ipa.aas_transformer.model.SubmodelIdType;
-import de.fhg.ipa.aas_transformer.model.TransformerActionTsReduceDropEvery;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerActionTsReduceDropEvery;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionTsReduceService;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElementCollection;

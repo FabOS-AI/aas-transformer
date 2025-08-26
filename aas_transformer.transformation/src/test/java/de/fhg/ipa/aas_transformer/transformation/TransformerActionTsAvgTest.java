@@ -1,8 +1,6 @@
 package de.fhg.ipa.aas_transformer.transformation;
 
-import de.fhg.ipa.aas_transformer.model.SubmodelId;
-import de.fhg.ipa.aas_transformer.model.SubmodelIdType;
-import de.fhg.ipa.aas_transformer.model.TransformerActionTsAvg;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerActionTsAvg;
 import de.fhg.ipa.aas_transformer.transformation.actions.TransformerActionTsAvgService;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonDeserializer;
