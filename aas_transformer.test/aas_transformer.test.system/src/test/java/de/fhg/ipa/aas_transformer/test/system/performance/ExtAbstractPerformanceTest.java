@@ -7,6 +7,7 @@ import de.fhg.ipa.aas_transformer.test.system.performance.model.AggregatedTestRe
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TestResult;
 import de.fhg.ipa.aas_transformer.test.system.performance.model.TransformationDurations;
 import de.fhg.ipa.aas_transformer.test.utils.creator.HistoricDataCreator;
+import de.fhg.ipa.aas_transformer.test.utils.creator.MachineDataCreator;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.DeserializationException;
 import org.eclipse.digitaltwin.basyx.submodelregistry.client.model.SubmodelDescriptor;
 import org.junit.jupiter.api.AfterAll;
@@ -174,6 +175,10 @@ public abstract class ExtAbstractPerformanceTest extends AbstractExtSystemTest {
 
     protected HistoricDataCreator createHistoricDataCreator(int submodelCount, int sleepInMs) {
         return new HistoricDataCreator(aasRegistry, aasRepository, smRegistry, smRepository, submodelCount, sleepInMs);
+    }
+
+    protected MachineDataCreator createMachineDataCreator(int submodelCount, int sleepInMs) {
+        return new MachineDataCreator(aasRegistry, aasRepository, smRegistry, smRepository, submodelCount, sleepInMs);
     }
 
     protected int waitForListenerCount(Predicate<Integer> condition) {
