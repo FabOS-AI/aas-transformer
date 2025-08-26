@@ -51,7 +51,7 @@ public class TransformerActionSubmodelElementTemplateService extends Transformer
             var jsonDeserializer = new JsonDeserializer();
             var newSubmodelElement = jsonDeserializer.read(submodelElementTemplateString, SubmodelElement.class);
 
-            if (this.transformerAction.getDestinationSubmodelElementId() == "") {
+            if (this.transformerAction.getDestinationSubmodelElementId().isEmpty()) {
                 this.transformerAction.setDestinationSubmodelElementId(newSubmodelElement.getIdShort());
             }
 
