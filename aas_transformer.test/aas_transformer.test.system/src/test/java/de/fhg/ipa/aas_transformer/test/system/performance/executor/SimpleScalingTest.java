@@ -12,6 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Disabled
 public class SimpleScalingTest extends AbstractExecutorTest {
 
+    protected SimpleScalingTest() {
+        super(SimpleScalingTest.class);
+    }
+
     @Test
     @Order(10)
     public void testScaleUpOfExecutor() throws InterruptedException {

@@ -14,6 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Disabled
 class SimpleScalingTest extends AbstractListenerTest {
 
+    protected SimpleScalingTest() {
+        super(SimpleScalingTest.class);
+    }
+
     @Order(10)
     @Test
     public void testScaleUpOfListener() {
