@@ -1,6 +1,7 @@
 package de.fhg.ipa.aas_transformer.test.system;
 
 import de.fhg.ipa.aas_transformer.model.*;
+import de.fhg.ipa.aas_transformer.model.actions.TransformerActionTsAvg;
 import de.fhg.ipa.aas_transformer.test.utils.extentions.*;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultAssetAdministrationShell;
