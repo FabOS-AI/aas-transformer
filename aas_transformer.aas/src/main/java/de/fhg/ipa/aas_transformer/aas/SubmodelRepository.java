@@ -98,12 +98,28 @@ public class SubmodelRepository {
             String submodelId
     ) {
         SubmodelDescriptor descriptor;
-        try {
-            descriptor = submodelRegistry.findSubmodelDescriptor(submodelId).orElseThrow();
-            LOG.info("SubmodelDescriptor found by SubmodelId = {}", submodelId);
-        } catch(NoSuchElementException e) {
-            LOG.error("Submodel with id {} not found in registry", submodelId);
-            return null;
+        int maxRetries = 3;
+        int attempt = 0;
+        int sleepTimeMs = 1000; // 1 Sekunde
+        while (true) {
+            try {
+                descriptor = submodelRegistry.findSubmodelDescriptor(submodelId).orElseThrow();
+                LOG.info("SubmodelDescriptor found by SubmodelId = {}", submodelId);
+                break;
+            } catch (NoSuchElementException e) {
+                attempt++;
+                if (attempt >= maxRetries) {
+                    LOG.error("SubmodelDescriptor with id {} not found in registry after {} attempts", submodelId, attempt);
+                    return null;
+                }
+                LOG.warn("SubmodelDescriptor with id {} not found, retrying... (attempt {}/{})", submodelId, attempt, maxRetries);
+                try {
+                    Thread.sleep(sleepTimeMs); // 1 Sekunde warten
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+            }
         }
         String endpoint = descriptor.getEndpoints().get(0).getProtocolInformation().getHref();
         return getExtSubmodel(endpoint);
