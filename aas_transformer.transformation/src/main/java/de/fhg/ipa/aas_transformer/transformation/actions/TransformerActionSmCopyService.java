@@ -43,9 +43,9 @@ public class TransformerActionSmCopyService extends TransformerActionService {
         Submodel cpSourceSubmodel = SubmodelRepository.getExtSubmodel(this.submodelRegistry, cpSourceSubmodelId);
 
         if(cpSourceSubmodel == null) {
-            LOG.warn("Submodel with ID {}' not found in Submodel Repository. Skipping Transformer Action '{}'.",
+            LOG.warn("Submodel with ID '{}' not found in Submodel Repository. Skipping Transformer Action '{}'.",
                     cpSourceSubmodelId,
-                    this.transformerAction.getType()
+                    this.transformerAction.getActionType()
             );
             return intermediateResult;
         }
