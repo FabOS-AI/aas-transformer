@@ -1,5 +1,6 @@
 package de.fhg.ipa.aas_transformer.service.listener.events.consumers;
 
+import de.fhg.ipa.aas_transformer.aas.SubmodelRegistry;
 import de.fhg.ipa.aas_transformer.aas.SubmodelRepository;
 import de.fhg.ipa.aas_transformer.clients.management.MetricsClient;
 import de.fhg.ipa.aas_transformer.clients.redis.RedisJobProducer;
@@ -27,6 +28,7 @@ public class MessageEventConsumer implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(MessageEventConsumer.class);
 
     // Submodel Services:
+    private final SubmodelRegistry submodelRegistry;
     private final SubmodelRepository submodelRepository;
     private final RedisMessageEventConsumer redisMessageEventConsumer;
     private final RedisJobProducer jobProducer;
@@ -34,12 +36,14 @@ public class MessageEventConsumer implements Runnable {
     private final MetricsClient metricsClient;
 
     public MessageEventConsumer(
+            SubmodelRegistry submodelRegistry,
             SubmodelRepository submodelRepository,
             RedisMessageEventConsumer redisMessageEventConsumer,
             RedisJobProducer jobProducer,
             TransformationDetectionServiceCache transformationDetectionServiceCache,
             MetricsClient metricsClient
     ) {
+        this.submodelRegistry = submodelRegistry;
         this.submodelRepository = submodelRepository;
         this.redisMessageEventConsumer = redisMessageEventConsumer;
         this.jobProducer = jobProducer;
@@ -75,7 +79,7 @@ public class MessageEventConsumer implements Runnable {
                 try {
                     submodelMessageEvent = new SubmodelMessageEvent(
                             messageEvent.getSubmodelChangeEventType(),
-                            submodelRepository.getSubmodel(submodelId)
+                            SubmodelRepository.getExtSubmodel(submodelRegistry, submodelId)
                     );
                 } catch (ElementDoesNotExistException e) {
                     LOG.info("Submodel [id='" + submodelId + "' not found --> Ignoring message");
