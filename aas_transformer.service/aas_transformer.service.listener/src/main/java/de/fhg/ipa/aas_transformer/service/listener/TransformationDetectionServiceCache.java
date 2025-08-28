@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static de.fhg.ipa.aas_transformer.aas.SubmodelRepository.getExtSubmodel;
+
 @Component
 public class TransformationDetectionServiceCache extends TransformerDTOListenerCache implements ApplicationListener<ContextClosedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(TransformationDetectionServiceCache.class);
@@ -122,7 +124,7 @@ public class TransformationDetectionServiceCache extends TransformerDTOListenerC
         switch (event.getSubmodelChangeEventType()) {
             case CREATED:
             case UPDATED:
-                Submodel sourceSubmodel = submodelRepository.getSubmodel(event.getSubmodel().getId());
+                Submodel sourceSubmodel = getExtSubmodel(submodelRegistry, event.getSubmodel().getId()); // submodelRepository.getSubmodel(event.getSubmodel().getId());
                 String destinationSubmodelId = aasTemplateRenderer.renderDestinationSubmodelId(
                         transformer.getId(),
                         transformer.getDestination(),
