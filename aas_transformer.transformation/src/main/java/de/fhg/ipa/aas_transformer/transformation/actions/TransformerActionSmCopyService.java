@@ -40,7 +40,15 @@ public class TransformerActionSmCopyService extends TransformerActionService {
             boolean isFirstAction
     ) {
         String cpSourceSubmodelId = this.templateRenderer.render(this.transformerAction.getSubmodelId(), context);
-        Submodel cpSourceSubmodel = this.submodelRepository.getExtSubmodel(this.submodelRegistry, cpSourceSubmodelId);
+        Submodel cpSourceSubmodel = SubmodelRepository.getExtSubmodel(this.submodelRegistry, cpSourceSubmodelId);
+
+        if(cpSourceSubmodel == null) {
+            LOG.warn("Submodel with ID {}' not found in Submodel Repository. Skipping Transformer Action '{}'.",
+                    cpSourceSubmodelId,
+                    this.transformerAction.getType()
+            );
+            return intermediateResult;
+        }
 
         intermediateResult.setAdministration(cpSourceSubmodel.getAdministration());
         intermediateResult.setCategory(cpSourceSubmodel.getCategory());
