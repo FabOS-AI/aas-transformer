@@ -2,10 +2,7 @@ package de.fhg.ipa.aas_transformer.test.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fhg.ipa.aas_transformer.model.*;
-import de.fhg.ipa.aas_transformer.model.actions.TransformerAction;
-import de.fhg.ipa.aas_transformer.model.actions.TransformerActionCopy;
-import de.fhg.ipa.aas_transformer.model.actions.TransformerActionSmCopy;
-import de.fhg.ipa.aas_transformer.model.actions.TransformerActionTsAvg;
+import de.fhg.ipa.aas_transformer.model.actions.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,13 +101,20 @@ public class TransformerTestObjects {
     }
 
     public static Transformer getMachineDataTransformer(String sourceSubmodelIdShort) {
+        ArrayList<TransformerAction> listOfActions = new ArrayList<>();
+        listOfActions.add(new TransformerActionSmCopy("{{ submodel:id(SOURCE_SUBMODEL) }}"));
+        for(int i = 0; i < 100; i++)
+            listOfActions.add(new TransformerActionSmeRename("Segments.InternalSegment.Records.t_0.sensor"+i, SubmodelElementProperty.ID_SHORT, "sensor"+i+"_v2"));
+
+
+
         return new Transformer(
                 UUID.randomUUID(),
                 new Destination(new DestinationSubmodel(
                         "{{ submodel:idShort(SOURCE_SUBMODEL) }}_v2",
                         "{{ submodel:id(SOURCE_SUBMODEL) }}_v2")
                 ),
-                List.of(new TransformerActionSmCopy("{{ submodel:id(SOURCE_SUBMODEL) }}")),
+                listOfActions,
                 List.of(new SourceSubmodelIdRule(RuleOperator.EQUALS,  new SubmodelId(SubmodelIdType.ID_SHORT, sourceSubmodelIdShort))),
                 false
         );
