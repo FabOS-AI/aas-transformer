@@ -26,15 +26,12 @@ class MachineDataListenerTest extends AbstractListenerTest {
     @Order(10)
     @ParameterizedTest
     @ValueSource(ints = {
+//            1
             1, 1, 1, 1, 1,
             2, 2, 2, 2, 2,
             3, 3, 3, 3, 3
     })
     public void doMachineDataListenerTest(int listenerCount) throws InterruptedException {
-        /**
-         * Test should not have different results than the HistoricDataListenerTest, because transformation is not carried out but the main difference between historic and machine data test
-         */
-
         // Scale Listener:
         scaleListener(listenerCount, true);
 
@@ -45,7 +42,6 @@ class MachineDataListenerTest extends AbstractListenerTest {
         List<MachineDataCreator> smCreatorThreads = new ArrayList<>();
         for(int i = 0; i < submodelCreatorCount; i++)
             smCreatorThreads.add(createMachineDataCreator(0, 1));
-
         long start = System.currentTimeMillis();
         smCreatorThreads.forEach(TimeSeriesSubmodelCreator::start);
 
