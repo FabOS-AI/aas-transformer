@@ -1,6 +1,7 @@
 package de.fhg.ipa.aas_transformer.test.system.performance.executor;
 
 import de.fhg.ipa.aas_transformer.model.ServiceType;
+import de.fhg.ipa.aas_transformer.model.Transformer;
 import de.fhg.ipa.aas_transformer.test.utils.creator.MachineDataCreator;
 import de.fhg.ipa.aas_transformer.test.utils.creator.TimeSeriesSubmodelCreator;
 import org.junit.jupiter.api.*;
@@ -10,18 +11,22 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.ArrayList;
 import java.util.List;
 
+import static de.fhg.ipa.aas_transformer.test.utils.TransformerTestObjects.getMachineDataTransformer;
 import static java.lang.Thread.sleep;
 
 @Disabled
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class MachineDataExecutorTest extends AbstractExecutorTest {
+    private static final Transformer machineDataTransformer = getMachineDataTransformer("test_timeseries");
+
     protected MachineDataExecutorTest() {
-        super(MachineDataExecutorTest.class);
+        super(MachineDataExecutorTest.class, machineDataTransformer);
     }
 
     @ParameterizedTest
     @Order(10)
     @ValueSource(ints = {
+//            1
             1, 1, 1, 1, 1,
             2, 2, 2, 2, 2,
             3, 3, 3, 3, 3
@@ -75,7 +80,5 @@ public class MachineDataExecutorTest extends AbstractExecutorTest {
         System.out.println("Average transformed submodels per second: " + (transformedSubmodelCount / ((end - start) / 1000.0)));
         System.out.println("Average transformed submodels per executor: " + (transformedSubmodelCount / executorCount));
         System.out.println("Residual Transformation jobs in Redis: " + residualTransformationJobs);
-
-
     }
 }
