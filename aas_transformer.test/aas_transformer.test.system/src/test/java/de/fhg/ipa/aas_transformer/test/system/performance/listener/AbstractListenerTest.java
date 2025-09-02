@@ -180,6 +180,14 @@ abstract public class AbstractListenerTest extends ExtAbstractPerformanceTest {
                     .count();
         }
 
+        public int getCreatorCount() {
+            return testResults.get(0).submodelCreatorCount;
+        }
+
+        public int getTestDurationInMs() {
+            return (int) testResults.get(0).testDurationInMs;
+        }
+
         private Double calculateStandardDeviation(List<Float> results, Double average) {
             return Math.sqrt(
                     results.stream()
@@ -258,8 +266,14 @@ abstract public class AbstractListenerTest extends ExtAbstractPerformanceTest {
                 );
             table.addRule();
             String testDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            String creatorInfo = "Submodel Creator Count: "+getCreatorCount();
+            String testDurationInfo = "Test Duration: "+(getTestDurationInMs()/1000)+"s";
 
-            return title+"\n"+table.render()+"\n"+ testDate;
+            return title+"\n"
+                    +table.render()+"\n"
+                    +creatorInfo+"\n"
+                    +testDurationInfo+"\n"
+                    + testDate;
         }
 
         /**
