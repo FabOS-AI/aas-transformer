@@ -19,10 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TransformerActionRenameSmeTest {
     Submodel submodel = getRandomTimeseriesSubmodel(100, 1, "test_timeseries");
-    TransformerActionSmeRenameService service = new TransformerActionSmeRenameService(
-//        new TransformerActionSmeRename("Metadata", SubmodelElementProperty.ID_SHORT, "new_value"),
-        new TransformerActionSmeRename("Segments.InternalSegment.Records.t_0.sensor0", SubmodelElementProperty.ID_SHORT, "sensor0_v2")
-    );
     // "Segments.InternalSegment.Records.t_0.sensor0"
 
     @Test
