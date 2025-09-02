@@ -48,7 +48,7 @@ public class MachineDataJobCreator extends MachineDataCreator {
     }
 
     private void createJob(Submodel s) {
-        createJob(s.getId(), s,s.getId()+"_avg");
+        createJob(s.getId(), s,s.getId()+"_v2");
     }
 
     private void createJob(String submodelId, @Nullable Submodel submodel, String targetSubmodelId) {
