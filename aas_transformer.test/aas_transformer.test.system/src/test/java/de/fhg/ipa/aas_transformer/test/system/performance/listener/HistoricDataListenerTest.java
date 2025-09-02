@@ -1,9 +1,11 @@
 package de.fhg.ipa.aas_transformer.test.system.performance.listener;
 
-import de.fhg.ipa.aas_transformer.model.ServiceType;
 import de.fhg.ipa.aas_transformer.test.utils.creator.HistoricDataCreator;
 import de.fhg.ipa.aas_transformer.test.utils.creator.TimeSeriesSubmodelCreator;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -61,8 +63,7 @@ class HistoricDataListenerTest extends AbstractListenerTest {
                 testDurationInMs,
                 end - start,
                 residualMessageEventCount
-                )
-        );
+        ));
 
         System.out.println("Listener Count: " + listenerCount);
         System.out.println("Submodel Creator Count: " + submodelCreatorCount);
