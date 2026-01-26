@@ -30,7 +30,7 @@
         <junit.version>5.10.1</junit.version>
         <testcontainers.version>1.19.7</testcontainers.version>
         <restassured.version>5.3.1</restassured.version>
-        <assertj.version>3.24.2</assertj.version>
+        <assertj.version>3.27.7</assertj.version>
         <jinjava.version>2.7.1</jinjava.version>
 
         <maven.plugin.codehaus.exec.version>1.2.1</maven.plugin.codehaus.exec.version>
